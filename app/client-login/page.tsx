@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/cards/dashboard-card";
 import { MetricTile } from "@/components/cards/metric-tile";
+import { Logo } from "@/components/layout/logo";
 
 /**
  * STRUCTURE ONLY — there is no password check. Submitting the Log In form
@@ -29,9 +30,9 @@ export default function ClientLoginPage() {
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.15fr_1fr]">
       {/* Left: brand panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-navy-deep via-navy to-[#1B3B6B] p-12 text-white lg:flex">
-        <div className="text-[19px] font-bold">
-          CFO<span className="text-teal-bright">X</span>PERT
-        </div>
+        <div>
+  <Logo heightClass="h-6" />
+</div>
         <div className="max-w-md">
           <p className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-bright">Client Portal</p>
           <h1 className="mb-4 font-display text-3xl font-medium">Your business, in one live view.</h1>
@@ -116,11 +117,11 @@ export default function ClientLoginPage() {
               <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
                 <div>
                   <label htmlFor="req-name" className="mb-2 block text-[13px] font-semibold text-navy">Full name</label>
-                  <Input id="req-name" placeholder="e.g. Parth Sharma" />
+                  <Input id="req-name" placeholder="e.g. Rohit Sharma" />
                 </div>
                 <div>
                   <label htmlFor="req-company" className="mb-2 block text-[13px] font-semibold text-navy">Company name</label>
-                  <Input id="req-company" placeholder="e.g. Shitla Paper Products Pvt Ltd" />
+                  <Input id="req-company" placeholder="e.g. Jagdamba Paper Products Pvt Ltd" />
                 </div>
                 <div>
                   <label htmlFor="req-email" className="mb-2 block text-[13px] font-semibold text-navy">Work email</label>
