@@ -71,9 +71,9 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               className="fixed inset-y-0 left-0 z-50 w-[260px] bg-white py-6 shadow-elevation-3 lg:hidden"
             >
               <div className="mb-6 flex items-center justify-between px-5">
-                <div className="text-[17px] font-bold text-navy">
-                  CFO<span className="text-teal">X</span>PERT
-                </div>
+                <div className="mb-6 px-5">
+  <Logo heightClass="h-6" />
+</div>
                 <button onClick={onClose} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center">
                   <X className="h-5 w-5 text-navy" />
                 </button>
