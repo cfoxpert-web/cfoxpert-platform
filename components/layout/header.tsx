@@ -18,9 +18,9 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-line/80 bg-white/72 backdrop-blur-xl backdrop-saturate-150">
       <Container>
         <nav className="flex items-center justify-between py-[18px]">
-          <Link href="/" className="text-[19px] font-bold text-navy" onClick={() => setMobileOpen(false)}>
-            CFO<span className="text-teal">X</span>PERT
-          </Link>
+          <Link href="/">
+  <Logo heightClass="h-7" />
+</Link>
 
           {/* Desktop nav — hidden below md, no disappearing-with-no-replacement like the static HTML had */}
           <ul className="hidden gap-9 text-[14.5px] font-medium text-slate md:flex">
