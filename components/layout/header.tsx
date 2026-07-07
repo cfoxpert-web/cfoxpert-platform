@@ -7,23 +7,28 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
+import { Logo } from "@/components/layout/logo";
 import { NAV_ITEMS, SITE_CONFIG } from "@/constants/site";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/layout/logo";
 
 export function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/80 bg-white/72 backdrop-blur-xl backdrop-saturate-150">
-      <Container>
-        <nav className="flex items-center justify-between py-[18px]">
-          <Link href="/">
-  <Logo heightClass="h-7" />
-</Link>
+    <header className="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur-xl backdrop-saturate-150">
+      {/* Row 1: large centered logo banner */}
+      <div className="border-b border-line/60 py-4">
+        <Container>
+          <Link href="/" className="flex justify-center" onClick={() => setMobileOpen(false)}>
+            <Logo heightClass="h-14 sm:h-16" />
+          </Link>
+        </Container>
+      </div>
 
-          {/* Desktop nav — hidden below md, no disappearing-with-no-replacement like the static HTML had */}
+      {/* Row 2: nav + actions */}
+      <Container>
+        <nav className="flex items-center justify-between py-3">
           <ul className="hidden gap-9 text-[14.5px] font-medium text-slate md:flex">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
@@ -43,7 +48,7 @@ export function Header() {
             })}
           </ul>
 
-          <div className="hidden items-center gap-5 md:flex">
+          <div className="hidden items-center gap-5 md:flex md:ml-auto">
             <Link href="/client-login" className="text-[14.5px] font-semibold text-navy hover:text-teal">
               Client Login
             </Link>
@@ -52,12 +57,11 @@ export function Header() {
             </Button>
           </div>
 
-          {/* Mobile hamburger — 44px touch target per the mobile-pass fix */}
           <button
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
-            className="flex h-11 w-11 items-center justify-center md:hidden"
+            className="flex h-11 w-11 items-center justify-center md:hidden ml-auto"
           >
             {mobileOpen ? <X className="h-5 w-5 text-navy" /> : <Menu className="h-5 w-5 text-navy" />}
           </button>
