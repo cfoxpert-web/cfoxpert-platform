@@ -26,8 +26,9 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry?.isIntersecting) {
         setIsVisible(true);
         observer.unobserve(node);
       }
