@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, JSX } from "react";
 
 interface ContainerProps extends PropsWithChildren {
   /** "default" matches marketing pages (1180px). "narrow" matches article/about copy (720px). */
