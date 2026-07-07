@@ -1,0 +1,200 @@
+import type { Article } from "@/types";
+
+export const MOCK_ARTICLES: Article[] = [
+  {
+    slug: "revenue-vs-enterprise-value",
+    title: "Why revenue growth doesn't always mean a more valuable business",
+    description:
+      "The gap between top-line growth and enterprise value — and the six drivers that actually close it.",
+    category: "Enterprise Value",
+    readingTimeMinutes: 7,
+    featured: true,
+    publishedAt: "2026-05-12",
+    author: "CFOxpert",
+    blocks: [
+      {
+        type: "paragraph",
+        text: "\u201cWe grew 22% this year.\u201d It's the number every founder reaches for first, and fairly so — growth is hard, and 22% is a real achievement. But revenue growth answers only one question: is the business getting bigger? It says almost nothing about whether the business is getting more valuable.",
+      },
+      {
+        type: "paragraph",
+        text: "Those two things feel like they should move together. In practice, we regularly see businesses growing revenue steadily for years while their actual enterprise value — what the business would be worth to an investor, acquirer, or lender — barely moves, or even declines in relative terms.",
+      },
+      { type: "heading", text: "Why growth and value can quietly diverge" },
+      {
+        type: "paragraph",
+        text: "Enterprise value isn't a multiple of revenue in isolation. It's a reflection of how sustainably, profitably, and independently that revenue is generated. A business can grow the top line while simultaneously becoming riskier, less profitable per rupee, and more dependent on things that could disappear tomorrow — a single large customer, a founder's personal relationships, or unsustainably thin margins bought with aggressive discounting.",
+      },
+      { type: "quote", text: "Revenue tells you the business is bigger. Enterprise value tells you whether that size is actually worth something." },
+      { type: "heading", text: "The six drivers that actually determine value" },
+      {
+        type: "list",
+        items: [
+          "Financial strength — margins, cash flow, and capital efficiency, not just top-line size.",
+          "Operational excellence — how efficiently the business runs, independent of any one person.",
+          "Strategic growth — growth diversified across customers and products, not concentrated in one relationship.",
+          "Governance & leadership — decision-making that doesn't route through a single founder.",
+          "Technology & intelligence — real-time visibility, not monthly guesswork.",
+          "Capital & valuation readiness — the clean financial story that withstands real diligence.",
+        ],
+      },
+      {
+        type: "stats",
+        items: [
+          { value: "2–4x", label: "Typical valuation multiple gap between comparable-revenue businesses with strong vs weak fundamentals" },
+          { value: "6", label: "Independent drivers of enterprise value, beyond revenue size" },
+          { value: "12–18 mo", label: "Realistic window to meaningfully shift a business's valuation profile" },
+        ],
+      },
+      { type: "heading", text: "Growth is still the goal — just not the whole story" },
+      {
+        type: "paragraph",
+        text: "None of this is an argument against growing revenue. Growth funds everything else. But treating revenue as the only scoreboard is how businesses end up bigger, busier, and no more valuable than they were three years ago. The businesses that compound in value are the ones tracking both numbers, deliberately, every month.",
+      },
+    ],
+  },
+  {
+    slug: "cash-conversion-cycle",
+    title: "The real cost of a 45-day cash conversion cycle",
+    description: "How working capital gaps quietly erode growth, and three practical levers to close them within a quarter.",
+    category: "Cash Flow",
+    readingTimeMinutes: 6,
+    publishedAt: "2026-05-05",
+    author: "CFOxpert",
+    blocks: [
+      {
+        type: "paragraph",
+        text: "Ask most founders how their business is doing and they'll point to revenue. Ask them how much cash sat idle in receivables and inventory last quarter, and you'll usually get a pause. That gap — between watching the top line and watching the cash conversion cycle — is where a lot of otherwise healthy businesses quietly bleed.",
+      },
+      {
+        type: "paragraph",
+        text: "The cash conversion cycle (CCC) measures how long it takes for a rupee spent on raw material or operations to come back as cash in the bank. The longer that cycle, the more working capital gets tied up.",
+      },
+      { type: "heading", text: "What a 45-day cycle actually costs you" },
+      {
+        type: "stats",
+        items: [
+          { value: "₹7.4Cr", label: "Working capital locked up at a 45-day cycle on ₹60Cr revenue" },
+          { value: "10–15%", label: "Typical cost of working capital financing for Indian SMEs" },
+          { value: "8–12 days", label: "Realistic reduction achievable within one quarter" },
+        ],
+      },
+      { type: "quote", text: "Every extra day in your cash cycle is a day your own money is funding someone else's business." },
+      { type: "heading", text: "Three levers that move the needle within 90 days" },
+      {
+        type: "list",
+        items: [
+          "Segment customers by actual payment behavior, not credit terms on paper.",
+          "Make collections a weekly discipline, not a monthly scramble.",
+          "Renegotiate supplier terms deliberately, not by default.",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Cash conversion problems rarely show up as a crisis until they're serious, because revenue keeps climbing the whole time — the P&L looks fine even as the balance sheet quietly deteriorates.",
+      },
+    ],
+  },
+  {
+    slug: "founder-dependency",
+    title: "Why founder-dependent businesses stall at ₹50 crore",
+    description: "Revenue keeps climbing. Then, somewhere around the ₹50 crore mark, growth flattens — not because demand disappears, but because the business runs out of founder.",
+    category: "Governance",
+    readingTimeMinutes: 8,
+    publishedAt: "2026-04-28",
+    author: "CFOxpert",
+    blocks: [
+      {
+        type: "paragraph",
+        text: "Almost every founder we work with hits the same wall in almost the same place. Revenue crosses ₹40–50 crore, the business has real traction — and then growth quietly stops compounding. Not because the market dried up. Because the business was never built to run without its founder in the room.",
+      },
+      { type: "heading", text: "The symptoms show up before the number does" },
+      {
+        type: "list",
+        items: [
+          "Every meaningful decision eventually needs the founder's sign-off.",
+          "Department heads report activity, not outcomes.",
+          "The founder is the only person who can see the full financial picture.",
+          "Key relationships run through the founder personally, not the company.",
+        ],
+      },
+      { type: "quote", text: "A business that depends on its founder isn't really a business yet. It's a very well-organized personal effort." },
+      { type: "heading", text: "Why this caps enterprise value, not just growth" },
+      {
+        type: "stats",
+        items: [
+          { value: "3–5x", label: "Typical valuation gap between founder-dependent and systemized businesses" },
+          { value: "₹40–50Cr", label: "Revenue range where founder dependency most commonly caps growth" },
+          { value: "6–12 mo", label: "Realistic timeframe to meaningfully reduce dependency" },
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Past this point, the job changes from \u201cmake every decision well\u201d to \u201cbuild a system that makes good decisions without you.\u201d That's a harder, less visible kind of work — and it's exactly where most founders need an outside set of hands to build it with them.",
+      },
+    ],
+  },
+  {
+    slug: "manufacturing-kpis",
+    title: "12 KPIs every manufacturing CEO should track monthly",
+    description: "Beyond revenue and margin — the operational metrics that predict trouble early.",
+    category: "KPI Library",
+    readingTimeMinutes: 5,
+    publishedAt: "2026-04-20",
+    author: "CFOxpert",
+  },
+  {
+    slug: "working-capital-financing-guide",
+    title: "A founder's guide to working capital financing",
+    description: "When to use it, when to avoid it, and how lenders actually evaluate your business.",
+    category: "Working Capital",
+    readingTimeMinutes: 9,
+    publishedAt: "2026-04-14",
+    author: "CFOxpert",
+  },
+  {
+    slug: "customer-concentration-risk",
+    title: "Customer concentration: the risk investors always ask about",
+    description: "Why one big client can quietly cap your valuation — and how to fix it.",
+    category: "Growth",
+    readingTimeMinutes: 6,
+    publishedAt: "2026-04-07",
+    author: "CFOxpert",
+  },
+  {
+    slug: "board-review-that-works",
+    title: "Running a board review that actually changes decisions",
+    description: "A practical structure for monthly reviews that go beyond reading the P&L aloud.",
+    category: "CEO Guides",
+    readingTimeMinutes: 7,
+    publishedAt: "2026-03-30",
+    author: "CFOxpert",
+  },
+  {
+    slug: "spreadsheets-to-dashboards",
+    title: "From spreadsheets to dashboards: what actually changes",
+    description: "The real difference live dashboards make to decision speed — with examples.",
+    category: "Business Intelligence",
+    readingTimeMinutes: 5,
+    publishedAt: "2026-03-22",
+    author: "CFOxpert",
+  },
+  {
+    slug: "13-week-cash-flow-forecast",
+    title: "Building a 13-week cash flow forecast that you'll actually use",
+    description: "A practical model founders can maintain themselves, without a finance team.",
+    category: "Financial Strategy",
+    readingTimeMinutes: 8,
+    publishedAt: "2026-03-15",
+    author: "CFOxpert",
+  },
+  {
+    slug: "manufacturing-valuation-benchmarks",
+    title: "Enterprise value benchmarks for Indian manufacturing SMEs",
+    description: "What comparable businesses in your revenue band are typically valued at, and why.",
+    category: "Industry Insights",
+    readingTimeMinutes: 6,
+    publishedAt: "2026-03-08",
+    author: "CFOxpert",
+  },
+];
