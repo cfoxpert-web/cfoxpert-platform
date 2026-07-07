@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
-import { FOOTER_COLUMNS, SITE_CONFIG } from "@/constants/site";
 import { Logo } from "@/components/layout/logo";
+import { FOOTER_COLUMNS, SITE_CONFIG } from "@/constants/site";
 
 export function Footer() {
   return (
     <footer className="border-t border-line py-14">
       <Container className="flex flex-wrap justify-between gap-8 text-[13.5px] text-slate-light">
         <div>
-  <Logo heightClass="h-6" />
-</div>
+          <div className="mb-2.5">
+            <Logo heightClass="h-6" />
+          </div>
           <p>
             {SITE_CONFIG.legalEntity}
             <br />
