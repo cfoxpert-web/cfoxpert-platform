@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { NAV_ITEMS, SITE_CONFIG } from "@/constants/site";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/layout/logo";
 
 export function Header() {
   const pathname = usePathname();
