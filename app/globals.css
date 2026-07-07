@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper text-ink antialiased;
+    letter-spacing: -0.011em;
+  }
+  ::selection {
+    @apply bg-teal-light text-navy;
+  }
+}
+
+@layer utilities {
+  /* One place to opt any element out of motion — respected by every
+     animation primitive in components/animations, not re-declared per file. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
