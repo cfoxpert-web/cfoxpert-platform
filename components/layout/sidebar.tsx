@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PORTAL_NAV_ITEMS } from "@/constants/portal-nav";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/layout/logo";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -44,9 +45,9 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside className="hidden w-[240px] shrink-0 border-r border-line bg-white lg:block">
         <div className="sticky top-0 flex h-screen flex-col py-6">
-          <div className="mb-6 px-5 text-[17px] font-bold text-navy">
-            CFO<span className="text-teal">X</span>PERT
-          </div>
+          <div className="mb-6 px-5">
+  <Logo heightClass="h-6" />
+</div>
           <NavLinks />
         </div>
       </aside>
