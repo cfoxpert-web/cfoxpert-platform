@@ -11,21 +11,23 @@ import { MOCK_ARTICLES } from "@/lib/mock-data/articles";
 import { getRelatedArticles } from "@/lib/knowledge/filter-articles";
 
 interface ArticlePageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
   return MOCK_ARTICLES.map((article) => ({ slug: article.slug }));
 }
 
-export function generateMetadata({ params }: ArticlePageProps): Metadata {
-  const article = MOCK_ARTICLES.find((a) => a.slug === params.slug);
+export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const article = MOCK_ARTICLES.find((a) => a.slug === slug);
   if (!article) return {};
   return { title: article.title, description: article.description };
 }
 
-export default function ArticlePage({ params }: ArticlePageProps) {
-  const article = MOCK_ARTICLES.find((a) => a.slug === params.slug);
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  const { slug } = await params;
+  const article = MOCK_ARTICLES.find((a) => a.slug === slug);
   if (!article) notFound();
 
   const style = ARTICLE_CATEGORY_STYLES[article.category];
