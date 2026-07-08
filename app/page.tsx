@@ -38,8 +38,7 @@ export default function HomePage() {
               </h1>
               <p className="mt-6 max-w-md text-lg leading-relaxed text-slate">
                 Financial intelligence, performance systems, and governance —
-                built into one integrated platform for founder-led companies
-                between ₹20Cr and ₹250Cr.
+                built into one integrated platform for founder-led companies.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
                 <Button asChild size="lg">
