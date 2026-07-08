@@ -21,7 +21,7 @@ export function Header() {
       <div className="border-b border-line/60 py-4">
         <Container>
           <Link href="/" className="flex justify-center" onClick={() => setMobileOpen(false)}>
-            <Logo heightClass="h-24 sm:h-32" />
+            <Logo heightClass="h-20 sm:h-28" />
           </Link>
         </Container>
       </div>
