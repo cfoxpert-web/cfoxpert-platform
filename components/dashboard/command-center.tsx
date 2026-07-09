@@ -25,18 +25,32 @@ import {
   MOCK_QUICK_ACTIONS,
 } from "@/lib/mock-data/dashboard";
 
+import { getDashboardData } from "@/lib/dashboard/data";
+import { toKpiCardData } from "@/lib/dashboard/map-kpis";
+
 /**
- * All data below is mock, per the Phase 4 brief (no backend, no database,
- * no auth). Every widget is independently reusable — this component is
- * only the layout that arranges them, so Phase 5's Client Portal can either
- * reuse this whole composition or cherry-pick individual widgets.
+ * Milestone 11: the dashboard's data seam, swapped. With the
+ * realDashboardData flag ON and a signed-in member, the KPI row and
+ * Health Score render REAL data (KPI Engine + latest health_scores row);
+ * with the flag OFF (or no session/org/data) every widget renders the
+ * same mock data as before — byte-identical behavior. Widgets are
+ * untouched either way; only the data source changes, exactly as the
+ * Phase 4 brief designed for.
+ *
+ * Remaining widgets (charts, actions, board packs, notifications, tasks,
+ * documents) stay mock until their own milestones deliver real sources.
  */
-export function CommandCenter() {
+export async function CommandCenter() {
+  const real = await getDashboardData();
+  const kpis = real?.snapshot ? toKpiCardData(real.snapshot.kpis) : null;
+  const kpiRow = kpis && kpis.length > 0 ? kpis : MOCK_KPIS;
+  const healthScore = real?.healthScore ?? { score: 82, grade: "A-" };
+
   return (
     <div className="flex flex-col gap-6">
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {MOCK_KPIS.map((kpi) => (
+        {kpiRow.map((kpi) => (
           <KPICard key={kpi.id} {...kpi} />
         ))}
       </div>
@@ -58,7 +72,7 @@ export function CommandCenter() {
       {/* Working capital + health score */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <WorkingCapitalCard data={MOCK_WORKING_CAPITAL} />
-        <HealthScoreCard score={82} grade="A-" />
+        <HealthScoreCard score={healthScore.score} grade={healthScore.grade} />
       </div>
 
       {/* Action tracker + board packs */}

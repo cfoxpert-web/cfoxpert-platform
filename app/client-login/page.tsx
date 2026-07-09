@@ -9,21 +9,55 @@ import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/cards/dashboard-card";
 import { MetricTile } from "@/components/cards/metric-tile";
 import { Logo } from "@/components/layout/logo";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { signInWithPassword } from "@/lib/auth/supabase-auth";
 
 /**
- * STRUCTURE ONLY — there is no password check. Submitting the Log In form
- * navigates straight to /dashboard because app/(portal)/layout.tsx always
- * resolves a mock session (see lib/auth/mock-session.ts). This lets the
- * full click-through flow be demonstrated end-to-end before real auth
- * exists; it is not, and must not be mistaken for, a working login.
+ * Milestone 4: real authentication, gated behind the realAuth feature
+ * flag (lib/feature-flags.ts).
+ *
+ * - realAuth OFF (default): behaves exactly as before — submitting
+ *   navigates straight to /dashboard against the mock session, and
+ *   the "structure only" notice is shown.
+ * - realAuth ON: submits credentials to Supabase via the
+ *   signInWithPassword server action; errors render inline; the
+ *   notice disappears.
  */
 export default function ClientLoginPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"login" | "request">("login");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  function handleLogin(e: React.FormEvent) {
+  const realAuth = isFeatureEnabled("realAuth");
+
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    router.push("/dashboard");
+
+    if (!realAuth) {
+      router.push("/dashboard");
+      return;
+    }
+
+    const form = new FormData(e.currentTarget);
+    const email = String(form.get("email") ?? "");
+    const password = String(form.get("password") ?? "");
+
+    setLoginError(null);
+    setIsSubmitting(true);
+    try {
+      const result = await signInWithPassword(email, password);
+      if (result.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setLoginError(result.error);
+      }
+    } catch {
+      setLoginError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -89,24 +123,31 @@ export default function ClientLoginPage() {
               <form onSubmit={handleLogin} className="flex flex-col gap-4">
                 <div>
                   <label htmlFor="login-email" className="mb-2 block text-[13px] font-semibold text-navy">Email address</label>
-                  <Input id="login-email" type="email" placeholder="you@company.com" required />
+                  <Input id="login-email" name="email" type="email" placeholder="you@company.com" required />
                 </div>
                 <div>
                   <label htmlFor="login-password" className="mb-2 block text-[13px] font-semibold text-navy">Password</label>
-                  <Input id="login-password" type="password" placeholder="Enter your password" required />
+                  <Input id="login-password" name="password" type="password" placeholder="Enter your password" required />
                 </div>
-                <Button type="submit" size="lg" className="mt-1 w-full">
-                  Log In →
+                {loginError && (
+                  <p role="alert" className="text-[13px] font-medium text-red-600">
+                    {loginError}
+                  </p>
+                )}
+                <Button type="submit" size="lg" className="mt-1 w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Logging in…" : "Log In →"}
                 </Button>
               </form>
-              <Card className="mt-6 flex gap-2.5 border-[#D6EEE6] bg-teal-light p-3.5 text-[12.5px] text-slate">
-                <span>🔒</span>
-                <span>
-                  <b className="text-navy">Structure only.</b> There&apos;s no real password check
-                  yet — this button navigates straight to the mock dashboard so the click-through
-                  flow can be reviewed end-to-end.
-                </span>
-              </Card>
+              {!realAuth && (
+                <Card className="mt-6 flex gap-2.5 border-[#D6EEE6] bg-teal-light p-3.5 text-[12.5px] text-slate">
+                  <span>🔒</span>
+                  <span>
+                    <b className="text-navy">Structure only.</b> There&apos;s no real password check
+                    yet — this button navigates straight to the mock dashboard so the click-through
+                    flow can be reviewed end-to-end.
+                  </span>
+                </Card>
+              )}
             </>
           ) : (
             <>

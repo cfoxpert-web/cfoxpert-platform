@@ -17,7 +17,9 @@ export interface WebhookResult {
   error?: string;
 }
 
-const WEBHOOK_URL = process.env.NEXT_PUBLIC_WEBHOOK_URL ?? "";
+import { env } from "@/lib/env";
+
+const WEBHOOK_URL = env.NEXT_PUBLIC_WEBHOOK_URL ?? "";
 
 export async function sendToWebhook(payload: WebhookPayload): Promise<WebhookResult> {
   if (!WEBHOOK_URL) {

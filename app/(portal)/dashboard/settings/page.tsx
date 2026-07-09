@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card } from "@/components/cards/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { updateOwnProfile } from "@/lib/auth/profile-actions";
 
 const COMING_SOON_SECTIONS = [
   { title: "Notification Preferences", description: "Choose which alerts trigger an email vs. an in-app notification only." },
@@ -13,13 +17,35 @@ const COMING_SOON_SECTIONS = [
 ];
 
 /**
- * STRUCTURE ONLY. The profile fields below are read-only and pre-filled
- * from the mock session — there's no save handler wired up because there's
- * nothing real to save to yet. The three sections below that are visibly
- * "Coming soon" rather than faked as functional.
+ * Milestone 6 (Settings wiring): with realAuth ON, the full-name field is
+ * editable and saves through updateOwnProfile (own-row RLS; the action
+ * accepts no user id by design). Email stays read-only (changes go through
+ * Supabase Auth) and company stays read-only (it comes from the
+ * organization, not the profile). With realAuth OFF, behavior is the
+ * original structure-only page, unchanged.
  */
 export default function SettingsPage() {
   const { session } = useSession();
+  const realAuth = isFeatureEnabled("realAuth");
+
+  const [name, setName] = useState<string | null>(null); // null = untouched
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const displayName = name ?? session?.user.name ?? "";
+  const dirty = realAuth && name !== null && name !== session?.user.name;
+
+  async function handleSave() {
+    setSaveState("saving");
+    setSaveError(null);
+    const result = await updateOwnProfile({ fullName: displayName });
+    if (result.ok) {
+      setSaveState("saved");
+    } else {
+      setSaveState("error");
+      setSaveError(result.error);
+    }
+  }
 
   return (
     <DashboardLayout title="Settings">
@@ -31,7 +57,12 @@ export default function SettingsPage() {
               <label htmlFor="settings-name" className="mb-2 block text-[13px] font-semibold text-navy">
                 Full name
               </label>
-              <Input id="settings-name" defaultValue={session?.user.name} disabled />
+              <Input
+                id="settings-name"
+                value={displayName}
+                onChange={(e) => setName(e.target.value)}
+                disabled={!realAuth}
+              />
             </div>
             <div>
               <label htmlFor="settings-company" className="mb-2 block text-[13px] font-semibold text-navy">
@@ -46,9 +77,23 @@ export default function SettingsPage() {
               <Input id="settings-email" defaultValue={session?.user.email} disabled />
             </div>
           </div>
-          <p className="mt-4 text-xs text-slate-light">
-            Profile editing isn&apos;t wired up yet — this reflects the current mock session only.
-          </p>
+          {realAuth ? (
+            <div className="mt-4 flex items-center gap-3">
+              <Button size="sm" onClick={handleSave} disabled={!dirty || saveState === "saving"}>
+                {saveState === "saving" ? "Saving…" : "Save changes"}
+              </Button>
+              {saveState === "saved" && !dirty && (
+                <span className="text-xs font-semibold text-teal">Saved.</span>
+              )}
+              {saveState === "error" && saveError && (
+                <span className="text-xs font-semibold text-coral">{saveError}</span>
+              )}
+            </div>
+          ) : (
+            <p className="mt-4 text-xs text-slate-light">
+              Profile editing isn&apos;t wired up yet — this reflects the current mock session only.
+            </p>
+          )}
         </Card>
 
         {COMING_SOON_SECTIONS.map((section) => (

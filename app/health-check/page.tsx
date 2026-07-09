@@ -12,6 +12,8 @@ import { useMultiStepForm } from "@/hooks/use-multi-step-form";
 import { HEALTH_CHECK_QUESTIONS } from "@/constants/health-check-questions";
 import { computeHealthCheckResult, type AnswerMap } from "@/lib/health-check/score-engine";
 import { sendToWebhook } from "@/lib/webhook";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { persistHealthCheckSubmission } from "@/lib/health-check/persistence";
 import type { ContactDetailsInput } from "@/lib/validation";
 import type { HealthCheckResult } from "@/types";
 
@@ -48,12 +50,19 @@ export default function HealthCheckPage() {
   function handleAnalysisComplete() {
     const computed = computeHealthCheckResult(answers);
     setResult(computed);
-    void sendToWebhook({
-      type: "health_check_completed",
-      contact,
-      answers,
-      result: computed,
-    });
+    if (isFeatureEnabled("healthCheckPersistence") && contact) {
+      // Milestone 8: persist-first server action (which recomputes the
+      // score server-side and fires the same webhook payload itself).
+      void persistHealthCheckSubmission({ contact, answers });
+    } else {
+      // Flag off: today's behavior, byte-identical.
+      void sendToWebhook({
+        type: "health_check_completed",
+        contact,
+        answers,
+        result: computed,
+      });
+    }
     setPhase("results");
   }
 
