@@ -1,21 +1,29 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
+import { useEffect, type PropsWithChildren } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 
 /**
- * STRUCTURE ONLY. In a real implementation, this component would:
- *   1. Check `session` from useSession()
- *   2. If `isLoading`, render a loading skeleton
- *   3. If `!session`, redirect to /client-login via next/navigation's useRouter
+ * Milestone 12: the real route guard, implementing exactly the two
+ * behaviors the structure-only version documented as missing:
+ *   1. isLoading → loading state (real auth resolves asynchronously)
+ *   2. !session  → redirect to /client-login
  *
- * Right now `session` is always the mock user (see lib/auth/mock-session.ts),
- * so this always renders children — there is no actual access control on
- * any route wrapped by this component yet. Do not treat /dashboard or any
- * other portal route as secure until this logic is implemented for real.
+ * With realAuth OFF the mock session always exists, so the only
+ * behavioral difference from before is that clicking Sign Out now
+ * lands on /client-login instead of a dead-end message — the exact
+ * redirect the original file's comment specified.
  */
 export function ProtectedLayout({ children }: PropsWithChildren) {
   const { session, isLoading } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !session) {
+      router.replace("/client-login");
+    }
+  }, [isLoading, session, router]);
 
   if (isLoading) {
     return (
@@ -26,10 +34,10 @@ export function ProtectedLayout({ children }: PropsWithChildren) {
   }
 
   if (!session) {
-    // Real implementation: router.push("/client-login") inside a useEffect.
+    // Redirect is in flight (useEffect above); render nothing sensitive.
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-slate">
-        You&apos;ve been signed out. (Structure only — no real redirect wired up yet.)
+        Redirecting to login…
       </div>
     );
   }
