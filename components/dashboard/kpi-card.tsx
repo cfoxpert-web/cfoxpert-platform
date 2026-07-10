@@ -1,4 +1,4 @@
-import { TrendingUp, Percent, Clock, Wallet, Target, ListChecks, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { TrendingUp, Percent, Clock, Wallet, Target, ListChecks, ArrowUp, ArrowDown, Minus, Coins, PiggyBank, Banknote, ArrowDownToLine, ArrowUpFromLine, Landmark, Package } from "lucide-react";
 import { Card } from "@/components/cards/card";
 import { cn } from "@/lib/utils";
 import type { KPIData } from "@/types";
@@ -10,6 +10,13 @@ const ICONS = {
   workingcapital: Wallet,
   healthscore: Target,
   actions: ListChecks,
+  grossprofit: Coins,
+  otherincome: PiggyBank,
+  netprofit: Banknote,
+  receivables: ArrowDownToLine,
+  payables: ArrowUpFromLine,
+  cashbank: Landmark,
+  inventory: Package,
 };
 
 const deltaIcon = { up: ArrowUp, down: ArrowDown, flat: Minus };

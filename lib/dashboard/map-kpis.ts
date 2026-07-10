@@ -9,9 +9,13 @@ import type { EvaluatedKpi } from "../kpi/engine";
 
 const ICON_BY_KEY: Record<string, KPIData["icon"]> = {
   revenue: "revenue",
-  ebitda_margin: "margin",
-  cash_cycle_days: "cashcycle",
-  working_capital: "workingcapital",
+  gross_profit: "grossprofit",
+  other_income: "otherincome",
+  net_profit: "netprofit",
+  trade_receivables: "receivables",
+  trade_payables: "payables",
+  cash_bank: "cashbank",
+  inventory: "inventory",
 };
 
 /** ₹ compact formatting matching the mock convention (₹1.54Cr / ₹4.1L). */
