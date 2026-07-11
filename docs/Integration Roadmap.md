@@ -104,3 +104,36 @@ Unchanged. Still correctly last: highest complexity, highest external risk, depe
 This is **CFOXPERT Platform Roadmap v1.0**. It is the single source of truth for implementation order and scope going forward. Future sessions implement one milestone at a time against this document and do not revisit its architecture unless a major business requirement changes the picture — in which case that change should be brought back for an explicit, scoped amendment, not an ad hoc in-flight redesign.
 
 **Next step:** Milestone 1 — Environment Configuration.
+
+---
+
+## Post-Freeze Amendments
+
+Per the freeze statement above, major business-requirement changes are recorded here as explicit, scoped amendments rather than as in-flight redesigns. These do not reorder the frozen list; they add/extend milestones with their own review cycle.
+
+### Amendment A1 — Flexible period comparison (MoM / YoY / QoQ / custom)
+**Requested:** 2026-07-11 (Parth). **Extends:** Milestones 10 (KPI Engine) + 11 (Dashboard Data). **Risk:** Medium. **Complexity:** M.
+
+**Requirement:** a client must be able to compare KPI values across any periods they choose — month-on-month, year-on-year, quarter-on-quarter, or an arbitrary custom pair (e.g. this month vs the same month last year).
+
+**Why it needs an amendment:** the current model can't express relationship-based comparison. `kpi_periods` carries only `period_label` (free text) + `period_type`; `getKpiSnapshot` treats the latest-created period as "current" and the next as "prior". Annual YoY (FY25→FY26) works today by accident of ordering; nothing else does.
+
+**Scope:**
+1. Add real `period_start` / `period_end` dates to `kpi_periods` (new migration) so periods can be *found* by relationship.
+2. A comparison resolver in the KPI query layer: given a current period + mode (MoM = −1 month, QoQ = −1 quarter, YoY = −12 months, or an explicit custom period), select the comparator. Keep the KPI Engine the single computation path — the resolver picks periods; the engine still does the math.
+3. A period + comparison selector on the dashboard (and, later, board packs).
+4. Populate enough historical monthly/quarterly data to compare against.
+
+**Sequence note:** build A1 **before** A2 — the financials-derived health score's trend line depends on the dated-period model.
+
+### Amendment A2 — Client health score computed from financials (distinct from lead self-assessment)
+**Requested:** 2026-07-11 (Parth). **New milestone.** **Depends on:** #10 (KPI Engine), A1 (dated periods), and a decision on where analyst input lives (overlaps M13 review-queue patterns). **Risk:** Medium. **Complexity:** L.
+
+**Requirement:** the Business Health score should work differently for a **lead** vs an **actual client**. Lead (prospect) keeps the existing six-question founder self-assessment (`lib/health-check/score-engine.ts`). Client (has financials) should be **computed from actual financial data**, not self-reported — may reuse the same six Enterprise Value drivers.
+
+**Honest caveat (raised at request time):** only about half the six drivers are derivable from financials — Financial Strength (fully), Operational Excellence & Strategic Growth (partly), Capital & Valuation (computed). **Governance & Leadership and Technology & Intelligence are not in the numbers** and must stay qualitative (questionnaire or analyst assessment). So the real design is a **hybrid**, not "purely from financials."
+
+**Scope:**
+1. Define per-driver financial formulas + benchmark bands, reusing the KPI Engine's benchmark-position logic (single computation path; benchmark bands are data per ADR-004 / industry classification per ADR-008). No parallel scorer.
+2. Compute the financial drivers from KPI data; take the qualitative drivers (governance, technology) from the questionnaire or an analyst assessment surface.
+3. Combine with the existing driver weights; write the result as an insert-only `health_scores` row (ADR-006), recomputed per period so the score gains a trend line (uses A1's dated periods).

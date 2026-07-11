@@ -2,6 +2,18 @@
 
 Tracks changes to the platform's plan and documentation itself — architecture, roadmap, and decisions — as distinct from a code-level CHANGELOG (which belongs in the repo root once real implementation begins, and should log shipped milestones, not planning).
 
+## 2026-07-11 (RPIL real-data dashboard on Preview + board KPI switch)
+
+- SEED CONFIRMED & DATA LIVE: first platform-owner org (CFOXPERT, is_platform_owner) + first client org (Reliable Packaging Industries Ltd) + memberships (client membership most-recent so it resolves as active org, per §8 gotcha) + FY25/FY26 kpi_periods + 9 kpi_values. Prior lost seed was rebuilt from the real migration schema, not the handed-over copy.
+- Migration 0007 (board-report KPI definitions): relabel `revenue`→"Total Revenue"; deactivate `ebitda_margin`/`cash_cycle_days`/`working_capital`; add 7 INR definitions (gross_profit, other_income, net_profit, trade_receivables, trade_payables, cash_bank, inventory). Definitions are data (ADR-004); deactivate-not-delete keeps historic values valid.
+- Dashboard KPI row now shows the 8 board line items: `map-kpis.ts` ICON_BY_KEY repointed; `kpi-card.tsx` + `types` icon union extended with 7 lucide icons in lockstep. Card order deterministic via engine `sortOrder`.
+- KPI VALUES are real RPIL figures from the June-2026 board report: FY26 = full-year FY2025-26 P&L (revenue 178.12Cr actual, GP, other income, PAT) + 31-Mar-2026 year-end balance sheet (receivables, payables, cash, inventory); FY25 = FY2024-25 revenue only (145.43Cr). Revenue shows real +22.5% YoY; derivation notes carried in each `kpi_values.note`.
+- realDashboardData FLIPPED ON — PREVIEW ONLY. `NEXT_PUBLIC_FEATURE_FLAGS` was scoped "Production and Preview" (shared) + Sensitive; split into a Preview-only var (`realAuth:on,realDashboardData:on`), Production left with no flags var (all default off = mock, as designed). This also fixes the "realAuth is Preview-only" intent. Vercel build is the compile gate (no local toolchain); build green.
+- LIVE-VERIFIED on Preview: RPIL's 8 real KPI cards render with correct values and YoY delta; health card / charts / working-capital widget stay mock by design (only the KPI row is real, per M11 scope).
+- Company name now shown in the Topbar (org resolved server-side in dashboard/page.tsx, passed through DashboardLayout; falls back to the plain title in mock).
+- ROADMAP AMENDMENTS recorded (docs/Integration Roadmap.md): A1 flexible period comparison (MoM/YoY/QoQ/custom — needs dated periods + comparison resolver); A2 client health score computed from financials (hybrid — governance & technology stay qualitative). Build A1 before A2. Saved to session memory.
+- Note: PR #1 merged `integration-milestones` → `main`/Production; the 8-KPI code is on Production but inert (flags off = mock). Nothing real exposed on Production.
+
 ## 2026-07-08 (Consolidated close-out — full repo received)
 
 - All milestone files merged into the live repo; full repo typecheck + production build verified (29 routes; sandbox font-fetch stub used for the build only and reverted).
