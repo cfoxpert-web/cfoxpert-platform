@@ -40,17 +40,21 @@ export function formatKpiValue(value: number, unit: string): string {
   }
 }
 
-function deltaLabel(kpi: EvaluatedKpi): string {
+function deltaLabel(kpi: EvaluatedKpi, comparisonLabel: string): string {
   const t = kpi.trend;
   if (!t) return "";
   if (t.percentChange !== null) {
     const pct = Math.abs(t.percentChange).toFixed(1).replace(/\.0$/, "");
-    return `${pct}% vs prior`;
+    return `${pct}% vs ${comparisonLabel}`;
   }
-  return `${t.delta > 0 ? "+" : ""}${t.delta} vs prior`;
+  return `${t.delta > 0 ? "+" : ""}${t.delta} vs ${comparisonLabel}`;
 }
 
-export function toKpiCardData(kpis: EvaluatedKpi[]): KPIData[] {
+export function toKpiCardData(
+  kpis: EvaluatedKpi[],
+  comparisonLabel?: string | null,
+): KPIData[] {
+  const label = comparisonLabel ?? "prior";
   return kpis
     .filter((k) => k.definition.key in ICON_BY_KEY)
     .map((k) => ({
@@ -58,7 +62,7 @@ export function toKpiCardData(kpis: EvaluatedKpi[]): KPIData[] {
       label: k.definition.label,
       value: formatKpiValue(k.value, k.definition.unit),
       delta: k.trend
-        ? { direction: k.trend.direction, label: deltaLabel(k) }
+        ? { direction: k.trend.direction, label: deltaLabel(k, label) }
         : undefined,
       icon: ICON_BY_KEY[k.definition.key]!,
     }));

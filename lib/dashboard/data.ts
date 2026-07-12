@@ -1,5 +1,11 @@
 import { isFeatureEnabled } from "../feature-flags";
-import { getKpiSnapshot, type KpiSnapshot } from "../kpi/queries";
+import {
+  getKpiSnapshot,
+  getOrgPeriods,
+  type KpiSnapshot,
+  type PeriodOption,
+} from "../kpi/queries";
+import type { ComparisonMode } from "../kpi/period-comparison";
 import { createClient } from "../supabase/server";
 
 /**
@@ -17,6 +23,13 @@ export type DashboardData = {
   organizationName: string;
   snapshot: KpiSnapshot | null; // null = org exists but no KPI periods yet
   healthScore: { score: number; grade: string } | null;
+  periods: PeriodOption[]; // for the dashboard's period/comparison selector
+};
+
+export type DashboardQuery = {
+  periodLabel?: string;
+  compare?: ComparisonMode;
+  comparePeriodLabel?: string;
 };
 
 /**
@@ -55,15 +68,18 @@ export async function getCurrentUserOrganization(): Promise<{
   return { id: org.id as string, name: org.name as string };
 }
 
-export async function getDashboardData(): Promise<DashboardData | null> {
+export async function getDashboardData(
+  query?: DashboardQuery,
+): Promise<DashboardData | null> {
   if (!isFeatureEnabled("realDashboardData")) return null;
 
   const org = await getCurrentUserOrganization();
   if (!org) return null;
 
   const supabase = await createClient();
-  const [snapshot, scoreRow] = await Promise.all([
-    getKpiSnapshot(org.id),
+  const [snapshot, periods, scoreRow] = await Promise.all([
+    getKpiSnapshot(org.id, query),
+    getOrgPeriods(org.id),
     supabase
       .from("health_scores")
       .select("overall_score, grade")
@@ -79,5 +95,6 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     healthScore: scoreRow
       ? { score: Number(scoreRow.overall_score), grade: scoreRow.grade as string }
       : null,
+    periods,
   };
 }

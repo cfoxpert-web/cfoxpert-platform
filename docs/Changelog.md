@@ -2,6 +2,16 @@
 
 Tracks changes to the platform's plan and documentation itself — architecture, roadmap, and decisions — as distinct from a code-level CHANGELOG (which belongs in the repo root once real implementation begins, and should log shipped milestones, not planning).
 
+## 2026-07-11 (Amendment A1 — flexible period comparison)
+
+- Migration 0008: `kpi_periods` gains `period_start`/`period_end` dates + a (org, type, start) index; backfilled RPIL FY25/FY26 on the Apr–Mar fiscal year. Nullable; the resolver degrades gracefully when a date is absent.
+- `lib/kpi/period-comparison.ts` (pure): `resolveComparator(current, mode, candidates, customLabel)` — modes previous/mom/qoq/yoy/custom via month-offset date matching; `shiftMonthsBack` numeric date math (no timezone drift). Unit-tested (`period-comparison.test.ts`): year-boundary shifts, type-crossing guard, earliest-period and no-match → null (no fabricated delta).
+- `getKpiSnapshot` now takes `{ periodLabel, compare, comparePeriodLabel }` and resolves the comparator by date relationship (was "next created"). New `getOrgPeriods()` feeds the selector. `KpiSnapshot`: `priorPeriodLabel` → `comparisonMode` + `comparisonLabel`. Engine stays the single computation path; the resolver only picks which two periods it evaluates.
+- `getDashboardData(query)` threads the comparison and returns the period list; `map-kpis` delta label now names the actual comparator ("22.5% vs FY25").
+- Dashboard: `PeriodComparisonSelector` (client, URL-param driven, Suspense-wrapped for `useSearchParams`) — Period + Compare dropdowns, the latter listing relationship modes plus explicit "vs &lt;period&gt;" custom pairs. `dashboard/page.tsx` reads `searchParams`. Real-data path only; mock path untouched.
+- SCOPE REALITY: the framework covers MoM/QoQ/YoY/custom, but only YoY is demonstrable with RPIL's current data (annual FY25/FY26). MoM/QoQ light up once monthly/quarterly data is entered.
+- Verification pending on Preview (no local toolchain; Vercel build is the compile gate). Requires migration 0008 run in Supabase before the real path returns data.
+
 ## 2026-07-11 (RPIL real-data dashboard on Preview + board KPI switch)
 
 - SEED CONFIRMED & DATA LIVE: first platform-owner org (CFOXPERT, is_platform_owner) + first client org (Reliable Packaging Industries Ltd) + memberships (client membership most-recent so it resolves as active org, per §8 gotcha) + FY25/FY26 kpi_periods + 9 kpi_values. Prior lost seed was rebuilt from the real migration schema, not the handed-over copy.
