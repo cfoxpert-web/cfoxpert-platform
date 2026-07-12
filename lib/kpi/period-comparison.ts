@@ -53,11 +53,16 @@ const MODE_OFFSET_MONTHS: Record<"mom" | "qoq" | "yoy", number> = {
  * Period starts are the first of a month, so exact.
  */
 export function shiftMonthsBack(isoDate: string, months: number): string {
-  const [y, m, d] = isoDate.split("-").map(Number);
+  // Fixed-position parse ('YYYY-MM-DD') rather than destructuring split():
+  // noUncheckedIndexedAccess types destructured elements as possibly
+  // undefined, and slices keep the types plain.
+  const y = Number(isoDate.slice(0, 4));
+  const m = Number(isoDate.slice(5, 7));
+  const day = isoDate.slice(8, 10);
   const monthIndex = y * 12 + (m - 1) - months;
   const ny = Math.floor(monthIndex / 12);
   const nm = (((monthIndex % 12) + 12) % 12) + 1;
-  return `${String(ny).padStart(4, "0")}-${String(nm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  return `${String(ny).padStart(4, "0")}-${String(nm).padStart(2, "0")}-${day}`;
 }
 
 /**
