@@ -1,8 +1,11 @@
+import { Suspense } from "react";
 import { Card } from "@/components/cards/card";
 import { ScoreRing } from "@/components/health-score/score-ring";
+import { PeriodComparisonSelector } from "@/components/dashboard/period-comparison-selector";
 import { ENTERPRISE_VALUE_DRIVERS } from "@/constants/drivers";
 import { getClientHealthScore } from "@/lib/dashboard/health";
 import type { DashboardQuery } from "@/lib/dashboard/data";
+import { getOrgPeriods } from "@/lib/kpi/queries";
 import type { MetricScore } from "@/lib/health-check/financial-score";
 import { cn } from "@/lib/utils";
 
@@ -41,18 +44,38 @@ export async function HealthScoreTab({
   organizationId: string;
   query: DashboardQuery;
 }) {
-  const health = await getClientHealthScore(organizationId, query.periodLabel);
+  const [health, periods] = await Promise.all([
+    getClientHealthScore(organizationId, query.periodLabel),
+    getOrgPeriods(organizationId),
+  ]);
+
+  // Period-only selector: the comparison basis for the score is pinned to
+  // "previous same-type period" by design, so no Compare dropdown here.
+  const selector =
+    periods.length > 0 ? (
+      <Suspense>
+        <PeriodComparisonSelector
+          periods={periods}
+          currentPeriod={health?.periodLabel ?? query.periodLabel ?? ""}
+          mode="previous"
+          showCompare={false}
+        />
+      </Suspense>
+    ) : null;
 
   if (!health) {
     return (
-      <Card className="p-10 text-center">
-        <p className="text-[14px] text-slate">
-          Not enough financial data to compute a health score for this period.
-        </p>
-        <p className="mt-1 text-[12.5px] text-slate-light">
-          The score computes once statement lines are recorded for the period.
-        </p>
-      </Card>
+      <div className="flex flex-col gap-6">
+        {selector}
+        <Card className="p-10 text-center">
+          <p className="text-[14px] text-slate">
+            Not enough financial data to compute a health score for this period.
+          </p>
+          <p className="mt-1 text-[12.5px] text-slate-light">
+            The score computes once statement lines are recorded for the period.
+          </p>
+        </Card>
+      </div>
     );
   }
 
@@ -63,6 +86,7 @@ export async function HealthScoreTab({
 
   return (
     <div className="flex flex-col gap-6">
+      {selector}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
         {/* Score */}
         <Card className="flex flex-col items-center justify-center gap-4 border-0 bg-gradient-to-br from-navy-deep via-navy to-[#1B3B6B] p-8 text-center text-white">

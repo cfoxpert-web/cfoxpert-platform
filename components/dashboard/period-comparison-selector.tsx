@@ -28,6 +28,9 @@ interface Props {
   currentPeriod: string;
   mode: ComparisonMode;
   comparePeriodLabel?: string | null;
+  /** false = period-only (e.g. Health Score tab, where the comparison basis
+   *  is pinned to "previous same-type period" by design). */
+  showCompare?: boolean;
 }
 
 export function PeriodComparisonSelector({
@@ -35,6 +38,7 @@ export function PeriodComparisonSelector({
   currentPeriod,
   mode,
   comparePeriodLabel,
+  showCompare = true,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -71,6 +75,7 @@ export function PeriodComparisonSelector({
         </select>
       </label>
 
+      {showCompare && (
       <label className="flex items-center gap-2">
         <span className="text-[12px] font-medium text-slate">Compare</span>
         <select
@@ -99,6 +104,7 @@ export function PeriodComparisonSelector({
             ))}
         </select>
       </label>
+      )}
     </div>
   );
 }

@@ -125,7 +125,15 @@ export async function CommandCenter({
         <HealthScoreCard
           score={healthScore?.score ?? null}
           grade={healthScore?.grade ?? null}
-          breakdownHref={real ? "/dashboard?tab=health" : undefined}
+          breakdownHref={
+            real
+              ? `/dashboard?tab=health${
+                  real.snapshot
+                    ? `&period=${encodeURIComponent(real.snapshot.periodLabel)}`
+                    : ""
+                }`
+              : undefined
+          }
         />
       </div>
 
