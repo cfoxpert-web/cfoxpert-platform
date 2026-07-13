@@ -1,5 +1,11 @@
 # Changelog.md
 
+## 2026-07-13 (A3-UI VERIFIED live — multi-tab report closed)
+
+- LIVE-VERIFIED on Preview (Q1 FY27 vs FY26): P&L line-by-line exact incl. margin sub-rows and correctly-absent Q1 lines; Segment tab shows branch P&L + BS (Dhaulana's net-advance payables render as accounting parentheses); Key Ratios scale day-ratios by real period length (Q1 DSO on 91 days) with direction-aware coloring (falling DPO flagged red). Overview confirmed with restated GP ₹30.02Cr.
+- Two build/runtime fixes en route: (1) const-tuple label union widened by a filter predicate in cost-structure-tab (type error at Vercel gate); (2) REPORT_TABS exported from the "use client" nav module became an opaque client reference when the server page imported it — any ?tab= URL crashed server-side. Registry moved to report/tab-defs.ts (shared, non-client). Lesson recorded: values crossing the server/client module boundary are references, not data.
+- Reading caveat carried in data provenance: Q1 net profit is before tax provisioning; FY26's is PAT — margin comparisons across those periods carry that basis difference.
+
 ## 2026-07-13 (Amendment A3-UI — multi-tab report)
 
 - Dashboard becomes a 7-tab report on the real-data path (mock mode byte-identical, no tabs): Overview (existing CommandCenter) / P&L / Balance Sheet / Key Ratios / Cost Structure / Segment / Inventory. Tab state is URL-driven (`?tab=`), period/compare params persist across tabs.
