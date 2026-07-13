@@ -1,0 +1,93 @@
+name: Apply database migrations
+
+# Applies any NOT-YET-APPLIED files from supabase/migrations/ to the live
+# Supabase database, in filename order, whenever migration files land on
+# integration-milestones or main. Applied files are tracked in
+# public._applied_migrations, so nothing ever runs twice.
+#
+# Consent model: migrations only reach these branches through commits Parth
+# pushes himself — the push IS the approval to apply them.
+#
+# One-time setup: repo secret SUPABASE_DB_URL = the SESSION-POOLER Postgres
+# connection string from Supabase (Connect → Session pooler URI, password
+# filled in). The pooler URI is required: GitHub runners have no IPv6, and
+# the direct db.<ref>.supabase.co host is IPv6-only.
+
+on:
+  push:
+    branches: [integration-milestones, main]
+    paths: ["supabase/migrations/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply pending migrations
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not set (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+          # Bootstrap the tracking table. Migrations 0001-0007 were applied
+          # manually before this pipeline existed; 0008 is marked applied
+          # only if its column actually exists (its run was unconfirmed).
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          create table if not exists public._applied_migrations (
+            filename   text primary key,
+            applied_at timestamptz not null default now()
+          );
+          alter table public._applied_migrations enable row level security;
+          insert into public._applied_migrations (filename) values
+            ('0001_organizations.sql'),
+            ('0002_users_and_memberships.sql'),
+            ('0003_audit_and_flags.sql'),
+            ('0004_kpi_schema.sql'),
+            ('0005_health_check_and_workflow.sql'),
+            ('0006_crm.sql'),
+            ('0007_board_report_kpi_definitions.sql')
+          on conflict do nothing;
+          insert into public._applied_migrations (filename)
+          select '0008_period_dates.sql'
+          where exists (
+            select 1 from information_schema.columns
+            where table_schema = 'public' and table_name = 'kpi_periods'
+              and column_name = 'period_start')
+          on conflict do nothing;
+          SQL
+
+          for f in supabase/migrations/*.sql; do
+            name=$(basename "$f")
+            applied=$(psql "$DATABASE_URL" -tAc \
+              "select 1 from public._applied_migrations where filename = '$name'")
+            if [ "$applied" = "1" ]; then
+              echo "skip    $name"
+              continue
+            fi
+            echo "apply   $name"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f "$f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+              "insert into public._applied_migrations (filename) values ('$name')"
+          done
+
+      - name: Verify database state
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          echo "== applied migrations =="
+          psql "$DATABASE_URL" -c "select filename, applied_at from public._applied_migrations order by filename;"
+          echo "== periods =="
+          psql "$DATABASE_URL" -c "select period_label, period_type, status, period_start, period_end from public.kpi_periods where deleted_at is null order by period_start;"
+          echo "== value counts =="
+          psql "$DATABASE_URL" -c "select coalesce(segment,'(group)') as segment, count(*) from public.kpi_values group by 1 order by 1;"

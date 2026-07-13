@@ -115,7 +115,10 @@ export async function getKpiSnapshot(
     const { data } = await supabase
       .from("kpi_current_values")
       .select("kpi_definition_id, value, recorded_at")
-      .eq("kpi_period_id", periodId);
+      .eq("kpi_period_id", periodId)
+      // Consolidated figures only: NULL segment = whole-organization
+      // (migration 0009). Branch-level rows feed the future Segment tab.
+      .is("segment", null);
     return ((data ?? []) as ValueRow[]).map((v) => ({
       definitionId: v.kpi_definition_id,
       value: Number(v.value),

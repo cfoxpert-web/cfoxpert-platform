@@ -2,6 +2,16 @@
 
 Tracks changes to the platform's plan and documentation itself — architecture, roadmap, and decisions — as distinct from a code-level CHANGELOG (which belongs in the repo root once real implementation begins, and should log shipped milestones, not planning).
 
+## 2026-07-13 (Strategic realignment + A5/A3-data + migration automation)
+
+- ROADMAP: strategic realignment recorded; end-goal frozen against the two reference reports (multi-tab client report, eventually populated from uploaded TB/P&L/BS — numbers automated, narrative human-authored). Amendments A3 (multi-tab, split data/UI), A4 (doc ingestion, last), A5 (period granularity), A6 (single package + per-org entitlements ≠ env feature flags). Sequence: A5+A3-data → A3-UI(+A2) → A6 → A4.
+- DESIGN DECISION (approved): branches are a `segment` dimension on `kpi_values` (null = consolidated), NOT child organizations — RPIL's units share one legal entity (tax/depreciation/finance company-wide); ADR-008 hierarchy stays reserved for real group structures.
+- Migration 0009: `kpi_values.segment` + reindexed lookup; `kpi_current_values` recreated as latest-per-(period, definition, segment); 8 statement-line definitions (fixed_assets, secured/unsecured_borrowings, indirect_expenses, depreciation, finance_cost, pbt, tax_expense; sort_order 90+ keeps them off the dashboard row). Ratios deliberately NOT stored — computed at read time (single-computation-path).
+- `queries.ts`: group snapshot filters `segment is null` — dashboard behavior unchanged.
+- Migration 0010 (data seed from report _8): monthly periods Mar–Jun 2026 + quarterly Q1 FY27 (created_at backdated so FY26 stays the dashboard default, per approval); Q1 group+branch P&L and 30-Jun-2026 balance sheet; FY26 enrichment (PBT/tax/depreciation/finance cost, 31-Mar fixed assets & borrowings, branch segments); **FY26 gross profit CORRECTION row — restated to audited-FS basis ₹30.02Cr (supersedes ₹47.24Cr; dashboard GP card will change)**; monthly inventory Mar/Jun on BS basis + Apr/May Greater Noida only (materials & stores basis — Dhaulana absent from the report; group Apr/May honestly missing, never interpolated).
+- AUTOMATION: `.github/workflows/db-migrate.yml` — new files in `supabase/migrations/` auto-apply to Supabase on push (filename order, tracked in `public._applied_migrations`, single-transaction each, verification queries printed in the Actions log). Push = consent. One-time setup: `SUPABASE_DB_URL` repo secret (SESSION-POOLER URI — GitHub runners have no IPv6). Bootstrap marks 0001–0007 applied; 0008 conditionally (its manual run was unconfirmed) so the pipeline self-heals either way.
+- KNOWN SHARP EDGE (flagged, not fixed — UI out of scope): selecting a period with no group-level values (Apr/May 2026) makes the KPI row fall back to MOCK cards silently (pre-existing command-center behavior). A3-UI must replace that fallback with an honest empty state.
+
 ## 2026-07-11 (Amendment A1 — flexible period comparison)
 
 - Migration 0008: `kpi_periods` gains `period_start`/`period_end` dates + a (org, type, start) index; backfilled RPIL FY25/FY26 on the Apr–Mar fiscal year. Nullable; the resolver degrades gracefully when a date is absent.
