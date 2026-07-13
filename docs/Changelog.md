@@ -2,6 +2,13 @@
 
 Tracks changes to the platform's plan and documentation itself — architecture, roadmap, and decisions — as distinct from a code-level CHANGELOG (which belongs in the repo root once real implementation begins, and should log shipped milestones, not planning).
 
+## 2026-07-13 (A5 + A3-data VERIFIED live; A1 verification closed)
+
+- CI pipeline's first real run: migrations 0009 + 0010 auto-applied by the Actions workflow (attempt #1 failed on the IPv6-only direct DB host — secret must be the SESSION-POOLER URI; attempt #2 green in 40s). Automation confirmed end-to-end: push → migrate → verify tables in the log.
+- LIVE-VERIFIED on Preview (Q1 FY27 vs FY26, custom compare): all 8 KPI cards correct to the paisa — revenue −69.1%, GP −67.8% (proves the FY26 GP correction row ₹30.02Cr is what the engine reads), OI −99.7%, NP −29.3%, receivables +18.6%, payables −3.8%, cash +24.9%, inventory −3.6%. Selector URL-driven; comparator named in delta labels.
+- A1 formally CLOSED: the resolver, selector, and custom comparison verified against real data in production-shaped conditions.
+- Deferred hardening noted: bump actions/checkout (Node 20 deprecation warning), A3-UI must replace the mock fallback for empty periods (Apr/May 2026).
+
 ## 2026-07-13 (Strategic realignment + A5/A3-data + migration automation)
 
 - ROADMAP: strategic realignment recorded; end-goal frozen against the two reference reports (multi-tab client report, eventually populated from uploaded TB/P&L/BS — numbers automated, narrative human-authored). Amendments A3 (multi-tab, split data/UI), A4 (doc ingestion, last), A5 (period granularity), A6 (single package + per-org entitlements ≠ env feature flags). Sequence: A5+A3-data → A3-UI(+A2) → A6 → A4.
