@@ -10,6 +10,7 @@ export const REPORT_TABS = [
   { key: "pnl", label: "P&L" },
   { key: "balance-sheet", label: "Balance Sheet" },
   { key: "ratios", label: "Key Ratios" },
+  { key: "health", label: "Health Score" },
   { key: "cost-structure", label: "Cost Structure" },
   { key: "segment", label: "Segment" },
   { key: "inventory", label: "Inventory" },

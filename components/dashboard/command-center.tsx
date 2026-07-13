@@ -31,6 +31,7 @@ import { toKpiCardData } from "@/lib/dashboard/map-kpis";
 import { isComparisonMode } from "@/lib/kpi/period-comparison";
 import { PeriodComparisonSelector } from "@/components/dashboard/period-comparison-selector";
 import { ReportEmpty } from "@/components/dashboard/report/report-empty";
+import { getClientHealthScore } from "@/lib/dashboard/health";
 
 /**
  * Milestone 11: the dashboard's data seam, swapped. With the
@@ -65,7 +66,18 @@ export async function CommandCenter({
   // Real-data path with an empty period shows an honest empty state; the
   // mock fallback is ONLY for mock mode (flag off / no org resolved).
   const kpiRow = kpis && kpis.length > 0 ? kpis : real ? null : MOCK_KPIS;
-  const healthScore = real?.healthScore ?? { score: 82, grade: "A-" };
+
+  // Health score (A2): computed from financials at read time; falls back to
+  // a persisted lead-check score if one exists; mock ONLY in mock mode.
+  // null on the real path = honest "Not yet assessed" card.
+  const computedHealth = real
+    ? await getClientHealthScore(real.organizationId, query.periodLabel)
+    : null;
+  const healthScore = computedHealth
+    ? { score: computedHealth.overallScore, grade: computedHealth.grade as string }
+    : real
+      ? real.healthScore
+      : { score: 82, grade: "A-" };
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,7 +122,11 @@ export async function CommandCenter({
       {/* Working capital + health score */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <WorkingCapitalCard data={MOCK_WORKING_CAPITAL} />
-        <HealthScoreCard score={healthScore.score} grade={healthScore.grade} />
+        <HealthScoreCard
+          score={healthScore?.score ?? null}
+          grade={healthScore?.grade ?? null}
+          breakdownHref={real ? "/dashboard?tab=health" : undefined}
+        />
       </div>
 
       {/* Action tracker + board packs */}

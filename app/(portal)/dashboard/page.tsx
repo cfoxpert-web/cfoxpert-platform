@@ -6,6 +6,7 @@ import { REPORT_TABS } from "@/components/dashboard/report/tab-defs";
 import { PnlTab } from "@/components/dashboard/report/pnl-tab";
 import { BalanceSheetTab } from "@/components/dashboard/report/balance-sheet-tab";
 import { RatiosTab } from "@/components/dashboard/report/ratios-tab";
+import { HealthScoreTab } from "@/components/dashboard/report/health-score-tab";
 import { CostStructureTab } from "@/components/dashboard/report/cost-structure-tab";
 import { SegmentTab } from "@/components/dashboard/report/segment-tab";
 import { InventoryTab } from "@/components/dashboard/report/inventory-tab";
@@ -66,6 +67,7 @@ export default async function DashboardPage({
           <BalanceSheetTab organizationId={org.id} query={query} />
         )}
         {org && tab === "ratios" && <RatiosTab organizationId={org.id} query={query} />}
+        {org && tab === "health" && <HealthScoreTab organizationId={org.id} query={query} />}
         {org && tab === "cost-structure" && (
           <CostStructureTab organizationId={org.id} query={query} />
         )}

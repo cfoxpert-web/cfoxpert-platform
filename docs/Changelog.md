@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-07-13 (Amendment A2 — client health score from financials)
+
+- CLIENT health score now computes from financial evidence (leads keep the questionnaire engine). Pure module `lib/health-check/financial-score.ts` (+16 unit tests against RPIL FY26 actuals): metric-vs-band bucket scores (favorable 90 / within 75 / breach 40), weighted driver scores, Capital via the lead engine's 75/25 rule with the scale score from ACTUAL revenue, overall reweighted across evidenced drivers.
+- Bands are DATA: migration 0011 `health_metric_bands` (driver→metric map, healthy bands, weights; authenticated read like kpi_definitions) — tuning a threshold is a row update. Defaults seeded: GP≥15%, NP≥5%, CCC≤60d, borrowings/rev≤0.30x, indirect/rev≤15%, asset turnover≥2x, growth≥10%, largest-unit share≤70%.
+- Governance & Technology (approved): not in the numbers → "Not yet assessed", excluded and reweighted — never fabricated. Analyst/questionnaire inputs slot in later.
+- Storage (approved deviation from A2's original scope): computed AT READ TIME (like ratios); the insert-only `health_scores` audit row arrives with a deliberate analyst-publish step (A4-adjacent), not as a GET side effect. Growth is pinned to the previous same-type period so the score is a property of the period, not of the user's compare selection.
+- UI: dashboard health card real on the real-data path (computed → persisted lead score → honest "Not yet assessed"; mock 82/A− only in mock mode; breakdown link → the new tab). New "Health Score" report tab: score ring, six-driver breakdown, metric-level detail with bands ("How the score is built").
+- Expected RPIL FY26 score with default bands: **68 / B** — dragged by NP margin 3.3% (<5%) and 78% Greater-Noida revenue concentration (>70%); both are real diagnostics, not artifacts. Verification pending on Preview.
+
 ## 2026-07-13 (A3-UI VERIFIED live — multi-tab report closed)
 
 - LIVE-VERIFIED on Preview (Q1 FY27 vs FY26): P&L line-by-line exact incl. margin sub-rows and correctly-absent Q1 lines; Segment tab shows branch P&L + BS (Dhaulana's net-advance payables render as accounting parentheses); Key Ratios scale day-ratios by real period length (Q1 DSO on 91 days) with direction-aware coloring (falling DPO flagged red). Overview confirmed with restated GP ₹30.02Cr.
