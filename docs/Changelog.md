@@ -1,5 +1,12 @@
 # Changelog.md
 
+## 2026-07-13 (A2 VERIFIED live and closed)
+
+- LIVE-VERIFIED on Preview: FY26 scores 68/B (drivers 66/75/58/71; NP margin + unit concentration flagged), Q1 FY27 recomputes to 65/B (financial 75 — pre-tax NP margin clears the band; growth 40 — no prior quarter, 72% concentration breach; capital 68) — every value matches the unit-test math. Per-period scoring works: the health trend line foundation is in place.
+- Fix en route: the card's breakdown link dropped the period param and the tab had no period control — link now carries the resolved period; tab gained a period-only selector (compare stays pinned to previous-same-type; the score is a property of the period).
+- Known nuance for a future band pass: Capital's revenue-scale score uses the PERIOD's revenue (a quarter reads as a smaller company than its annualized run-rate). Fix belongs in the scale mapping (annualize by period days) alongside the first band-tuning session.
+- Remaining on the amendment ledger: A6 (single package + entitlements + pricing page), A4 (document ingestion — final scoping pass first). Qualitative governance/tech inputs + insert-only score persistence land with the analyst-publish flow.
+
 ## 2026-07-13 (Amendment A2 — client health score from financials)
 
 - CLIENT health score now computes from financial evidence (leads keep the questionnaire engine). Pure module `lib/health-check/financial-score.ts` (+16 unit tests against RPIL FY26 actuals): metric-vs-band bucket scores (favorable 90 / within 75 / breach 40), weighted driver scores, Capital via the lead engine's 75/25 rule with the scale score from ACTUAL revenue, overall reweighted across evidenced drivers.
