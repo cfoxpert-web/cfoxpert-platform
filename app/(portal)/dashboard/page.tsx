@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { CommandCenter } from "@/components/dashboard/command-center";
-import { ReportTabs, REPORT_TABS } from "@/components/dashboard/report-tabs";
+import { ReportTabs } from "@/components/dashboard/report-tabs";
+import { REPORT_TABS } from "@/components/dashboard/report/tab-defs";
 import { PnlTab } from "@/components/dashboard/report/pnl-tab";
 import { BalanceSheetTab } from "@/components/dashboard/report/balance-sheet-tab";
 import { RatiosTab } from "@/components/dashboard/report/ratios-tab";

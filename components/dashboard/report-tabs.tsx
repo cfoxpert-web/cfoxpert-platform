@@ -2,24 +2,14 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { REPORT_TABS } from "@/components/dashboard/report/tab-defs";
 
 /**
  * Amendment A3 — report tab navigation. URL-param driven (?tab=...) so tab
  * state is shareable and survives reloads; period/compare params persist
- * across tab switches.
+ * across tab switches. The tab registry lives in report/tab-defs.ts (shared
+ * with the server page — do NOT move it back into this client module).
  */
-
-export const REPORT_TABS = [
-  { key: "overview", label: "Overview" },
-  { key: "pnl", label: "P&L" },
-  { key: "balance-sheet", label: "Balance Sheet" },
-  { key: "ratios", label: "Key Ratios" },
-  { key: "cost-structure", label: "Cost Structure" },
-  { key: "segment", label: "Segment" },
-  { key: "inventory", label: "Inventory" },
-] as const;
-
-export type ReportTabKey = (typeof REPORT_TABS)[number]["key"];
 
 export function ReportTabs({ active }: { active: string }) {
   const router = useRouter();
