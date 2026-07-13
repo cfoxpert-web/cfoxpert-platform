@@ -1,5 +1,16 @@
 # Changelog.md
 
+## 2026-07-13 (Amendment A3-UI — multi-tab report)
+
+- Dashboard becomes a 7-tab report on the real-data path (mock mode byte-identical, no tabs): Overview (existing CommandCenter) / P&L / Balance Sheet / Key Ratios / Cost Structure / Segment / Inventory. Tab state is URL-driven (`?tab=`), period/compare params persist across tabs.
+- `lib/kpi/ratios.ts` (pure, unit-tested): GP%/NP%/DSO/DIO/DPO/CCC/borrowings-to-annualized-revenue computed AT READ TIME from statement-line primitives — ratios are never stored (single-computation-path). Day ratios scale by each period's real length (`periodDaysBetween`); `KpiSnapshot` now carries both periods' date ranges for exactly this.
+- `getSegmentValues(periodId)` + `getMonthlySeries(org, key)` added to the query layer (authenticated client, RLS via period→org join). `getReportSnapshot()` is the tabs' shared fetch.
+- New components under `components/dashboard/report/`: shared `ComparisonTable` + `statement.ts` row-builders (prior value = current − trend.delta from the engine; no new math), `ReportEmpty`, and the six tab components. `ReportTabs` nav (client, URL-param driven). All styled from existing tokens — no second design system.
+- Honest-rendering rules throughout: lines a period doesn't carry don't render (never a fabricated zero); ratios with missing inputs show "—"; Cost Structure v1 is the GP→NP bridge (category breakdown is a named data gap awaiting expense-line definitions or A4); Inventory renders recorded provenance notes as footnotes and never interpolates sparse months.
+- FIXED (flagged 2026-07-13): real-data path with an empty period now shows an honest "No data recorded" state instead of silently falling back to mock cards. Mock fallback remains only for mock mode.
+- FIXED: `actions/checkout` v4 → v5 (Node 20 deprecation warning in the migration workflow).
+- No DB changes in this milestone; verification is Vercel build + live Preview (tabs against RPIL's Q1 FY27 / FY26 / monthly data).
+
 Tracks changes to the platform's plan and documentation itself — architecture, roadmap, and decisions — as distinct from a code-level CHANGELOG (which belongs in the repo root once real implementation begins, and should log shipped milestones, not planning).
 
 ## 2026-07-13 (A5 + A3-data VERIFIED live; A1 verification closed)

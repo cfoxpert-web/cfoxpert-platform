@@ -30,6 +30,7 @@ import { getDashboardData, type DashboardQuery } from "@/lib/dashboard/data";
 import { toKpiCardData } from "@/lib/dashboard/map-kpis";
 import { isComparisonMode } from "@/lib/kpi/period-comparison";
 import { PeriodComparisonSelector } from "@/components/dashboard/period-comparison-selector";
+import { ReportEmpty } from "@/components/dashboard/report/report-empty";
 
 /**
  * Milestone 11: the dashboard's data seam, swapped. With the
@@ -61,7 +62,9 @@ export async function CommandCenter({
   const kpis = real?.snapshot
     ? toKpiCardData(real.snapshot.kpis, real.snapshot.comparisonLabel)
     : null;
-  const kpiRow = kpis && kpis.length > 0 ? kpis : MOCK_KPIS;
+  // Real-data path with an empty period shows an honest empty state; the
+  // mock fallback is ONLY for mock mode (flag off / no org resolved).
+  const kpiRow = kpis && kpis.length > 0 ? kpis : real ? null : MOCK_KPIS;
   const healthScore = real?.healthScore ?? { score: 82, grade: "A-" };
 
   return (
@@ -80,11 +83,15 @@ export async function CommandCenter({
       )}
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpiRow.map((kpi) => (
-          <KPICard key={kpi.id} {...kpi} />
-        ))}
-      </div>
+      {kpiRow ? (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {kpiRow.map((kpi) => (
+            <KPICard key={kpi.id} {...kpi} />
+          ))}
+        </div>
+      ) : (
+        <ReportEmpty periodLabel={real?.snapshot?.periodLabel} />
+      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

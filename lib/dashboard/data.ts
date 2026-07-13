@@ -68,6 +68,22 @@ export async function getCurrentUserOrganization(): Promise<{
   return { id: org.id as string, name: org.name as string };
 }
 
+/**
+ * Amendment A3 — the report tabs' shared fetch: snapshot + period list,
+ * without the Overview-only extras (health score). Callers (server tab
+ * components) have already passed the flag/org gate in the page.
+ */
+export async function getReportSnapshot(
+  organizationId: string,
+  query?: DashboardQuery,
+): Promise<{ snapshot: KpiSnapshot | null; periods: PeriodOption[] }> {
+  const [snapshot, periods] = await Promise.all([
+    getKpiSnapshot(organizationId, query),
+    getOrgPeriods(organizationId),
+  ]);
+  return { snapshot, periods };
+}
+
 export async function getDashboardData(
   query?: DashboardQuery,
 ): Promise<DashboardData | null> {

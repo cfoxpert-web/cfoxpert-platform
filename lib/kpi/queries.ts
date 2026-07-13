@@ -35,14 +35,19 @@ type ValueRow = { kpi_definition_id: string; value: number; recorded_at: string 
 
 type PeriodRow = {
   id: string; period_label: string; period_type: string;
-  period_start: string | null; created_at: string;
+  period_start: string | null; period_end: string | null; created_at: string;
 };
 
 export type KpiSnapshot = {
   periodId: string;
   periodLabel: string;
+  periodType: string;
+  periodStart: string | null;
+  periodEnd: string | null;
   comparisonMode: ComparisonMode;
   comparisonLabel: string | null; // comparator period label, null when none applies
+  comparisonStart: string | null;
+  comparisonEnd: string | null;
   kpis: EvaluatedKpi[];
 };
 
@@ -76,7 +81,7 @@ export async function getKpiSnapshot(
   // 1. All live periods for the org; newest-created is the default "current".
   const { data: periods, error: pErr } = await supabase
     .from("kpi_periods")
-    .select("id, period_label, period_type, period_start, created_at")
+    .select("id, period_label, period_type, period_start, period_end, created_at")
     .eq("organization_id", organizationId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -131,11 +136,129 @@ export async function getKpiSnapshot(
     comparator ? fetchValues(comparator.id) : Promise.resolve([]),
   ]);
 
+  // Comparator's full row (for its date range — ratio math needs both
+  // period lengths, since e.g. a quarter's DSO scales by 91 days, a year's
+  // by 365).
+  const comparatorRow = comparator
+    ? periodRows.find((p) => p.id === comparator.id) ?? null
+    : null;
+
   return {
     periodId: current.id,
     periodLabel: current.period_label,
+    periodType: current.period_type,
+    periodStart: current.period_start,
+    periodEnd: current.period_end,
     comparisonMode: mode,
     comparisonLabel: comparator?.label ?? null,
+    comparisonStart: comparatorRow?.period_start ?? null,
+    comparisonEnd: comparatorRow?.period_end ?? null,
     kpis: evaluateKpis({ definitions, current: currentValues, prior: priorValues }),
   };
+}
+
+// ----------------------------------------------------------------------------
+// Amendment A3 — segment (unit/branch) and series reads. Same tenancy model:
+// authenticated client, RLS via the period → org membership join.
+// ----------------------------------------------------------------------------
+
+export type SegmentValue = {
+  segment: string;
+  definitionKey: string;
+  definitionLabel: string;
+  sortOrder: number;
+  value: number;
+  note: string | null;
+};
+
+/** Unit-level values for one period (segment IS NOT NULL rows). */
+export async function getSegmentValues(periodId: string): Promise<SegmentValue[]> {
+  const supabase = await createClient();
+
+  const [{ data: defRows }, { data: valueRows }] = await Promise.all([
+    supabase.from("kpi_definitions").select("id, key, label, sort_order"),
+    supabase
+      .from("kpi_current_values")
+      .select("kpi_definition_id, segment, value, note")
+      .eq("kpi_period_id", periodId)
+      .not("segment", "is", null),
+  ]);
+
+  const defs = new Map(
+    ((defRows ?? []) as { id: string; key: string; label: string; sort_order: number }[])
+      .map((d) => [d.id, d]),
+  );
+
+  const out: SegmentValue[] = [];
+  for (const row of (valueRows ?? []) as {
+    kpi_definition_id: string; segment: string | null; value: number; note: string | null;
+  }[]) {
+    const def = defs.get(row.kpi_definition_id);
+    if (!def || row.segment === null) continue;
+    out.push({
+      segment: row.segment,
+      definitionKey: def.key,
+      definitionLabel: def.label,
+      sortOrder: def.sort_order,
+      value: Number(row.value),
+      note: row.note,
+    });
+  }
+  return out.sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export type SeriesPoint = {
+  periodLabel: string;
+  periodStart: string | null;
+  segment: string | null; // null = consolidated
+  value: number;
+  note: string | null;
+};
+
+/** One definition's values across all monthly periods, oldest first. */
+export async function getMonthlySeries(
+  organizationId: string,
+  definitionKey: string,
+): Promise<SeriesPoint[]> {
+  const supabase = await createClient();
+
+  const [{ data: defRows }, { data: periodRows }] = await Promise.all([
+    supabase.from("kpi_definitions").select("id").eq("key", definitionKey).limit(1),
+    supabase
+      .from("kpi_periods")
+      .select("id, period_label, period_start")
+      .eq("organization_id", organizationId)
+      .eq("period_type", "monthly")
+      .is("deleted_at", null)
+      .order("period_start", { ascending: true }),
+  ]);
+
+  const defId = (defRows as { id: string }[] | null)?.[0]?.id;
+  const periods = (periodRows ?? []) as {
+    id: string; period_label: string; period_start: string | null;
+  }[];
+  if (!defId || periods.length === 0) return [];
+
+  const { data: valueRows } = await supabase
+    .from("kpi_current_values")
+    .select("kpi_period_id, segment, value, note")
+    .eq("kpi_definition_id", defId)
+    .in("kpi_period_id", periods.map((p) => p.id));
+
+  const byPeriod = new Map(periods.map((p) => [p.id, p]));
+  const out: SeriesPoint[] = [];
+  for (const row of (valueRows ?? []) as {
+    kpi_period_id: string; segment: string | null; value: number; note: string | null;
+  }[]) {
+    const period = byPeriod.get(row.kpi_period_id);
+    if (!period) continue;
+    out.push({
+      periodLabel: period.period_label,
+      periodStart: period.period_start,
+      segment: row.segment,
+      value: Number(row.value),
+      note: row.note,
+    });
+  }
+  return out.sort((a, b) => ((a.periodStart ?? "") < (b.periodStart ?? "") ? -1 : 1));
 }

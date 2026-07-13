@@ -27,6 +27,21 @@ export function formatInrCompact(value: number): string {
   return `${sign}₹${abs.toLocaleString("en-IN")}`;
 }
 
+/** Table formatting: 2-decimal Cr/L, negatives in accounting parentheses. */
+export function formatInrTable(value: number): string {
+  const negative = value < 0;
+  const abs = Math.abs(value);
+  let s: string;
+  if (abs >= 1_00_00_000) s = `₹${(abs / 1_00_00_000).toFixed(2)} Cr`;
+  else if (abs >= 1_00_000) s = `₹${(abs / 1_00_000).toFixed(2)} L`;
+  else s = `₹${abs.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  return negative ? `(${s})` : s;
+}
+
+export function formatPercent(value: number, decimals = 1): string {
+  return `${value.toFixed(decimals)}%`;
+}
+
 export function formatKpiValue(value: number, unit: string): string {
   switch (unit) {
     case "%":
