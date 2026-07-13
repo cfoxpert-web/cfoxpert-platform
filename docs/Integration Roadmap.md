@@ -137,3 +137,39 @@ Per the freeze statement above, major business-requirement changes are recorded 
 1. Define per-driver financial formulas + benchmark bands, reusing the KPI Engine's benchmark-position logic (single computation path; benchmark bands are data per ADR-004 / industry classification per ADR-008). No parallel scorer.
 2. Compute the financial drivers from KPI data; take the qualitative drivers (governance, technology) from the questionnaire or an analyst assessment surface.
 3. Combine with the existing driver weights; write the result as an insert-only `health_scores` row (ADR-006), recomputed per period so the score gains a trend line (uses A1's dated periods).
+
+---
+
+## Strategic realignment (2026-07-13)
+
+Triggered by Parth reviewing all project work against two concrete reference reports — `CFOxpert_XYZZ002_FY26_Board_Report_Interactive.html` (10-tab generic template) and `RPIL_Board_Report_June2026_8.html` (6-tab real client report, branch-level) — plus the original 4-tier package sheet (`CFOXPERT_ver_2.docx`).
+
+**Verdict:** foundations are correct (auth, org/data model, mock seam, flag-gated real data, KPI engine, A1 comparison resolver, entitlement columns). Nothing is thrown away. The gap: the "final report" target was never frozen against a concrete reference, so the roadmap optimized infrastructure without a fixed shape to build toward. Amendments A3–A6 fix that.
+
+**End-goal shape (now frozen):** a multi-tab client report — Overview / P&L Comparison / Balance Sheet / Key Ratios vs Benchmarks / Health Score / Cost Structure / Segment (unit-wise) / Inventory & Production / Governance watch-list / Recommendations / Roadmap-Ambition / Projections — eventually generated from client-uploaded Trial Balance / P&L / Balance Sheet with minimal manual intervention **on the numbers** (narrative/advisory sections stay human-authored by design). One combined feature package for now; a future pricing page unlocks tiers.
+
+**Gap audit (reference tabs vs live platform):** Overview is live (8-KPI dashboard + charts). Health Score is a mock placeholder pending A2. Everything else — P&L, Balance Sheet, Ratios, Cost Structure, Segment/unit-wise (no "branch" concept in schema yet), Inventory & Production, Governance, Recommendations, Roadmap/Ambition, Projections — is not built. Document-upload → auto-populated report does not exist as a concept; every live number arrived via hand-run SQL (named as its own epic, A4).
+
+**Recommended build sequence:** A5 + A3-data → A3-UI (+ A2 for the Health Score tab) → A6 → A4. A5/A3-data are tightly coupled and lowest-risk; A3-UI is the visible payoff; A2 slots in where the Health Score tab is built; A6 is contained and monetization-enabling; A4 goes last because it depends on A3's data shape being final.
+
+### Amendment A3 — Multi-tab report architecture
+**Requested:** 2026-07-13 (Parth). **Extends:** M10/M11/A1. **Risk:** Moderate. **Complexity:** L (split).
+
+Build P&L / Balance Sheet / Ratios / Cost Structure / Segment / Inventory tabs on the client dashboard, reusing the KPI engine and the A1 comparison resolver. Mostly computed/mechanical; high visible payoff. **Split into two milestones:** **A3-data** (schema + KPI definitions + seed — the data foundation for every tab) and **A3-UI** (tab shell + rendering). Ratios are computed at read time through the engine (single computation path) — never stored as values.
+
+### Amendment A4 — Document ingestion pipeline (upload TB/P&L/BS → auto-populated report)
+**Requested:** 2026-07-13 (Parth). **New epic, sequenced last.** **Depends on:** A3's data shape being final. **Risk:** High. **Complexity:** XL.
+
+Hardest, highest-payoff. **Pushback recorded and accepted:** "least manual intervention" applies to the *numbers*, not the *judgment*. Recommendations, Governance commentary, and Roadmap/Ambition are the CFO's professional read — that is the paid value in "Virtual CFO as a Service." Design intent: fully automate extraction + mapping of financial figures; keep a lightweight human-confirm step before numbers publish (consistent with the insert-only, audit-logged pattern); keep narrative sections as an editable analyst panel, not auto-generated text. Needs its own dedicated scoping pass before implementation (same treatment A2 got) — not scoped in detail here.
+
+### Amendment A5 — Period granularity (monthly + quarterly)
+**Requested:** 2026-07-13 (Parth). **Extends:** A1. **Risk:** Low. **Complexity:** S–M.
+
+`kpi_periods` holds only FY25/FY26. Parth's comparison examples ("June 2026 vs March 2026", "Q1 FY26-27 vs Q4 FY25-26") need monthly and quarterly periods. The A1 resolver already supports mom/qoq/custom by date matching — primarily a **data gap**, not a logic gap. Seed source: the embedded `const D`/`DET`/`SS` data objects in `RPIL_Board_Report_June2026_8.html` (real data, same provenance-in-`kpi_values.note` pattern as FY25/FY26). Note: `_8` restates FY26 Gross Profit to the audited-FS basis — requires an insert-only correction row (ADR-006).
+
+### Amendment A6 — Single combined package + entitlements + pricing page
+**Requested:** 2026-07-13 (Parth). **Depends on:** A3-UI (tabs must exist to be entitlement-gated). **Risk:** Low-Med. **Complexity:** M.
+
+One package for now: all features visible, non-applicable ones greyed out; segregate into real tiers later. Entitlement taxonomy from `CFOXPERT_ver_2.docx`'s 4 tiers (Essential ₹5-25Cr / Growth ₹25-50Cr / Strategic ₹50-100Cr / Enterprise ₹100Cr+) — each "Dashboard Deliverable" bullet becomes an entitlement key. Starting tab→tier map: Overview/P&L/BS/Ratios/Cost Structure → Essential+; Health Score → Essential+; Segment → Growth+; Projections → Growth+ (Forecasting) → Strategic (Modelling); Governance → Strategic+; Recommendations & Roadmap/Ambition → Strategic+; Inventory & Production → industry add-on (manufacturing), not tier-locked.
+
+**Do not conflate mechanisms:** this is a per-organization DB entitlement (the `organizations.entitlements` jsonb + `plan_tier` columns already exist per ADR-008) — a different thing from `NEXT_PUBLIC_FEATURE_FLAGS` (a dev rollout switch).
