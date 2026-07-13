@@ -61,22 +61,18 @@ export async function CostStructureTab({
 
   // %-of-revenue bars (working-capital-card idiom).
   const revenue = map.get("revenue")?.value;
-  const bars =
-    revenue && revenue !== 0
-      ? (
-          [
-            ["gross_profit", "Gross Profit"],
-            ["indirect_expenses", "Indirect Expenses"],
-            ["net_profit", "Net Profit"],
-          ] as const
-        )
-          .map(([key, label]) => {
-            const kpi = map.get(key);
-            if (!kpi) return null;
-            return { label, share: (kpi.value / revenue) * 100 };
-          })
-          .filter((bar): bar is { label: string; share: number } => bar !== null)
-      : [];
+  const barDefs: { key: string; label: string }[] = [
+    { key: "gross_profit", label: "Gross Profit" },
+    { key: "indirect_expenses", label: "Indirect Expenses" },
+    { key: "net_profit", label: "Net Profit" },
+  ];
+  const bars: { label: string; share: number }[] = [];
+  if (revenue !== undefined && revenue !== 0) {
+    for (const def of barDefs) {
+      const kpi = map.get(def.key);
+      if (kpi) bars.push({ label: def.label, share: (kpi.value / revenue) * 100 });
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
