@@ -73,6 +73,7 @@ export default function PricingPage() {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {PLAN_TIERS.map((tier, i) => {
               const info = TIER_INFO[tier];
+              const prevTier = i > 0 ? PLAN_TIERS[i - 1] : undefined;
               return (
                 <Reveal key={tier} delay={i * 0.06} className="h-full">
                   <div className="flex h-full flex-col rounded-card border border-line bg-paper p-7">
@@ -84,9 +85,9 @@ export default function PricingPage() {
                     </p>
                     <p className="mt-2 text-[14px] text-slate">{info.tagline}</p>
                     <ul className="mt-6 flex flex-col gap-2.5 border-t border-line pt-6">
-                      {i > 0 && (
+                      {prevTier && (
                         <li className="text-[13px] font-semibold text-navy">
-                          Everything in {TIER_INFO[PLAN_TIERS[i - 1]].label}, plus:
+                          Everything in {TIER_INFO[prevTier].label}, plus:
                         </li>
                       )}
                       {TIER_EXTRAS[tier].map((label) => (
