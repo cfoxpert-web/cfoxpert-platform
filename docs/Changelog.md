@@ -1,5 +1,13 @@
 # Changelog.md
 
+## 2026-07-14 (A6 verified on Preview and closed)
+
+- Vercel build green on both projects after one type fix (pricing page indexed the PLAN_TIERS tuple with `i - 1`; `noUncheckedIndexedAccess` makes tuple indexing `| undefined` — the no-local-toolchain class of miss, caught at the Vercel gate as designed).
+- Migration 0012 auto-applied by the Actions workflow (run green, ~40s): tier enum values live; RPIL classified Manufacturing / Flexible Packaging / ₹100Cr+.
+- LIVE-VERIFIED on Preview: /pricing renders all four tier cards from the taxonomy module (cumulative deliverables correct per the A6 map), the manufacturing add-on note, the combined-package footnote, and the "Packages" nav item. Auth gate on /dashboard confirmed intact.
+- DEFERRED (deliberate, low-risk): eyeball check of the 8 unlocked tabs on a logged-in session, and the jsonb-override grey-out demo (`{"report.segment": false}` → locked Segment tab). The resolution logic is unit-tested (18 tests); the combined package renders nothing locked by construction.
+- Amendment ledger: only A4 (document ingestion) remains — needs its own scoping pass before implementation.
+
 ## 2026-07-13 (Amendment A6 — single combined package + entitlements + pricing page)
 
 - Entitlement taxonomy is CODE-AS-DATA in one pure module, `lib/entitlements.ts` (+18 unit tests): four tiers from the package sheet (Essential ₹5–25Cr / Growth ₹25–50Cr / Strategic ₹50–100Cr / Enterprise ₹100Cr+), one key per dashboard deliverable, tab→tier map exactly as recorded in the A6 amendment. Inventory & Production is a manufacturing INDUSTRY ADD-ON (gates on `organizations.industry`), not tier-locked. Jsonb overrides (`{"report.inventory": true}`) win in both directions; malformed jsonb is ignored, never fatal.
