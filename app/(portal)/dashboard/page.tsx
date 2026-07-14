@@ -10,6 +10,7 @@ import { HealthScoreTab } from "@/components/dashboard/report/health-score-tab";
 import { CostStructureTab } from "@/components/dashboard/report/cost-structure-tab";
 import { SegmentTab } from "@/components/dashboard/report/segment-tab";
 import { InventoryTab } from "@/components/dashboard/report/inventory-tab";
+import { ReportLocked } from "@/components/dashboard/report/report-locked";
 import {
   getCurrentUserOrganization,
   type DashboardQuery,
@@ -40,6 +41,15 @@ export default async function DashboardPage({
       ? tabParam
       : "overview";
 
+  // Amendment A6: unentitled tabs stay visible but greyed; navigating to
+  // one (including a ?tab= deep link) renders the locked panel and fetches
+  // no data. On the single combined package nothing is locked.
+  const lockedTabs =
+    showTabs && org !== null
+      ? REPORT_TABS.filter((t) => !org.entitlements.includes(t.entitlement))
+      : [];
+  const activeLocked = lockedTabs.find((t) => t.key === tab);
+
   const compare = first(params.compare);
   const query: DashboardQuery = {
     periodLabel: first(params.period),
@@ -52,27 +62,38 @@ export default async function DashboardPage({
       <div className="flex flex-col gap-6">
         {showTabs && (
           <Suspense>
-            <ReportTabs active={tab} />
+            <ReportTabs active={tab} locked={lockedTabs.map((t) => t.key)} />
           </Suspense>
         )}
-        {tab === "overview" && (
+        {activeLocked && <ReportLocked entitlement={activeLocked.entitlement} />}
+        {!activeLocked && tab === "overview" && (
           <CommandCenter
             period={query.periodLabel}
             compare={compare}
             comparePeriod={query.comparePeriodLabel}
           />
         )}
-        {org && tab === "pnl" && <PnlTab organizationId={org.id} query={query} />}
-        {org && tab === "balance-sheet" && (
+        {org && !activeLocked && tab === "pnl" && (
+          <PnlTab organizationId={org.id} query={query} />
+        )}
+        {org && !activeLocked && tab === "balance-sheet" && (
           <BalanceSheetTab organizationId={org.id} query={query} />
         )}
-        {org && tab === "ratios" && <RatiosTab organizationId={org.id} query={query} />}
-        {org && tab === "health" && <HealthScoreTab organizationId={org.id} query={query} />}
-        {org && tab === "cost-structure" && (
+        {org && !activeLocked && tab === "ratios" && (
+          <RatiosTab organizationId={org.id} query={query} />
+        )}
+        {org && !activeLocked && tab === "health" && (
+          <HealthScoreTab organizationId={org.id} query={query} />
+        )}
+        {org && !activeLocked && tab === "cost-structure" && (
           <CostStructureTab organizationId={org.id} query={query} />
         )}
-        {org && tab === "segment" && <SegmentTab organizationId={org.id} query={query} />}
-        {org && tab === "inventory" && <InventoryTab organizationId={org.id} />}
+        {org && !activeLocked && tab === "segment" && (
+          <SegmentTab organizationId={org.id} query={query} />
+        )}
+        {org && !activeLocked && tab === "inventory" && (
+          <InventoryTab organizationId={org.id} />
+        )}
       </div>
     </DashboardLayout>
   );

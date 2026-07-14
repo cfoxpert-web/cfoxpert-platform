@@ -112,6 +112,21 @@ This is the single log of every consequential architectural decision made on the
 
 ---
 
+## ADR-009: Legacy `plan_tier` values mean the single combined package; tier gating activates only by assigning one of the four real tier values
+
+**Date:** 2026-07-13
+
+**Decision:** Migration 0012 adds the four package tiers from the CFOXPERT package sheet (`essential`/`growth`/`strategic`/`enterprise`) to the `plan_tier` enum but moves no organization onto them. `lib/entitlements.ts` — the ONLY interpreter of `plan_tier` and the `entitlements` jsonb (never SQL, per migration 0001's contract) — treats the legacy values (`internal`/`trial`/`standard`/`premium`) as the single combined package: every tier-gated entitlement granted. Industry add-ons (Inventory & Production → manufacturing) gate on `organizations.industry`, not tier; explicit jsonb overrides win in both directions. Report tabs an org isn't entitled to stay **visible but greyed** with a lock, and their data is never fetched.
+
+**Why:** A6's requirement is "one package for now, segregate into real tiers later" — so the current package must be the *absence* of tier assignment, not a fifth pseudo-tier that would need migrating away from. Moving a client onto a real tier becomes a one-row data change with no deploy, which is exactly the monetization switch A6 exists to enable. Greying rather than hiding keeps the upgrade surface visible (the pricing page renders from the same taxonomy module, so marketing claims and platform gates cannot drift).
+
+**Alternatives considered:**
+- Map legacy values onto tiers (e.g. `premium` → `strategic`) — rejected: those values never meant tiers, and silently downgrading a client's visible tabs on deploy is a support incident, not a migration.
+- Reuse `NEXT_PUBLIC_FEATURE_FLAGS` for gating — rejected explicitly in the roadmap: flags answer "is this capability deployed?", entitlements answer "has this client paid for it?"; conflating them makes every sale a deploy.
+- Hide unentitled tabs — rejected: the package sheet sells progression; an invisible feature can't create demand, and "all features visible, non-applicable greyed out" was the recorded requirement.
+
+---
+
 ## Template for future entries
 
 ```

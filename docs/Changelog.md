@@ -1,5 +1,15 @@
 # Changelog.md
 
+## 2026-07-13 (Amendment A6 — single combined package + entitlements + pricing page)
+
+- Entitlement taxonomy is CODE-AS-DATA in one pure module, `lib/entitlements.ts` (+18 unit tests): four tiers from the package sheet (Essential ₹5–25Cr / Growth ₹25–50Cr / Strategic ₹50–100Cr / Enterprise ₹100Cr+), one key per dashboard deliverable, tab→tier map exactly as recorded in the A6 amendment. Inventory & Production is a manufacturing INDUSTRY ADD-ON (gates on `organizations.industry`), not tier-locked. Jsonb overrides (`{"report.inventory": true}`) win in both directions; malformed jsonb is ignored, never fatal.
+- ADR-009: legacy `plan_tier` values (internal/trial/standard/premium) = the single combined package — everything granted; nobody is assigned a real tier yet, so moving a client onto one later is a one-row data change, no deploy. Entitlements are per-org DB state — a different mechanism from `NEXT_PUBLIC_FEATURE_FLAGS` (dev rollout), per the roadmap's do-not-conflate rule.
+- Migration 0012: the four tier values added to the `plan_tier` enum (add-only, unused in-transaction — safe under the workflow's single-transaction run); RPIL classified per ADR-008 (Manufacturing / Flexible Packaging / ₹100Cr+, fill-NULLs-only) — the industry value is what keeps RPIL's Inventory tab unlocked.
+- Report tabs now carry their entitlement key in `tab-defs.ts`; unentitled tabs stay VISIBLE but greyed with a lock (the package sheet sells progression — hiding kills the upgrade surface); navigating to one (incl. ?tab= deep links) renders `ReportLocked` and fetches NO data. `getCurrentUserOrganization` resolves effective entitlements from `plan_tier` + jsonb + industry. Mock mode untouched (no tabs there).
+- `/pricing` marketing page renders the four tier cards FROM the taxonomy module — marketing claims and platform gates cannot drift. Revenue bands shown, not price points (engagements are priced on scope); combined-package-today note included; "Packages" added to site nav + footer. Enterprise is presented as scope (group/multi-entity, ADR-008), not extra tabs — no enterprise-exclusive entitlement key exists yet.
+- On the live combined package nothing greys out, deliberately: A6 ships the MECHANISM. Verifiable by flipping a jsonb override (e.g. `{"report.segment": false}`) on RPIL and reloading.
+- Remaining on the amendment ledger: A4 (document ingestion — needs its own scoping pass first).
+
 ## 2026-07-13 (A2 VERIFIED live and closed)
 
 - LIVE-VERIFIED on Preview: FY26 scores 68/B (drivers 66/75/58/71; NP margin + unit concentration flagged), Q1 FY27 recomputes to 65/B (financial 75 — pre-tax NP margin clears the band; growth 40 — no prior quarter, 72% concentration breach; capital 68) — every value matches the unit-test math. Per-period scoring works: the health trend line foundation is in place.

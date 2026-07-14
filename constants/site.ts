@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Platform", href: "/platform" },
   { label: "Business Health Check", href: "/health-check" },
   { label: "Knowledge Hub", href: "/knowledge" },
+  { label: "Packages", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -49,6 +50,7 @@ export const FOOTER_COLUMNS = [
     heading: "Company",
     links: [
       { label: "About", href: "/about" },
+      { label: "Packages", href: "/pricing" },
       { label: "Knowledge Hub", href: "/knowledge" },
       { label: "Contact", href: "/contact" },
     ],

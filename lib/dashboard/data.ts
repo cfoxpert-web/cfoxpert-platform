@@ -1,3 +1,7 @@
+import {
+  resolveEntitlements,
+  type EntitlementKey,
+} from "../entitlements";
 import { isFeatureEnabled } from "../feature-flags";
 import {
   getKpiSnapshot,
@@ -42,6 +46,8 @@ export type DashboardQuery = {
 export async function getCurrentUserOrganization(): Promise<{
   id: string;
   name: string;
+  /** Effective entitlements (A6): tier/package + jsonb overrides, resolved. */
+  entitlements: EntitlementKey[];
 } | null> {
   const supabase = await createClient();
   const {
@@ -51,7 +57,9 @@ export async function getCurrentUserOrganization(): Promise<{
 
   const { data } = await supabase
     .from("organization_members")
-    .select("organization_id, created_at, organizations ( id, name )")
+    .select(
+      "organization_id, created_at, organizations ( id, name, plan_tier, entitlements, industry )",
+    )
     .eq("user_id", user.id) // REQUIRED: RLS shows teammates' membership
     // rows in shared orgs by design (team views), so visibility alone
     // must never drive resolution. Caught by live testing.
@@ -65,7 +73,15 @@ export async function getCurrentUserOrganization(): Promise<{
     : row?.organizations;
   if (!org) return null;
 
-  return { id: org.id as string, name: org.name as string };
+  return {
+    id: org.id as string,
+    name: org.name as string,
+    entitlements: resolveEntitlements({
+      planTier: (org.plan_tier as string) ?? "",
+      overrides: org.entitlements,
+      industry: (org.industry as string | null) ?? null,
+    }),
+  };
 }
 
 /**
