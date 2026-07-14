@@ -1,5 +1,16 @@
 # Changelog.md
 
+## 2026-07-14 (Amendment A4-a — ingestion schema, storage, upload surface)
+
+- Migration 0013: the FULL A4 data shape in one migration so A4-b/A4-c are pure app code — `client_documents`, `ingestion_jobs` (own `ingestion_stage` enum; one live job per document) + insert-only `ingestion_job_events` with auto-recording trigger (status_history PATTERN, deliberately not the work_status enum), `extracted_lines` staging (staff-only in every verb — unreviewed numbers are never client-visible), `account_mappings` memory (unique live per org+normalized label, FK to kpi_definitions.key). `docIngestion` flag added to lib/feature-flags.ts + seeded in the registry.
+- RLS: members read own-org documents/jobs and insert uploads; member-created jobs are FORCED to stage 'received' by the insert policy (the analyst-approval gate is schema-enforced, not just app logic); stage transitions staff-only; event notes staff-only (members get coarse stage from the job row).
+- STORAGE (deliberate boundary, documented in 0013's header): bytes live in a private `client-documents` bucket with NO storage policies — every access goes through server actions via the service-role client (M8 precedent, always audit-logged), bucket lazily created on first upload; `client_documents` rows (authenticated-client writes, real actors) are the tenancy record. Avoids the storage.objects-policy-from-migration permission trap entirely.
+- `lib/documents/`: `model.ts` (shared kinds/stages/limits vocabulary — same server/client boundary reasoning as tab-defs), `actions.ts` (upload: flag gate, type/size validation vs a 20 MB limit, staff-on-behalf support via `is_internal_staff` RPC, orphan-byte cleanup if the row insert fails, audit entry), `queries.ts` (member read path).
+- Documents page real path: upload form (kind + optional period hint; copy promises analyst review, not instant numbers) + uploaded-documents list with member-facing stage badges. Mock mode byte-identical. Staff uploads auto-approve ('approved'); client uploads wait at 'received'.
+- `next.config.ts`: server-action body limit raised to 25 MB (Next default 1 MB would reject every upload).
+- Deferred to A4-c (recorded): approve/reject staff actions + queue UI; staff org-picker upload surface; document download via signed URLs.
+- Verification pending: Vercel build (compile gate) + live Preview upload once pushed; migration 0013 auto-applies on push.
+
 ## 2026-07-14 (Amendment A4 SCOPED — document ingestion pipeline)
 
 - Dedicated scoping pass completed with Parth (the treatment A2 got). Full scope recorded in `Integration Roadmap.md` under the A4 amendment; architecture keystone recorded as ADR-010.
