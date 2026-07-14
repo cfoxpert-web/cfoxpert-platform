@@ -127,6 +127,21 @@ This is the single log of every consequential architectural decision made on the
 
 ---
 
+## ADR-010: In document ingestion, the LLM only ever proposes — a deterministic-plus-human path is the only way numbers publish
+
+**Date:** 2026-07-14
+
+**Decision:** A4's pipeline never lets model output touch `kpi_values` directly. Extraction follows a ladder — deterministic parsers for known formats first, Claude (structured outputs, one org's one document per request) as the fallback — and everything lands in a mutable staging table (`extracted_lines`). Publishing requires deterministic validation gates (TB balances, BS equation, P&L recomputation) plus an explicit staff-confirmed action, which writes through the existing insert-only `kpi_periods`/`kpi_values` path with document-level provenance and an audit entry. Analyst-confirmed label→KPI mappings persist in org-scoped `account_mappings`, so repeated uploads bypass the model entirely for known labels. Client uploads additionally wait at `received` until an analyst approves processing.
+
+**Why:** The board report's numbers are the product; a hallucinated digit is a trust-ending event, not a bug. Structured outputs guarantee *parseable* extraction, not *correct* extraction — correctness comes from arithmetic identities the statements must satisfy and from the analyst who signs off. The mapping memory makes the system MORE deterministic over time instead of more model-dependent, and the approve-to-process gate bounds both garbage input and API spend. This also instantiates AI Design.md's standing rule ("drafts, not decisions; nothing reaches a client unreviewed") in the platform's first real AI feature.
+
+**Alternatives considered:**
+- Auto-publish when validation gates pass — rejected: gates prove internal consistency, not fidelity to the source document; a consistently-wrong extraction passes gates.
+- LLM-per-upload with no mapping memory — rejected: pays extraction risk and cost on every upload for labels a human already confirmed; learning nothing across uploads is the strictly worse version of the same pipeline.
+- Extending the shared `work_status` enum for pipeline stages — rejected: `open/in_progress/resolved` is THE generic workflow shape (migration 0005); ingestion stages are pipeline states, so the job gets its own enum and mirrors the history *pattern* instead.
+
+---
+
 ## Template for future entries
 
 ```

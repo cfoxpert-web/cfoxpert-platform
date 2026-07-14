@@ -160,7 +160,36 @@ Build P&L / Balance Sheet / Ratios / Cost Structure / Segment / Inventory tabs o
 ### Amendment A4 — Document ingestion pipeline (upload TB/P&L/BS → auto-populated report)
 **Requested:** 2026-07-13 (Parth). **New epic, sequenced last.** **Depends on:** A3's data shape being final. **Risk:** High. **Complexity:** XL.
 
-Hardest, highest-payoff. **Pushback recorded and accepted:** "least manual intervention" applies to the *numbers*, not the *judgment*. Recommendations, Governance commentary, and Roadmap/Ambition are the CFO's professional read — that is the paid value in "Virtual CFO as a Service." Design intent: fully automate extraction + mapping of financial figures; keep a lightweight human-confirm step before numbers publish (consistent with the insert-only, audit-logged pattern); keep narrative sections as an editable analyst panel, not auto-generated text. Needs its own dedicated scoping pass before implementation (same treatment A2 got) — not scoped in detail here.
+Hardest, highest-payoff. **Pushback recorded and accepted:** "least manual intervention" applies to the *numbers*, not the *judgment*. Recommendations, Governance commentary, and Roadmap/Ambition are the CFO's professional read — that is the paid value in "Virtual CFO as a Service." Design intent: fully automate extraction + mapping of financial figures; keep a lightweight human-confirm step before numbers publish (consistent with the insert-only, audit-logged pattern); keep narrative sections as an editable analyst panel, not auto-generated text.
+
+#### A4 scoping pass (2026-07-14) — scoped, ready to build
+
+**Decisions taken with Parth:** (1) source documents are a MIX — Tally/Excel/ERP exports, digital PDFs; v1 is built for spreadsheet + digital-PDF fidelity, scans are best-effort (the review gate catches what extraction can't). (2) BOTH clients and analysts can upload, but nothing is processed until an analyst approves the job — approval gates the queue, not just the publish. (3) Review happens in an in-portal, staff-gated review UI — the platform's first internal-analyst surface (CRM UI stays deferred; this one has a concrete workflow to design around).
+
+**Pipeline (job stages):** `received → approved → extracting → needs_review → published` (terminal alternatives: `rejected`, `failed`). Client-uploaded jobs sit at `received` until an analyst approves; analyst uploads may auto-approve. Two human gates by design: approve-to-process (cost + garbage-input control) and confirm-to-publish (correctness control).
+
+**Extraction ladder — deterministic first, AI second, human always:**
+1. **Deterministic parsers** for known structured formats (clean Tally XLSX/CSV exports): no AI involved, cell-level provenance. The format library grows per client.
+2. **Claude extraction** for everything else: `claude-opus-4-8` via the Messages API with **structured outputs** (`output_config.format` json_schema — guaranteed-parseable line items), PDFs passed natively as document blocks, spreadsheets parsed server-side to text first. Server-only `ANTHROPIC_API_KEY`. Grounding is ONE document from ONE org per request — no cross-client context, ever (AI Design.md non-goal, enforced by construction).
+3. **Analyst review** of every number before publish, regardless of which rung extracted it.
+
+This makes A4 (not M13) the platform's **first AI feature**; AI Design.md's "assistive, not autonomous" rule applies verbatim: the model proposes staged rows; only a staff-confirmed action publishes.
+
+**Schema (new migrations):**
+- `client_documents` — org-scoped metadata + private Supabase Storage bucket (org-scoped paths, storage RLS, type/size limits; uploads are untrusted content, never rendered raw).
+- `ingestion_jobs` — the pipeline entity. Its own stage enum + an insert-only `ingestion_job_events` history (mirrors the status_history PATTERN but does NOT extend `work_status` — pipeline stages would pollute the shared workflow enum).
+- `extracted_lines` — staging: source label as printed, amount, statement type, period/segment hints, page/cell provenance, confidence, proposed `kpi_definitions.key`. Staging is mutable until publish; published values are never edited (ADR-006 untouched).
+- `account_mappings` — org-scoped mapping MEMORY: normalized source label → kpi key (+ segment). Analyst-confirmed once, applied deterministically on every later upload; AI only proposes for labels with no confirmed mapping. The pipeline gets more deterministic with every document.
+
+**Deterministic validation gates (pre-review, never silently passed):** TB debits = credits; BS assets = liabilities + equity; P&L GP/NP recompute from components; extracted totals vs stated totals; period dates parse and match the declared period.
+
+**Publish semantics:** staff-gated server action inserts `kpi_periods` (if new, with real dates) + `kpi_values` through the existing insert-only path — provenance note carries document + page/cell ref (the same note convention the hand-run SQL era used), audit_logs entry, corrections as new rows. Ratios/health score still compute at read time; nothing new is stored derived.
+
+**Milestone split:** **A4-a** (M): schema + storage + upload surfaces (client Documents page becomes real; staff upload) + job queue at `received`. **A4-b** (L): extraction service (parser ladder + Claude structured outputs), staging, validation gates. **A4-c** (L): staff review UI (extracted vs source side-by-side, mapping confirmation feeding `account_mappings`), publish action. Flag: `docIngestion` (dev rollout — distinct from entitlements per A6).
+
+**Non-goals (v1, recorded):** no auto-publish under any condition; no narrative generation (analyst panel is a separate future milestone); no OCR guarantee on scans; no live ERP integration (M15); no client-visible extraction detail beyond coarse job status.
+
+**Risks:** extraction accuracy on messy PDFs (mitigated by gates + mandatory review + mapping memory); Tally/ERP format diversity (parser library grows incrementally; Claude rung is the fallback); per-document API cost (Opus 4.8 at $5/$25 per MTok — a full statement pack is well under a dollar; approval gate prevents abuse).
 
 ### Amendment A5 — Period granularity (monthly + quarterly)
 **Requested:** 2026-07-13 (Parth). **Extends:** A1. **Risk:** Low. **Complexity:** S–M.

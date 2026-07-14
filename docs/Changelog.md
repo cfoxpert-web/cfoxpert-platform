@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-07-14 (Amendment A4 SCOPED — document ingestion pipeline)
+
+- Dedicated scoping pass completed with Parth (the treatment A2 got). Full scope recorded in `Integration Roadmap.md` under the A4 amendment; architecture keystone recorded as ADR-010.
+- DECISIONS (Parth): source docs are a mix (Tally/Excel/ERP exports + digital PDFs; scans best-effort); clients AND analysts upload but processing runs only after analyst approval (approval gates the queue, not just the publish); review/confirm happens in an in-portal staff-gated UI — the platform's first internal-analyst surface.
+- ARCHITECTURE (ADR-010): extraction ladder — deterministic parsers for known formats → Claude (`claude-opus-4-8`, structured outputs, one org's one document per request) → mandatory analyst review. Model output never touches kpi_values; staging (`extracted_lines`) + arithmetic validation gates (TB balance, BS equation, P&L recompute) + staff-confirmed publish through the existing insert-only path with document provenance. Org-scoped `account_mappings` memory makes repeat uploads deterministic.
+- A4 becomes the platform's FIRST AI feature (ahead of M13); AI Design.md updated — "assistive, not autonomous" applies verbatim, model/provider and review-surface open questions resolved for this feature.
+- Schema plan: `client_documents` (+ private storage bucket), `ingestion_jobs` (own stage enum + insert-only events history — deliberately NOT extending work_status), `extracted_lines`, `account_mappings`. Flag: `docIngestion`.
+- Build split: A4-a schema/storage/upload (M) → A4-b extraction+validation (L) → A4-c review UI+mapping+publish (L). Non-goals recorded: no auto-publish ever, no narrative generation (separate future milestone), no OCR guarantee on scans, no live ERP (M15).
+
 ## 2026-07-14 (A6 verified on Preview and closed)
 
 - Vercel build green on both projects after one type fix (pricing page indexed the PLAN_TIERS tuple with `i - 1`; `noUncheckedIndexedAccess` makes tuple indexing `| undefined` — the no-local-toolchain class of miss, caught at the Vercel gate as designed).
