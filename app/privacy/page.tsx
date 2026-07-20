@@ -10,6 +10,7 @@ const SECTIONS = [
   { heading: "Information We Collect", body: "Name, phone number, email address, and business details submitted through the Business Health Check, Contact form, or Client Portal request." },
   { heading: "How We Use Your Information", body: "To respond to enquiries, deliver Business Health Check results, and provide ongoing Virtual CFO services to engaged clients." },
   { heading: "Data Sharing", body: "We do not sell personal data. Information may be shared with service providers strictly to operate the platform (e.g. hosting, email delivery)." },
+  { heading: "AI-Assisted Processing", body: "Financial documents uploaded to the Client Portal may be processed by third-party AI infrastructure (Anthropic) to extract financial figures. Under Anthropic's commercial API terms, submitted content is not used to train AI models and is retained only for a limited period for abuse monitoring before deletion. Every extracted figure is reviewed by a CFOxpert analyst before it appears in any report." },
   { heading: "Data Retention", body: "Contact and engagement data is retained for as long as necessary to provide services and meet legal/compliance obligations." },
   { heading: "Your Rights", body: "You may request access to, correction of, or deletion of your personal data by contacting info@cfoxpert.in." },
   { heading: "Cookies", body: "The website may use essential cookies for functionality. No third-party advertising cookies are used." },

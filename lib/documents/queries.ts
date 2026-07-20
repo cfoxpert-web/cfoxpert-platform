@@ -15,7 +15,15 @@ export type DocumentListItem = {
   periodHint: string | null;
   uploadedAt: string; // ISO
   stage: IngestionStage | null; // null = job row missing (shouldn't happen)
+  jobId: string | null;
 };
+
+/** Whether the viewer is CFOxpert internal staff (drives the A4-b Process button). */
+export async function isInternalStaff(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("is_internal_staff");
+  return data === true;
+}
 
 export async function getClientDocuments(
   organizationId: string,
@@ -25,7 +33,7 @@ export async function getClientDocuments(
   const { data, error } = await supabase
     .from("client_documents")
     .select(
-      "id, file_name, kind, size_bytes, period_hint, created_at, ingestion_jobs ( stage, deleted_at )",
+      "id, file_name, kind, size_bytes, period_hint, created_at, ingestion_jobs ( id, stage, deleted_at )",
     )
     .eq("organization_id", organizationId)
     .is("deleted_at", null)
@@ -52,6 +60,7 @@ export async function getClientDocuments(
       periodHint: (row.period_hint as string | null) ?? null,
       uploadedAt: row.created_at as string,
       stage: (liveJob?.stage as IngestionStage | undefined) ?? null,
+      jobId: (liveJob?.id as string | undefined) ?? null,
     };
   });
 }

@@ -140,6 +140,8 @@ This is the single log of every consequential architectural decision made on the
 - LLM-per-upload with no mapping memory — rejected: pays extraction risk and cost on every upload for labels a human already confirmed; learning nothing across uploads is the strictly worse version of the same pipeline.
 - Extending the shared `work_status` enum for pipeline stages — rejected: `open/in_progress/resolved` is THE generic workflow shape (migration 0005); ingestion stages are pipeline states, so the job gets its own enum and mirrors the history *pattern* instead.
 
+**Addendum — client-document data handling on the Claude API (2026-07-20, decided by Parth before A4-b shipped):** extraction uses Anthropic's standard commercial API: inputs/outputs are not used for model training by default and are retained by Anthropic for a limited period (~30 days) for abuse monitoring, then deleted. A client's document leaves CFOxpert's Supabase infrastructure for the duration of the extraction call, one document from one organization per request. This is DISCLOSED, not silent: the Privacy Policy carries an AI-assisted-processing section naming Anthropic and the no-training/limited-retention terms, and the same line belongs in client engagement terms. Alternatives considered: zero-data-retention agreement (enterprise-tier, revisit if a client demands it); deterministic-only processing (rejected as default — PDFs are half the intake; remains the automatic behavior whenever `ANTHROPIC_API_KEY` is absent).
+
 ---
 
 ## Template for future entries

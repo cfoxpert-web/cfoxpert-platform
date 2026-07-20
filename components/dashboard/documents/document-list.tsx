@@ -3,6 +3,10 @@ import { Card } from "@/components/cards/card";
 import { cn } from "@/lib/utils";
 import { DOCUMENT_KINDS, stageLabel } from "@/lib/documents/model";
 import type { DocumentListItem } from "@/lib/documents/queries";
+import { ProcessButton } from "./process-button";
+
+/** Stages the staff Process/Retry trigger applies to (A4-b). */
+const PROCESSABLE_STAGES = new Set(["received", "approved", "failed"]);
 
 /**
  * Amendment A4-a — uploaded documents with their coarse pipeline stage.
@@ -39,7 +43,13 @@ function stageBadgeClass(stage: string | null): string {
   }
 }
 
-export function DocumentList({ items }: { items: DocumentListItem[] }) {
+export function DocumentList({
+  items,
+  isStaff = false,
+}: {
+  items: DocumentListItem[];
+  isStaff?: boolean;
+}) {
   return (
     <Card className="p-6">
       <h3 className="mb-4 font-display text-[16px] text-navy">
@@ -76,6 +86,12 @@ export function DocumentList({ items }: { items: DocumentListItem[] }) {
               >
                 {doc.stage ? stageLabel(doc.stage) : "—"}
               </span>
+              {isStaff &&
+                doc.jobId &&
+                doc.stage &&
+                PROCESSABLE_STAGES.has(doc.stage) && (
+                  <ProcessButton jobId={doc.jobId} stage={doc.stage} />
+                )}
             </div>
           ))}
         </div>

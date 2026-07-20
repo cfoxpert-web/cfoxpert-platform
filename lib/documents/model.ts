@@ -52,3 +52,6 @@ export const ACCEPTED_MIME_TYPES: Record<string, string> = {
 export const ACCEPT_ATTRIBUTE = ".pdf,.xlsx,.xls,.csv";
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // keep next.config.ts limit above this
+
+/** Private bucket holding document bytes — service-role access only (0013). */
+export const STORAGE_BUCKET = "client-documents";

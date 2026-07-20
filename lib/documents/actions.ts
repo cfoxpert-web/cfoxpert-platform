@@ -5,9 +5,13 @@ import { revalidatePath } from "next/cache";
 import { isFeatureEnabled } from "../feature-flags";
 import { createAdminClient } from "../supabase/admin";
 import { createClient } from "../supabase/server";
+import { after } from "next/server";
+
+import { runExtraction } from "../ingestion/run";
 import {
   ACCEPTED_MIME_TYPES,
   MAX_UPLOAD_BYTES,
+  STORAGE_BUCKET,
   isDocumentKind,
   type DocumentKind,
 } from "./model";
@@ -27,7 +31,7 @@ import {
  *   ingestion_jobs insert policy, not just by this action.
  */
 
-const BUCKET = "client-documents";
+const BUCKET = STORAGE_BUCKET;
 
 export type UploadResult =
   | { ok: true; documentId: string }
@@ -145,16 +149,29 @@ export async function uploadClientDocument(
     return { ok: false, error: "Could not record the upload. Try again." };
   }
 
-  const { error: jobError } = await supabase.from("ingestion_jobs").insert({
-    organization_id: organizationId,
-    document_id: documentId,
-    stage: isStaff === true ? "approved" : "received",
-    created_by: user.id,
-    updated_by: user.id,
-  });
-  if (jobError) {
+  const { data: jobRow, error: jobError } = await supabase
+    .from("ingestion_jobs")
+    .insert({
+      organization_id: organizationId,
+      document_id: documentId,
+      stage: isStaff === true ? "approved" : "received",
+      created_by: user.id,
+      updated_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (jobError || !jobRow) {
     // Document row exists without a job — recoverable by staff, but log loudly.
-    console.error("[documents] job insert failed:", jobError.message);
+    console.error("[documents] job insert failed:", jobError?.message);
+  } else if (isStaff === true) {
+    // A4-b: staff uploads auto-approve, so extraction starts immediately —
+    // after the response is sent, so the upload UI stays snappy. Client
+    // uploads wait at 'received' for the approve-to-process gate.
+    const jobId = jobRow.id as string;
+    const actorId = user.id;
+    after(async () => {
+      await runExtraction(jobId, actorId);
+    });
   }
 
   // ---- Audit (ADR-005): required — a service-role write happened above.
@@ -178,4 +195,64 @@ export async function uploadClientDocument(
 
   revalidatePath("/dashboard/documents");
   return { ok: true, documentId };
+}
+
+export type ProcessResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * A4-b — the minimal staff-only Process/Retry trigger (approved by Parth
+ * as A4-b scope; the full review queue is A4-c). On a 'received' job the
+ * click IS the approve-to-process decision, so that transition happens
+ * with the AUTHENTICATED client — the job event records the real analyst.
+ * The machine transitions inside runExtraction use the service role.
+ */
+export async function processIngestionJob(jobId: string): Promise<ProcessResult> {
+  if (!isFeatureEnabled("docIngestion")) {
+    return { ok: false, error: "Document ingestion is not enabled." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: isStaff } = await supabase.rpc("is_internal_staff");
+  if (isStaff !== true) {
+    return { ok: false, error: "Only CFOxpert staff can process documents." };
+  }
+
+  const { data: job } = await supabase
+    .from("ingestion_jobs")
+    .select("id, stage")
+    .eq("id", jobId)
+    .is("deleted_at", null)
+    .single();
+  if (!job) return { ok: false, error: "Job not found." };
+
+  if (job.stage === "extracting") {
+    return { ok: false, error: "This document is already being processed." };
+  }
+  if (job.stage === "needs_review" || job.stage === "published") {
+    return { ok: false, error: "This document has already been processed." };
+  }
+  if (job.stage === "rejected") {
+    return { ok: false, error: "This document was rejected." };
+  }
+
+  if (job.stage === "received") {
+    // The human approve-to-process gate — real actor, RLS-checked (staff
+    // update policy), auto-recorded in ingestion_job_events.
+    const { error } = await supabase
+      .from("ingestion_jobs")
+      .update({ stage: "approved", updated_by: user.id })
+      .eq("id", jobId);
+    if (error) {
+      return { ok: false, error: `Could not approve the job: ${error.message}` };
+    }
+  }
+
+  const result = await runExtraction(jobId, user.id);
+  revalidatePath("/dashboard/documents");
+  return result.ok ? { ok: true } : { ok: false, error: result.error };
 }
