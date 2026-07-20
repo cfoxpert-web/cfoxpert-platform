@@ -12,6 +12,7 @@
   - `run.ts` orchestrator: approved/failed → extracting → needs_review|failed; staged lines soft-delete-and-replace on retry; audit_logs entry per run (ingestion.extract / .extract_failed). Machine transitions via service role; human transitions (approve) via authenticated client with the real actor.
 - Triggers: staff uploads auto-extract post-response (Next `after()`); staff-only Process/Retry button on the documents list (Parth-approved A4-b addition) — on a 'received' job the click IS the recorded approve decision. Members see stage badges only, unchanged.
 - 19 new unit tests (`lib/ingestion/ingestion.test.ts`). Deps: exceljs ^4.4.0, @anthropic-ai/sdk ^0.110.0. `maxDuration = 60` on the documents page route.
+- FIX en route (Vercel gate): the SDK's `zodOutputFormat` helper type-clashes with the repo's zod 3.23 — replaced with a hand-written json_schema on `output_config.format` + explicit runtime narrowing (`narrowPayload`, drops malformed lines, fails honestly on refusal/truncation). Schema enforcement is server-side either way; no behavior change.
 - OPERATIONAL PREREQ (Parth): create ANTHROPIC_API_KEY at console.anthropic.com, add to Vercel (Preview, server-side) + small billing credit — PDF extraction is inert until then; spreadsheet extraction works regardless.
 - Verification plan on Preview: staff-upload a clean Tally-style XLSX/CSV (deterministic rung, no key needed) → needs_review with gate results; client-upload → staff "Approve & process"; a PDF after the key exists (AI rung); a deliberately unbalanced TB → flagged validation failure.
 

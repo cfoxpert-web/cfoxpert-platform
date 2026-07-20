@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { z } from "zod";
 
-import type { DocumentKind } from "../documents/model";
+import { DOCUMENT_KINDS, type DocumentKind } from "../documents/model";
 import { env } from "../env";
 import type {
   CandidateLine,
@@ -18,38 +16,125 @@ import type {
  * client-identifying context beyond the document itself, and no data from
  * any other organization can be present by construction.
  *
- * Structured outputs (json_schema) make the response guaranteed-parseable;
- * correctness still comes from the validation gates + analyst review.
+ * Structured outputs (a hand-written json_schema on output_config — NOT
+ * the SDK's zod helper, which type-clashes with this repo's zod version)
+ * make the response schema-conformant server-side; the payload is still
+ * re-validated here line by line, and correctness ultimately comes from
+ * the validation gates + analyst review.
  *
  * Data handling per the ADR-010 addendum: standard Anthropic commercial
  * API (no training on inputs/outputs by default, limited retention),
  * disclosed in the Privacy Policy.
  */
 
-const LineSchema = z.object({
-  statement: z.enum([
-    "trial_balance",
-    "pnl",
-    "balance_sheet",
-    "stock_statement",
-    "other",
-  ]),
-  source_label: z.string(),
-  amount: z.number().nullable(),
-  period_label: z.string().nullable(),
-  segment: z.string().nullable(),
-  provenance: z.string(),
-  proposed_kpi_key: z.string().nullable(),
-  confidence: z.number(),
-});
+const KIND_VALUES = DOCUMENT_KINDS.map((k) => k.key);
 
-const ExtractionSchema = z.object({
-  period_label: z.string().nullable(),
-  period_start: z.string().nullable(),
-  period_end: z.string().nullable(),
-  notes: z.array(z.string()),
-  lines: z.array(LineSchema),
-});
+const NULLABLE_STRING = { anyOf: [{ type: "string" }, { type: "null" }] };
+const NULLABLE_NUMBER = { anyOf: [{ type: "number" }, { type: "null" }] };
+
+const EXTRACTION_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["period_label", "period_start", "period_end", "notes", "lines"],
+  properties: {
+    period_label: NULLABLE_STRING,
+    period_start: NULLABLE_STRING,
+    period_end: NULLABLE_STRING,
+    notes: { type: "array", items: { type: "string" } },
+    lines: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "statement",
+          "source_label",
+          "amount",
+          "period_label",
+          "segment",
+          "provenance",
+          "proposed_kpi_key",
+          "confidence",
+        ],
+        properties: {
+          statement: { type: "string", enum: KIND_VALUES },
+          source_label: { type: "string" },
+          amount: NULLABLE_NUMBER,
+          period_label: NULLABLE_STRING,
+          segment: NULLABLE_STRING,
+          provenance: { type: "string" },
+          proposed_kpi_key: NULLABLE_STRING,
+          confidence: { type: "number" },
+        },
+      },
+    },
+  },
+};
+
+type RawLine = {
+  statement: DocumentKind;
+  source_label: string;
+  amount: number | null;
+  period_label: string | null;
+  segment: string | null;
+  provenance: string;
+  proposed_kpi_key: string | null;
+  confidence: number;
+};
+
+type RawExtraction = {
+  period_label: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  notes: string[];
+  lines: RawLine[];
+};
+
+const isKind = (v: unknown): v is DocumentKind =>
+  typeof v === "string" && (KIND_VALUES as string[]).includes(v);
+
+const strOrNull = (v: unknown): string | null =>
+  typeof v === "string" ? v : null;
+
+/**
+ * Belt-and-braces runtime narrowing. The API enforces the schema, but a
+ * truncated response (max_tokens) or anything unexpected must fail
+ * honestly, never stage garbage. Malformed individual lines are dropped.
+ */
+function narrowPayload(value: unknown): RawExtraction {
+  if (typeof value !== "object" || value === null) {
+    throw new Error("AI extraction returned a non-object payload.");
+  }
+  const v = value as Record<string, unknown>;
+  const rawLines = Array.isArray(v.lines) ? v.lines : [];
+
+  const lines: RawLine[] = [];
+  for (const item of rawLines) {
+    if (typeof item !== "object" || item === null) continue;
+    const l = item as Record<string, unknown>;
+    if (typeof l.source_label !== "string" || l.source_label === "") continue;
+    lines.push({
+      statement: isKind(l.statement) ? l.statement : "other",
+      source_label: l.source_label,
+      amount: typeof l.amount === "number" && Number.isFinite(l.amount) ? l.amount : null,
+      period_label: strOrNull(l.period_label),
+      segment: strOrNull(l.segment),
+      provenance: typeof l.provenance === "string" ? l.provenance : "unknown",
+      proposed_kpi_key: strOrNull(l.proposed_kpi_key),
+      confidence: typeof l.confidence === "number" ? l.confidence : 0,
+    });
+  }
+
+  return {
+    period_label: strOrNull(v.period_label),
+    period_start: strOrNull(v.period_start),
+    period_end: strOrNull(v.period_end),
+    notes: Array.isArray(v.notes)
+      ? v.notes.filter((n): n is string => typeof n === "string")
+      : [],
+    lines,
+  };
+}
 
 function buildSystemPrompt(catalogue: KpiCatalogueEntry[]): string {
   const catalogueList = catalogue
@@ -121,20 +206,41 @@ File name: ${input.fileName}`;
           },
         ];
 
-  const response = await client.messages.parse({
+  const response = await client.messages.create({
     model: "claude-opus-4-8",
     max_tokens: 16000,
     system: buildSystemPrompt(input.catalogue),
     messages: [{ role: "user", content }],
-    output_config: { format: zodOutputFormat(ExtractionSchema) },
+    output_config: {
+      format: { type: "json_schema", schema: EXTRACTION_SCHEMA },
+    },
   });
 
-  const parsed = response.parsed_output;
-  if (!parsed) {
+  if (response.stop_reason === "refusal") {
+    throw new Error("AI extraction declined to process this document.");
+  }
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(
+      "AI extraction output was truncated (document too large for one pass).",
+    );
+  }
+
+  const textBlock = response.content.find(
+    (b): b is Anthropic.TextBlock => b.type === "text",
+  );
+  if (!textBlock) {
     throw new Error(
       `AI extraction returned no usable result (stop reason: ${response.stop_reason ?? "unknown"}).`,
     );
   }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(textBlock.text);
+  } catch {
+    throw new Error("AI extraction returned unparseable output.");
+  }
+  const parsed = narrowPayload(payload);
 
   const validKeys = new Set(input.catalogue.map((k) => k.key));
   const lines: CandidateLine[] = parsed.lines.map((l) => ({
