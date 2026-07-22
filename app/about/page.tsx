@@ -89,11 +89,7 @@ export default function AboutPage() {
               align="center"
               className="mx-auto mb-12 max-w-xl [&_h2]:text-white [&_p]:text-white/60"
             />
-            <div className="[&_.rounded-card]:border-white/10 [&_h3]:text-white [&_p]:text-white/65">
-              <div className="rounded-card border border-white/10 bg-transparent">
-                <ChallengeGrid />
-              </div>
-            </div>
+            <ChallengeGrid variant="dark" />
           </Reveal>
         </Container>
       </Section>
