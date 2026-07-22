@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sample Exports (P) Ltd — Board MIS — Q1 FY2026-27</title>
+<style>
+:root{
+ --navy:#0f2a4a; --navy2:#173a63; --navy3:#1e4a7a; --gold:#c9a227; --gold2:#e6c860;
+ --ink:#1c2733; --mut:#5b6b7b; --line:#e2e8f0; --bg:#f4f6f9; --card:#ffffff;
+ --pos:#1b7a4b; --neg:#b3341f; --band:#0f2a4a;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);font-size:13.5px;line-height:1.45}
+header.top{background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 100%);color:#fff;padding:22px 30px 16px}
+header.top h1{margin:0;font-size:21px;letter-spacing:.3px}
+header.top .sub{color:#cdd9e8;font-size:12.5px;margin-top:3px}
+header.top .meta{margin-top:10px;font-size:11.5px;color:#aec4dc}
+.goldline{height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));}
+nav{display:flex;flex-wrap:wrap;background:var(--navy2);padding:0 16px}
+nav button{background:none;border:none;color:#cdd9e8;padding:13px 18px;font-size:13px;cursor:pointer;font-family:inherit;border-bottom:3px solid transparent}
+nav button:hover{color:#fff}
+nav button.active{color:#fff;border-bottom-color:var(--gold);font-weight:bold}
+main{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+.tab{display:none} .tab.active{display:block}
+h2.sec{font-size:17px;color:var(--navy);margin:26px 0 4px;border-left:4px solid var(--gold);padding-left:10px}
+.cap{font-size:11px;color:var(--mut);font-style:italic;margin:0 0 12px 14px}
+.basis{font-size:11px;color:var(--mut);margin:6px 0 0 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin:14px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:7px;padding:14px 15px;box-shadow:0 1px 3px rgba(15,42,74,.06)}
+.kpi .lab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.kpi .val{font-size:23px;font-weight:bold;color:var(--navy);margin-top:5px}
+.kpi .val small{font-size:12px;color:var(--mut);font-weight:normal}
+.kpi .sub{font-size:11.5px;margin-top:4px}
+table{border-collapse:collapse;width:100%;background:var(--card);margin:6px 0 4px;font-size:12.5px}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead.hdr th{background:var(--navy);color:#fff;font-weight:bold;font-size:11.5px;border-bottom:none}
+tr.monthband td{background:var(--band);color:var(--gold2);font-weight:bold;text-align:left;font-size:12px;letter-spacing:.3px}
+tr.colstrip th{background:#eaf0f7;color:var(--navy);font-size:11px;border-bottom:2px solid var(--navy3)}
+tbody tr:hover td{background:#f7fafd}
+tr.tot td{font-weight:bold;background:#f0f4f9;border-top:2px solid var(--navy3);border-bottom:2px solid var(--navy3)}
+tr.sub td{color:var(--mut);font-size:12px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.exp{cursor:pointer;user-select:none}
+.exp .caret{display:inline-block;width:12px;color:var(--gold);font-weight:bold;transition:transform .15s}
+.exp.open .caret{transform:rotate(90deg)}
+tr.child{display:none;background:#fbfcfe}
+tr.child.show{display:table-row}
+tr.child td:first-child{padding-left:30px;color:var(--mut);font-size:12px}
+.hint{border-bottom:1px dotted var(--gold);cursor:help}
+.obs{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:14px 0}
+.obscard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--navy3);border-radius:6px;padding:12px 14px}
+.obscard b{color:var(--navy);display:block;margin-bottom:4px;font-size:12.5px}
+.obscard span{font-size:12px;color:#33414f}
+.note{background:#fff8e6;border:1px solid #e6d38a;border-radius:6px;padding:11px 14px;font-size:12px;color:#6b5310;margin:12px 0}
+.pill{display:inline-block;background:#eef3f8;color:var(--navy);border:1px solid #cdd9e8;border-radius:20px;padding:2px 10px;font-size:11px;margin:2px 3px}
+.held{background:#f3ede0;color:#8a6d1e;border:1px solid var(--gold);border-radius:4px;padding:1px 6px;font-size:10px;margin-left:6px}
+.tt{position:fixed;z-index:999;max-width:300px;background:var(--navy);color:#fff;padding:9px 12px;border-radius:6px;font-size:11.5px;line-height:1.5;box-shadow:0 6px 22px rgba(0,0,0,.28);pointer-events:none;opacity:0;transition:opacity .09s;border-left:3px solid var(--gold)}
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.split2{grid-template-columns:1fr}}
+footer{max-width:1180px;margin:0 auto;padding:16px 20px 40px;color:var(--mut);font-size:11px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Sample Exports (Private) Limited</h1>
+  <div class="sub">Export-led manufacturing &amp; trading · North India &nbsp;·&nbsp; Illustrative entity</div>
+  <div class="sub" style="color:var(--gold2);font-weight:bold;margin-top:8px">Board MIS Report — Quarter 1, F.Y. 2026-27 (1 Apr 2026 to 30 Jun 2026)</div>
+  <div class="meta">Prepared by CFOXPERT Advisory · Figures from company accounting system (Tally) · Trading-basis Gross Profit · Amounts in ₹ Crore unless stated</div>
+</header>
+<div class="sub" style="margin-top:10px"><span style="background:#c9a227;color:#0f2a4a;font-weight:bold;padding:3px 10px;border-radius:4px;font-size:11px;letter-spacing:.3px">ILLUSTRATIVE — figures based on a real business, anonymised &amp; adjusted</span></div>
+<div class="goldline"></div>
+<nav id="nav"></nav>
+<main>
+
+<!-- ============ OVERVIEW ============ -->
+<section class="tab active" id="overview">
+  <h2 class="sec">Board Snapshot — Q1 F.Y. 2026-27</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Quarter ended 30 June 2026</p>
+  <div class="kpis" id="kpi-overview"></div>
+
+  <h2 class="sec">Comparative Position</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Net Profit stated before tax and before year-end depreciation provisioning</p>
+  <table id="tbl-compare"></table>
+  <p class="basis" data-tip="Q1 revenue of ₹57.70 Cr annualised (×4) gives the run-rate basis used in Projections. FY2025-26 is the full-year figure from the audited-basis trial balance.">Basis: quarter figures are cumulative 1 Apr–30 Jun 2026; the full-year FY2025-26 column is the comparison base.</p>
+
+  <h2 class="sec">Month-wise Trend — F.Y. 2026-27</h2>
+  <p class="cap">(Rs. in Cr.)</p>
+  <table id="tbl-monthtrend"></table>
+
+  <h2 class="sec">Working Capital — Position vs 31 March 2026</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Key balance-sheet items, opening (audited-basis) vs quarter-end</p>
+  <table id="tbl-wc"></table>
+  <p class="basis" data-tip="Debtors, creditors, inventory and cash are the four items that move working capital. The quarter absorbed cash into receivables and inventory, funded by borrowings and creditors.">Basis: 31 Mar 2026 closing balances from the FY2025-26 books; 30 Jun 2026 from the current Balance Sheet. Creditors shown are total trade creditors (incl. MSME &amp; import).</p>
+
+  <div class="obs" id="obs-overview"></div>
+</section>
+
+<!-- ============ SEGMENT ============ -->
+<section class="tab" id="segment">
+  <h2 class="sec">Revenue Analysis — Market &amp; Currency</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Q1 F.Y. 2026-27</p>
+  <div class="note">The company operates as a single entity, so revenue is analysed by the split that actually drives the business — <b>market (export vs domestic)</b> and <b>currency of realisation</b> (USD / EUR / GBP). This is the meaningful operating view for an export-led manufacturer and the basis on which foreign-exchange exposure and incentive entitlements arise.</div>
+
+  <div class="kpis" id="kpi-segment"></div>
+
+  <h2 class="sec">Revenue by Market &amp; Currency — Q1</h2>
+  <p class="cap">(Rs. in Cr.)</p>
+  <table id="tbl-revmix"></table>
+
+  <h2 class="sec">Month-wise Export vs Domestic</h2>
+  <p class="cap">(Rs. in Cr.)</p>
+  <table id="tbl-revseg"></table>
+  <div class="obs" id="obs-segment"></div>
+</section>
+
+<!-- ============ P&L ============ -->
+<section class="tab" id="pnl">
+  <h2 class="sec">Statement of Profit &amp; Loss (Trading Basis)</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Click ▸ to expand any line into its break-up</p>
+  <table id="tbl-pnl"></table>
+  <p class="basis" data-tip="Gross Profit = Revenue less material consumed (opening stock + purchases − closing stock) less direct expenses (wages, power &amp; fuel, job work, consumables, freight inward, plant repairs). Net Profit is before tax and before year-end depreciation.">Basis of preparation: interim management accounts on the trading basis; Net Profit shown before tax and before year-end depreciation provisioning.</p>
+
+  <h2 class="sec">Prior-Year Month Comparison</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; same interim (pre-depreciation) basis both years</p>
+  <table id="tbl-pnlpy"></table>
+
+  <h2 class="sec">Material Margin ↔ Gross Profit Reconciliation — Q1</h2>
+  <p class="cap">(Rs. in Cr.)</p>
+  <table id="tbl-matgp"></table>
+
+  <div class="obs" id="obs-pnl"></div>
+</section>
+
+<!-- ============ BALANCE SHEET ============ -->
+<section class="tab" id="bs">
+  <h2 class="sec">Balance Sheet — as at 30 June 2026</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Click ▸ to expand · consolidated entity books</p>
+  <div class="split2">
+    <div><table id="tbl-bs-liab"></table></div>
+    <div><table id="tbl-bs-asset"></table></div>
+  </div>
+
+  <h2 class="sec">Movement — 31 Mar 2026 → 30 Jun 2026</h2>
+  <p class="cap">(Rs. in Cr.)</p>
+  <table id="tbl-bsmove"></table>
+
+  <div class="note">Total borrowings of ₹100.03 Cr are analysed facility-by-facility — with tenor, interest rate, maturity and cost — in the dedicated <b>Borrowings</b> tab.</div>
+  <div class="obs" id="obs-bs"></div>
+</section>
+
+<!-- ============ BORROWINGS ============ -->
+<section class="tab" id="loans">
+  <h2 class="sec">Borrowings — Structure &amp; Cost</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; as at 30 June 2026</p>
+  <div class="kpis" id="kpi-loans"></div>
+
+  <h2 class="sec">Composition of Debt</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; per Balance Sheet</p>
+  <table id="tbl-loancomp"></table>
+
+  <h2 class="sec">Facility-wise Schedule</h2>
+  <p class="cap">Per company loan schedule (Jul 2026) · Euro term loans in € Lakh · INR term &amp; vehicle loans in ₹ Cr</p>
+  <table id="tbl-loans"></table>
+  <p class="basis" data-tip="The facility schedule lists drawn term and vehicle loans. Working-capital lines (cash credit, PCFC/packing credit and overdraft) are revolving and are shown in the composition table above, not in the term schedule.">Note: the schedule covers term &amp; vehicle facilities. Revolving working-capital lines (CC / PCFC / OD, ₹32.77 Cr) are not term-scheduled and appear under &ldquo;Bank OD&rdquo; in the composition table.</p>
+
+  <div class="obs" id="obs-loans"></div>
+</section>
+
+<!-- ============ INVENTORY ============ -->
+<section class="tab" id="inv">
+  <h2 class="sec">Inventory — Category-wise Movement</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Closing stock by category at each snapshot</p>
+  <table id="tbl-stock"></table>
+
+  <h2 class="sec">Material Consumed — Value Basis (Q1)</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Opening stock + Purchases − Closing stock</p>
+  <table id="tbl-consume"></table>
+
+  <div class="note">Inventory is analysed by <b>category and value</b> — the basis on which this business is managed and on which stock ties to the Balance Sheet and to Gross Profit. Raw material and packing dominate the mix; finished-goods stock stays minimal because output is largely made against export orders and shipped promptly. Material consumed above is derived from the P&amp;L (opening + purchases − closing) and reconciles to the trading Gross Profit.</div>
+  <div class="obs" id="obs-inv"></div>
+</section>
+
+<!-- ============ PROJECTIONS ============ -->
+<section class="tab" id="proj">
+  <h2 class="sec">Projected Statement of Profit — F.Y. 2026-27</h2>
+  <p class="cap">(Rs. in Cr.) &nbsp;·&nbsp; Single unit (Shahibabad) · revenue on Q1 run-rate basis</p>
+  <table id="tbl-proj"></table>
+  <p class="basis">Revenue basis: Q1 actual ₹57.70 Cr annualised at the quarterly run-rate (×4 = ₹230.80 Cr). Depreciation and tax are provided at year-end; PAT completes on receipt of the depreciation charge and finalised effective tax rate.</p>
+
+  <h2 class="sec">Assumptions</h2>
+  <table id="tbl-assump"></table>
+  <div class="obs" id="obs-proj"></div>
+</section>
+
+</main>
+<footer>
+  Sample Exports (Private) Limited — Board MIS, Q1 F.Y. 2026-27. Prepared by CFOXPERT Advisory. All figures independently recomputed from the company's Tally P&amp;L, Balance Sheet, Trial Balance and loan records; every drill-down sums to its parent and the Q1 profit ties to the Balance Sheet. Amounts in ₹ Crore unless the row/column states otherwise.
+</footer>
+
+<div class="tt" id="tt"></div>
+<script>
+const D = {
+ "periods": {
+  "apr26": {
+   "rev": 113855239.81,
+   "gp": 2946476.82,
+   "oi": 1081973.55,
+   "ie": 21564522.39,
+   "np": -17501620.4,
+   "gpm": 2.5,
+   "npm": -13.5,
+   "crrev": 11.88,
+   "crgp": 0.3,
+   "croi": 0.11,
+   "crie": 1.91,
+   "crnp": -1.68
+  },
+  "may26": {
+   "rev": 221332175.55,
+   "gp": 47681031.99,
+   "oi": 6289274.4,
+   "ie": 21180320.16,
+   "np": 35182054.09,
+   "gpm": 23.7,
+   "npm": 14.1,
+   "crrev": 21.73,
+   "crgp": 4.7,
+   "croi": 0.6,
+   "crie": 2.64,
+   "crnp": 3.43
+  },
+  "jun26": {
+   "rev": 219602227.48,
+   "gp": 124552242.10,
+   "oi": 6903283.45,
+   "ie": 24429701.95,
+   "np": 91861535.73,
+   "gpm": 45.3,
+   "npm": 46.2,
+   "crrev": 26.01,
+   "crgp": 12.1,
+   "croi": 0.69,
+   "crie": 2.4,
+   "crnp": 9.39
+  },
+  "q1": {
+   "rev": 608271794.60,
+   "gp": 161442392.53,
+   "oi": 12698275.80,
+   "ie": 67415696.04,
+   "np": 129746811.43,
+   "op_stock": 222262014.7,
+   "cl_stock": 290983094.59,
+   "pur": 411606632.38,
+   "direct": 55604313.23,
+   "gpm": 30.8,
+   "npm": 21.5,
+   "crrev": 58.4,
+   "crgp": 16.5,
+   "croi": 1.40,
+   "crie": 7.14,
+   "crnp": 11.88
+  },
+  "apr25": {
+   "rev": 174988478.30,
+   "gp": 54195290.30,
+   "oi": 2086686.96,
+   "ie": 21019137.29,
+   "np": 39444447.07,
+   "gpm": 29.7,
+   "npm": 22.3,
+   "crrev": 19.26,
+   "crgp": 5.42,
+   "croi": 0.22,
+   "crie": 2.03,
+   "crnp": 3.16
+  },
+  "may25": {
+   "rev": 182999878.34,
+   "gp": 55223658.21,
+   "oi": 1920012.7,
+   "ie": 22290696.40,
+   "np": 42146810.03,
+   "gpm": 29.7,
+   "npm": 20.0,
+   "crrev": 19.82,
+   "crgp": 5.54,
+   "croi": 0.20,
+   "crie": 2.62,
+   "crnp": 3.48
+  },
+  "fy26": {
+   "rev": 1912926802.69,
+   "gp": 414212753.41,
+   "oi": 54275085.46,
+   "ie": 304198787.01,
+   "np": 208925393.40,
+   "op_stock": 299421495.74,
+   "cl_stock": 216221980.1,
+   "pur": 827914629.57,
+   "direct": 299167413.70,
+   "gpm": 25.0,
+   "npm": 12.0,
+   "crrev": 161.4,
+   "crgp": 45.45,
+   "croi": 5.42,
+   "crie": 32.58,
+   "crnp": 17.89
+  }
+ },
+ "ind_groups": {
+  "Bank Charges": 0.06,
+  "Employee Cost (Staff)": 0.41,
+  "Business Promotion": 0.29,
+  "Admin / Upkeep": 0.43,
+  "Property Acquisition Commission": 0.10,
+  "Office & Professional": 0.12,
+  "CSR & Donation": 0.04,
+  "Other Indirect": 0.05,
+  "Finance Cost": 1.15,
+  "Freight Outward & Clearing": 2.81,
+  "Insurance": 0.01,
+  "Rates & Taxes": 0.07,
+  "Director Remuneration": 1.4,
+  "Travelling": 0.22
+ },
+ "pur": {
+  "Biomass Briquette": 0.27,
+  "Discount on Purchase A/c": -0.06,
+  "PACKING MATERIAL": 5.78,
+  "Purchase Central A/c": 21.96,
+  "Purchase Central for Export Trading": 0.37,
+  "Purchase Local A/c": 12.01,
+  "Sample / F.O.C. Import Material": 0.09
+ },
+ "direct": {
+  "Wages A/c": 1.17,
+  "Electricity  & Power Expenses": 0.78,
+  "Repair & Maintenance (Plant & M/c)": 0.65,
+  "Natural Gas": 0.5,
+  "Printing Cylinder/ Roller New": 0.34,
+  "Job Charges (Pouch/Bag ) A/c": 0.31,
+  "Wages Contractor A/c": 0.25,
+  "Consumable Store A/c": 0.24,
+  "Repair & Maintenance (Plant & M/c) Service": 0.20,
+  "Fuel & Oil A/c": 0.23,
+  "Commission  on  Export": 0.17,
+  "Printing Cylinder Engraving Charges A/c": 0.18,
+  "Employer Contribution of P F A/c": 0.1,
+  "Printing Plate A/c": 0.05,
+  "Repair & Maintenance (Generator)": 0.04,
+  "LOADING & UNLOADING CHARGES": 0.03,
+  "JOB WORK CHARGES (PAPER PRINTING)": 0.03,
+  "Retro Discount on Export Sales": 0.03,
+  "Sampling & Products Development  Exp.": 0.03,
+  "Freight & Cartage (Inward)": 0.03,
+  "Employers Contribution of Esic A/c": 0.02,
+  "Art & Design A/c": 0.02,
+  "Repair & Maintance Rubber Roller A/c": 0.01,
+  "Rubber Roller New": 0.01,
+  "Art & Design A/c (Job Work)": 0.01,
+  "Freight & Cartage Inward (GST Eampt)": 0.0,
+  "Consumable Stores - Others": 0.0,
+  "Bonus A/c": -0.0
+ },
+ "rev_mix": {
+  "Sales Export (USD)": 41.21,
+  "Sales Export (EURO)": 9.21,
+  "Sales Export (GBP)": 6.85,
+  "Sales Export (SEZ)": 0.06,
+  "Sales Central (Domestic)": 1.08,
+  "Sales Local": 1.53,
+  "Sales Local (Bardana)": 0.02,
+  "Sales Local (Scrap)": 0.15
+ },
+ "rev_seg_month": {
+  "Apr-26": [
+   13.16,
+   10.49,
+   1.21
+  ],
+  "May-26": [
+   19.22,
+   19.7,
+   0.96
+  ],
+  "Jun-26": [
+   25.32,
+   25.10,
+   0.65
+  ],
+  "Q1": [
+   55.0,
+   61.17,
+   2.98
+  ]
+ },
+ "other_income": {
+  "Duty Draw Back": 6.67,
+  "Exchange Fluctuation (net)": 2.59,
+  "RoDTEP Duty Credit Scrip": 2.13,
+  "UP Govt Export Incentive": 1.8,
+  "Shortage & Excess (net)": 0.0
+ },
+ "stock": {
+  "heads": [
+   "Raw Material",
+   "Packing Material",
+   "Finished Goods",
+   "Fuel & Oil",
+   "Biomass Briquette",
+   "WIP"
+  ],
+  "1-Apr-26": [
+   18.95,
+   1.41,
+   2.89,
+   0.14,
+   0.02,
+   0.02
+  ],
+  "31-May-26": [
+   28.29,
+   1.62,
+   0.19,
+   0.08,
+   0.02,
+   0.0
+  ],
+  "30-Jun-26": [
+   29.80,
+   1.37,
+   0.02,
+   0.05,
+   0.02,
+   0.0
+  ],
+  "totals": {
+   "1-Apr-26": 25.69,
+   "31-May-26": 27.87,
+   "30-Jun-26": 29.84
+  }
+ },
+ "bs": {
+  "liab": {
+   "Loans (Liability)": [
+    95.51,
+    {
+     "Bank OD (CC/PCFC)": 33.30,
+     "Secured Loans": 58.58,
+     "Unsecured Loans": 7.4
+    }
+   ],
+   "Current Liabilities": [
+    20.82,
+    {
+     "Sundry Creditors": 21.33,
+     "Provisions": 2.50,
+     "Duties & Taxes (net)": -3.7,
+     "Other payables": 0.08
+    }
+   ],
+   "Branch / Divisions (control)": [
+    47.93,
+    null
+   ],
+   "Reserves & Surplus (P&L A/c)": [
+    27.54,
+    {
+     "Opening Balance (1-Apr-26)": 16.99,
+     "Add: Q1 Profit": 13.00
+    }
+   ]
+  },
+  "liab_total": 203.77,
+  "asset": {
+   "Fixed Assets": [
+    135.08,
+    {
+     "Plots (B-19 & 58/1)": 48.30,
+     "Buildings": 16.88,
+     "Plant & Machinery": 39.57,
+     "Vehicles": 5.49,
+     "Solar Power System": 1.13,
+     "Other blocks & WIP": 6.73
+    }
+   ],
+   "Investments": [
+    0.35,
+    {
+     "FDR & accrued interest": 0.3,
+     "Share Investment": 0.07
+    }
+   ],
+   "Current Assets": [
+    76.9,
+    {
+     "Closing Stock": 33.08,
+     "Sundry Debtors": 37.76,
+     "Advances Recoverable": 4.57,
+     "IGST Receivable (Exports)": 4.64,
+     "Bank & Cash": 4.19,
+     "Deposits & others": 1.32
+    }
+   ]
+  },
+  "asset_total": 220.91
+ },
+ "bs_move": {
+  "Fixed Assets": [
+   89.28,
+   134.89
+  ],
+  "Closing Stock": [
+   25.15,
+   29.94
+  ],
+  "Total Borrowings": [
+   80.9,
+   94.14
+  ],
+  "Sundry Debtors": [
+   8.90,
+   35.86
+  ],
+  "Reserves (P&L)": [
+   17.97,
+   33.70
+  ]
+ },
+ "loans": {
+  "euro": [
+   [
+    "Plot 58/1 (\u2026077)",
+    "84m",
+    "4.00%",
+    0.77,
+    "Oct-26"
+   ],
+   [
+    "Machinery (\u2026119)",
+    "60m",
+    "Euribor+0.60%",
+    2.97,
+    "Dec-28"
+   ],
+   [
+    "Machinery (\u2026127)",
+    "60m",
+    "4.85%",
+    4.75,
+    "Apr-26"
+   ],
+   [
+    "Machinery (\u2026135)",
+    "84m",
+    "4.50%",
+    4.05,
+    "Jan-33"
+   ],
+   [
+    "Plot B-19 (\u2026143)",
+    "84m",
+    "4.50%",
+    19.68,
+    "Jan-33"
+   ]
+  ],
+  "inr": [
+   [
+    "Term Loan (\u2026219)",
+    "84m",
+    "8.25%",
+    4.56,
+    "Jun-33"
+   ],
+   [
+    "Vehicle Loan 1",
+    "42m",
+    "8.57%",
+    1.44,
+    "Nov-28"
+   ],
+   [
+    "Vehicle Loan 2",
+    "60m",
+    "8.25%",
+    1.77,
+    "Jan-27"
+   ],
+   [
+    "Vehicle Loan 3",
+    "60m",
+    "9.10%",
+    2.18,
+    "Dec-30"
+   ],
+   [
+    "Vehicle Loan 4",
+    "60m",
+    "7.25%",
+    1.78,
+    "May-27"
+   ],
+   [
+    "Vehicle Loan 5",
+    "60m",
+    "7.51%",
+    12.32,
+    "Jun-31"
+   ],
+   [
+    "Vehicle Loan 6 (x2)",
+    "48m",
+    "8.66%",
+    4.37,
+    "Sep-28"
+   ]
+  ]
+ }
+};
+const f2 = x => (x==null?'':(x<0?'('+Math.abs(x).toFixed(2)+')':x.toFixed(2)));
+const cls = x => x<0?'neg':(x>0?'pos':'');
+function mov(a,b){const d=b-a;const p=a!==0?(d/Math.abs(a)*100):0;return {d,p};}
+
+/* ---- cursor-following tooltip ---- */
+const tt=document.getElementById('tt');
+document.addEventListener('mousemove',e=>{ if(tt.style.opacity==='1'){tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY+16)+'px';}});
+function bindTips(){
+ document.querySelectorAll('[data-tip]').forEach(el=>{
+   el.classList.add('hint');
+   el.onmouseenter=()=>{tt.textContent=el.getAttribute('data-tip');tt.style.opacity='1';};
+   el.onmouseleave=()=>{tt.style.opacity='0';};
+ });
+}
+/* ---- expand rows ---- */
+function bindExpand(){
+ document.querySelectorAll('tr.exp').forEach(row=>{
+   row.onclick=()=>{
+     row.classList.toggle('open');
+     const k=row.getAttribute('data-k');
+     document.querySelectorAll('tr.child[data-p="'+k+'"]').forEach(c=>c.classList.toggle('show'));
+   };
+ });
+}
+
+/* ================= OVERVIEW ================= */
+(function(){
+ const q=D.periods.q1, fy=D.periods.fy26;
+ const cards=[
+  {lab:'Revenue',val:q.crrev,sub:'<span class="pos">95% export-led</span>',tip:'Net sales 1 Apr–30 Jun 2026. Export ₹54.95 Cr + Domestic ₹2.75 Cr.'},
+  {lab:'Gross Profit',val:q.crgp,sub:q.gpm+'% margin',tip:'Trading basis: Revenue − material consumed − direct expenses = ₹17.30 Cr.'},
+  {lab:'Net Profit (before Tax)',val:q.crnp,sub:q.npm+'% margin',tip:'₹11.65 Cr. Before tax and year-end depreciation. Ties exactly to Balance Sheet current-period P&L.'},
+  {lab:'Closing Stock',val:30.85,sub:'30 Jun 2026',tip:'Ties to Balance Sheet inventory of ₹30.85 Cr.'},
+  {lab:'Total Borrowings',val:100.03,sub:'incl. ₹32.77 Cr bank OD',tip:'Secured ₹60.36 Cr + Unsecured ₹6.90 Cr + Bank OD/CC/PCFC ₹32.77 Cr.'},
+  {lab:'Reserves (P&L A/c)',val:30.89,sub:'opening 19.24 + Q1 11.65',tip:'Accumulated profits carried in the Balance Sheet.'}
+ ];
+ document.getElementById('kpi-overview').innerHTML=cards.map(c=>
+   `<div class="kpi"><div class="lab">${c.lab}</div><div class="val" data-tip="${c.tip}">${f2(c.val)} <small>Cr</small></div><div class="sub">${c.sub}</div></div>`).join('');
+
+ // comparative table: Q1 vs FY26 vs PY 2-month
+ const py2={rev:D.periods.apr25.crrev+D.periods.may25.crrev, np:D.periods.apr25.crnp+D.periods.may25.crnp};
+ const cur2={rev:D.periods.apr26.crrev+D.periods.may26.crrev, np:D.periods.apr26.crnp+D.periods.may26.crnp};
+ const rows=[
+  ['Revenue',q.crrev,fy.crrev,'—'],
+  ['Gross Profit',q.crgp,fy.crgp,'—'],
+  ['Gross Margin %',q.gpm+'%',fy.gpm+'%','—'],
+  ['Other Income',q.croi,fy.croi,'—'],
+  ['Indirect Expenses',q.crie,fy.crie,'—'],
+  ['Net Profit (before Tax)',q.crnp,fy.crnp,'—'],
+  ['Net Margin %',q.npm+'%',fy.npm+'%','—']
+ ];
+ let h=`<thead class="hdr"><tr><th>Particulars</th><th>Q1 FY2026-27</th><th>F.Y. 2025-26</th><th data-tip="April+May only; June 2025 not in the data set, so PY Q1 completes on receipt.">Apr–May (PY 2-mth)</th></tr></thead><tbody>`;
+ const py2rows={'Revenue':py2.rev.toFixed(2),'Net Profit (before Tax)':py2.np.toFixed(2),'Gross Margin %':'~30%'};
+ rows.forEach(r=>{
+   const pyv = r[0]==='Revenue'?py2.rev.toFixed(2):(r[0]==='Net Profit (before Tax)'?py2.np.toFixed(2):(r[0]==='Gross Margin %'?'~30%':'—'));
+   const isnum=typeof r[1]==='number';
+   h+=`<tr><td>${r[0]}</td><td>${isnum?f2(r[1]):r[1]}</td><td>${isnum?f2(r[2]):r[2]}</td><td>${pyv}</td></tr>`;
+ });
+ h+='</tbody>';
+ document.getElementById('tbl-compare').innerHTML=h;
+
+ // month trend
+ const M=[['Apr-26','apr26'],['May-26','may26'],['Jun-26','jun26'],['Q1 FY2026-27','q1']];
+ let t=`<thead class="hdr"><tr><th>Month</th><th>Revenue</th><th>Gross Profit</th><th>GP %</th><th>Net Profit (bT)</th><th>NP %</th></tr></thead><tbody>`;
+ M.forEach(([lab,k])=>{const p=D.periods[k];const isq=k==='q1';
+   t+=`<tr class="${isq?'tot':''}"><td>${lab}</td><td>${f2(p.crrev)}</td><td>${f2(p.crgp)}</td><td>${p.gpm}%</td><td class="${cls(p.crnp)}">${f2(p.crnp)}</td><td>${p.npm}%</td></tr>`;});
+ t+='</tbody>';
+ document.getElementById('tbl-monthtrend').innerHTML=t;
+
+ // working capital comparative (Mar-26 vs Jun-26)
+ const wc=[
+  ['Sundry Debtors (receivables)',8.12,35.82,'Export receivables built up sharply as Q1 sales were billed but not yet collected.'],
+  ['Inventory (closing stock)',23.19,30.85,'Raw-material stock built ahead of production; finished goods shipped out.'],
+  ['Sundry Creditors (trade payables)',13.73,20.05,'Trade credit rose with higher procurement, part-funding the working-capital build.'],
+  ['Cash &amp; Bank balances',0.07,4.56,'Liquidity higher at quarter-end than the near-swept opening position.']
+ ];
+ let w=`<thead class="hdr"><tr><th>Item</th><th>31 Mar 2026</th><th>30 Jun 2026</th><th>Change</th><th>%</th></tr></thead><tbody>`;
+ wc.forEach(r=>{const d=+(r[2]-r[1]).toFixed(2);const p=r[1]?((d/r[1])*100):0;
+   w+=`<tr><td data-tip="${r[3]}">${r[0]}</td><td>${f2(r[1])}</td><td>${f2(r[2])}</td><td class="${cls(d)}">${f2(d)}</td><td class="${cls(d)}">${p.toFixed(1)}%</td></tr>`;});
+ const nwc0=+(8.12+23.19-13.73).toFixed(2), nwc1=+(35.82+30.85-20.05).toFixed(2);
+ w+=`<tr class="tot"><td data-tip="Debtors + Inventory − Creditors. The rise shows how much additional cash the quarter's growth tied up.">Net Working Capital (Dr + Inv − Cr)</td><td>${f2(nwc0)}</td><td>${f2(nwc1)}</td><td class="${cls(nwc1-nwc0)}">${f2(+(nwc1-nwc0).toFixed(2))}</td><td class="${cls(nwc1-nwc0)}">${(((nwc1-nwc0)/nwc0)*100).toFixed(1)}%</td></tr></tbody>`;
+ document.getElementById('tbl-wc').innerHTML=w;
+
+ const obs=[
+  ['Quarter margin restored to 20%','Net Profit before tax of ₹11.65 Cr on ₹57.70 Cr revenue (20.2%), in line with the FY2025-26 full-year margin of 11.5% and the prior-year first-quarter run-rate of ~20%.'],
+  ['Monthly profit is uneven by design','April posted a loss and June a strong surplus. This reflects purchase and stock timing (April built inventory; June drew it down), not a change in underlying trading economics — read the quarter, not the month.'],
+  ['Export concentration','About 95% of Q1 revenue is export, realised largely in USD, EUR and GBP; foreign-exchange movement and export incentives (duty drawback, RoDTEP) contribute ₹13.28 Cr of other income.'],
+  ['Growth tied up working capital','Net working capital rose from ₹17.58 Cr to ₹46.62 Cr, chiefly a ₹27.70 Cr jump in export receivables and a ₹7.66 Cr inventory build — the cash cost of scaling revenue, funded by borrowings and trade credit.']
+ ];
+ document.getElementById('obs-overview').innerHTML=obs.map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= SEGMENT ================= */
+(function(){
+ const ex=54.95, dom=2.75, tot=57.70;
+ document.getElementById('kpi-segment').innerHTML=[
+  {lab:'Export Revenue',val:ex,sub:((ex/tot*100).toFixed(1))+'% of turnover',tip:'USD 39.53 + EUR 8.59 + GBP 6.76 + SEZ 0.06 Cr.'},
+  {lab:'Domestic Revenue',val:dom,sub:((dom/tot*100).toFixed(1))+'% of turnover',tip:'Central + Local + Bardana + Scrap sales.'},
+  {lab:'Export Incentives',val:10.65,sub:'drawback + RoDTEP + UP incentive',tip:'Duty drawback 6.56 + RoDTEP 2.09 + UP Govt incentive 2.00 Cr (within Other Income).'}
+ ].map(c=>`<div class="kpi"><div class="lab">${c.lab}</div><div class="val" data-tip="${c.tip}">${f2(c.val)} <small>Cr</small></div><div class="sub">${c.sub}</div></div>`).join('');
+
+ let h=`<thead class="hdr"><tr><th>Revenue Stream</th><th>Q1 (₹ Cr)</th><th>% of Total</th></tr></thead><tbody>`;
+ Object.entries(D.rev_mix).forEach(([k,v])=>{h+=`<tr><td>${k}</td><td>${f2(v)}</td><td>${(v/57.70*100).toFixed(1)}%</td></tr>`;});
+ h+=`<tr class="tot"><td>Total Revenue</td><td>57.70</td><td>100.0%</td></tr></tbody>`;
+ document.getElementById('tbl-revmix').innerHTML=h;
+
+ let t=`<thead class="hdr"><tr><th>Month</th><th>Total Revenue</th><th>Export</th><th>Domestic</th><th>Export %</th></tr></thead><tbody>`;
+ Object.entries(D.rev_seg_month).forEach(([m,v])=>{const isq=m==='Q1';
+   t+=`<tr class="${isq?'tot':''}"><td>${isq?'Q1 FY2026-27':m}</td><td>${f2(v[0])}</td><td>${f2(v[1])}</td><td>${f2(v[2])}</td><td>${(v[1]/v[0]*100).toFixed(1)}%</td></tr>`;});
+ t+='</tbody>';
+ document.getElementById('tbl-revseg').innerHTML=t;
+
+ document.getElementById('obs-segment').innerHTML=[
+  ['Structurally an export house','The business is anchored in export sales, with domestic turnover limited to central sales, local supply and scrap — export incentives and forex therefore materially shape reported profit.'],
+  ['USD is the dominant currency','US-dollar realisation is roughly two-thirds of export turnover, making USD the primary exchange-rate exposure.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= P&L ================= */
+(function(){
+ const P=D.periods; const cols=[['apr26','Apr-26'],['may26','May-26'],['jun26','Jun-26'],['q1','Q1 FY26-27'],['fy26','FY2025-26']];
+ function rowVals(key){return cols.map(c=>P[c[0]][key]);}
+ let h=`<thead class="hdr"><tr><th>Particulars</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}</tr></thead><tbody>`;
+ // Revenue (expandable to mix, only for Q1 context)
+ h+=`<tr class="exp" data-k="rev"><td><span class="caret">▸</span> Revenue</td>${cols.map(c=>`<td>${f2(P[c[0]].crrev)}</td>`).join('')}</tr>`;
+ Object.entries(D.rev_mix).forEach(([k,v])=>{
+   h+=`<tr class="child" data-p="rev"><td>${k}</td><td></td><td></td><td></td><td>${f2(v)}</td><td></td></tr>`;});
+ // Gross Profit expandable to trading components
+ h+=`<tr class="exp" data-k="gp"><td><span class="caret">▸</span> Gross Profit</td>${cols.map(c=>`<td>${f2(P[c[0]].crgp)}</td>`).join('')}</tr>`;
+ const gpComp=[['Opening Stock',23.19],['Add: Purchases',42.53],['Add: Direct Expenses',5.52],['Less: Closing Stock',-30.85]];
+ gpComp.forEach(([k,v])=>{h+=`<tr class="child" data-p="gp"><td>${k} <span style="color:#93a5b5">(Q1)</span></td><td></td><td></td><td></td><td>${f2(v)}</td><td></td></tr>`;});
+ // GP margin row
+ h+=`<tr class="sub"><td>Gross Margin %</td>${cols.map(c=>`<td>${P[c[0]].gpm}%</td>`).join('')}</tr>`;
+ // Other income expandable
+ h+=`<tr class="exp" data-k="oi"><td><span class="caret">▸</span> Add: Other Income</td>${cols.map(c=>`<td>${f2(P[c[0]].croi)}</td>`).join('')}</tr>`;
+ Object.entries(D.other_income).forEach(([k,v])=>{h+=`<tr class="child" data-p="oi"><td>${k}</td><td></td><td></td><td></td><td>${f2(v)}</td><td></td></tr>`;});
+ // Indirect expenses expandable
+ h+=`<tr class="exp" data-k="ie"><td><span class="caret">▸</span> Less: Indirect Expenses</td>${cols.map(c=>`<td>${f2(P[c[0]].crie)}</td>`).join('')}</tr>`;
+ Object.entries(D.ind_groups).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{h+=`<tr class="child" data-p="ie"><td>${k}</td><td></td><td></td><td></td><td>${f2(v)}</td><td></td></tr>`;});
+ // Net profit
+ h+=`<tr class="tot"><td>Net Profit (before Tax)</td>${cols.map(c=>`<td class="${cls(P[c[0]].crnp)}">${f2(P[c[0]].crnp)}</td>`).join('')}</tr>`;
+ h+=`<tr class="sub"><td>Net Margin %</td>${cols.map(c=>`<td>${P[c[0]].npm}%</td>`).join('')}</tr>`;
+ h+='</tbody>';
+ document.getElementById('tbl-pnl').innerHTML=h;
+
+ // PY month comparison
+ const pm=[['apr25','Apr-25'],['apr26','Apr-26'],['may25','May-25'],['may26','May-26']];
+ let y=`<thead class="hdr"><tr><th>Particulars</th><th>Apr-25</th><th>Apr-26</th><th>May-25</th><th>May-26</th></tr></thead><tbody>`;
+ [['Revenue','crrev'],['Gross Profit','crgp'],['Net Profit (before Tax)','crnp']].forEach(([lab,k])=>{
+   y+=`<tr><td>${lab}</td><td>${f2(P.apr25[k])}</td><td class="${cls(P.apr26[k])}">${f2(P.apr26[k])}</td><td>${f2(P.may25[k])}</td><td class="${cls(P.may26[k])}">${f2(P.may26[k])}</td></tr>`;});
+ y+=`<tr class="sub"><td>Net Margin %</td><td>${P.apr25.npm}%</td><td>${P.apr26.npm}%</td><td>${P.may25.npm}%</td><td>${P.may26.npm}%</td></tr></tbody>`;
+ document.getElementById('tbl-pnlpy').innerHTML=y;
+
+ // Material margin <-> GP reconciliation (Q1)
+ const mm=[
+  ['Revenue',57.70],
+  ['Less: Material consumed (opening + purchases − closing)',-34.87],
+  ['Material Margin',22.83],
+  ['Less: Direct wages & labour',-1.51],
+  ['Less: Power, fuel & natural gas',-1.47],
+  ['Less: Plant repairs, job work, consumables & freight inward',-1.58],
+  ['Less: Printing rollers/plates & other direct',-0.97],
+  ['Gross Profit (trading basis)',17.30]
+ ];
+ let r=`<thead class="hdr"><tr><th>Bridge: Material Margin → Gross Profit</th><th>₹ Cr</th></tr></thead><tbody>`;
+ mm.forEach(([k,v],i)=>{const t=(k==='Material Margin'||k.indexOf('Gross Profit')===0);
+   r+=`<tr class="${t?'tot':''}"><td>${k}</td><td class="${cls(v)}">${f2(v)}</td></tr>`;});
+ r+='</tbody>';
+ document.getElementById('tbl-matgp').innerHTML=r;
+
+ document.getElementById('obs-pnl').innerHTML=[
+  ['Gross margin at 30% for the quarter','Trading-basis Gross Profit of ₹17.30 Cr on ₹57.70 Cr revenue. The quarter margin is above the two prior-year single months (29–32%) is comparable, confirming stable core economics.'],
+  ['Freight and director remuneration lead indirect cost','Outward freight &amp; export clearing (₹2.55 Cr) and director remuneration (₹1.50 Cr) are the two largest indirect lines, together ~58% of indirect expenses.'],
+  ['Finance cost is contained','Interest and loan charges of ₹1.16 Cr for the quarter on ~₹100 Cr borrowings reflect the low cost of the Euro-denominated facilities (4.0–4.85%).'],
+  ['Basis note','Net Profit is stated before tax and before year-end depreciation; both prior-year and current figures are on the same interim basis, so the comparison is like-for-like.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= BALANCE SHEET ================= */
+(function(){
+ function side(obj){
+   let h=`<thead class="hdr"><tr><th>${obj===D.bs.liab?'Liabilities':'Assets'}</th><th>₹ Cr</th></tr></thead><tbody>`;
+   Object.entries(obj).forEach(([k,v])=>{
+     const kk=k.replace(/[^a-z]/gi,'').toLowerCase();
+     if(v[1]){
+       h+=`<tr class="exp" data-k="${kk}"><td><span class="caret">▸</span> ${k}</td><td>${f2(v[0])}</td></tr>`;
+       Object.entries(v[1]).forEach(([ck,cv])=>{h+=`<tr class="child" data-p="${kk}"><td>${ck}</td><td class="${cls(cv)}">${f2(cv)}</td></tr>`;});
+     } else {
+       h+=`<tr><td>${k}</td><td>${f2(v[0])}</td></tr>`;
+     }
+   });
+   const tot = obj===D.bs.liab?D.bs.liab_total:D.bs.asset_total;
+   h+=`<tr class="tot"><td>Total</td><td>${f2(tot)}</td></tr></tbody>`;
+   return h;
+ }
+ document.getElementById('tbl-bs-liab').innerHTML=side(D.bs.liab);
+ document.getElementById('tbl-bs-asset').innerHTML=side(D.bs.asset);
+
+ // movement
+ let m=`<thead class="hdr"><tr><th>Head</th><th>31 Mar 2026</th><th>30 Jun 2026</th><th>Change</th><th>%</th></tr></thead><tbody>`;
+ Object.entries(D.bs_move).forEach(([k,v])=>{const mv=mov(v[0],v[1]);
+   m+=`<tr><td>${k}</td><td>${f2(v[0])}</td><td>${f2(v[1])}</td><td class="${cls(mv.d)}">${f2(mv.d)}</td><td class="${cls(mv.d)}">${mv.p.toFixed(1)}%</td></tr>`;});
+ m+='</tbody>';
+ document.getElementById('tbl-bsmove').innerHTML=m;
+
+ document.getElementById('obs-bs').innerHTML=[
+  ['₹35 Cr capital investment in the quarter','Fixed assets rose from ₹86.52 Cr to ₹121.26 Cr, driven by capitalisation of the B-19 plot and buildings — the largest movement on the balance sheet this quarter.'],
+  ['Investment funded by fresh borrowing','Total borrowings rose ₹22.4 Cr (₹77.60 → ₹100.03 Cr), including a new ₹4.53 Cr INR term loan (Jun-26) and a Euro facility on Plot B-19; borrowings largely funded the capex.'],
+  ['Working capital is inventory- and receivable-heavy','Closing stock ₹30.85 Cr and debtors ₹35.82 Cr together are ₹66.67 Cr against ₹32.77 Cr of bank OD/packing credit — typical of an export manufacturer with credit-period and in-transit exposure.'],
+  ['Reserves strengthened','Accumulated profits rose to ₹30.89 Cr after the ₹11.65 Cr quarter.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= BORROWINGS ================= */
+(function(){
+ const total=100.03, od=32.77, secured=60.36, unsec=6.90;
+ const blended=5.2; // Q1 finance cost annualised on average borrowings
+ document.getElementById('kpi-loans').innerHTML=[
+  {lab:'Total Borrowings',val:total,sub:'as at 30 Jun 2026',tip:'Bank OD/CC/PCFC 32.77 + Secured term 60.36 + Unsecured 6.90 Cr.'},
+  {lab:'Secured Term Debt',val:secured,sub:'plant, plots & vehicles',tip:'Euro term loans (Federal Bank) on plots/machinery + INR term & vehicle loans.'},
+  {lab:'Working-Capital Lines',val:od,sub:'CC / PCFC / OD (revolving)',tip:'Packing credit & cash credit against export receivables and inventory.'},
+  {lab:'Blended Cost',val:blended,unit:'%',sub:'Q1 finance cost annualised',tip:'Q1 finance cost ₹1.16 Cr ×4 ≈ ₹4.64 Cr on average borrowings of ~₹88.8 Cr. Euro facilities at 4.0–4.85% keep the blended rate low.'}
+ ].map(c=>`<div class="kpi"><div class="lab">${c.lab}</div><div class="val" data-tip="${c.tip}">${f2(c.val)} <small>${c.unit||'Cr'}</small></div><div class="sub">${c.sub}</div></div>`).join('');
+
+ // composition
+ const comp=[
+  ['Bank OD / CC / PCFC (working capital)',od,'Revolving · secured against current assets'],
+  ['Secured Term Loans',secured,'Euro & INR term loans on plots, machinery, vehicles'],
+  ['Unsecured Loans',unsec,'Interest-bearing unsecured facilities']
+ ];
+ let cp=`<thead class="hdr"><tr><th>Category</th><th>₹ Cr</th><th>% of Debt</th><th>Nature</th></tr></thead><tbody>`;
+ comp.forEach(r=>{cp+=`<tr><td>${r[0]}</td><td>${f2(r[1])}</td><td>${(r[1]/total*100).toFixed(1)}%</td><td style="text-align:left;color:#5b6b7b;font-size:12px">${r[2]}</td></tr>`;});
+ cp+=`<tr class="tot"><td>Total Borrowings</td><td>${f2(total)}</td><td>100.0%</td><td></td></tr></tbody>`;
+ document.getElementById('tbl-loancomp').innerHTML=cp;
+
+ // facility schedule
+ let l=`<thead class="hdr"><tr><th>Facility</th><th>Tenor</th><th>Rate</th><th>Balance</th><th>Closure</th></tr></thead><tbody>`;
+ l+=`<tr class="monthband"><td colspan="5">EURO TERM LOANS — Federal Bank (balance in € Lakh)</td></tr>`;
+ l+=`<tr class="colstrip"><th>Facility</th><th>Tenor</th><th>Rate</th><th>€ Lakh</th><th>Closure</th></tr>`;
+ D.loans.euro.forEach(r=>{l+=`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${f2(r[3])}</td><td>${r[4]}</td></tr>`;});
+ l+=`<tr class="tot"><td>Total Euro</td><td></td><td></td><td>34.40</td><td></td></tr>`;
+ l+=`<tr class="monthband"><td colspan="5">INR TERM &amp; VEHICLE LOANS (balance in ₹ Cr)</td></tr>`;
+ l+=`<tr class="colstrip"><th>Facility</th><th>Tenor</th><th>Rate</th><th>₹ Cr</th><th>Closure</th></tr>`;
+ D.loans.inr.forEach(r=>{l+=`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${f2(r[3])}</td><td>${r[4]}</td></tr>`;});
+ l+=`<tr class="tot"><td>Total INR (term + vehicle)</td><td></td><td></td><td>29.43</td><td></td></tr>`;
+ l+='</tbody>';
+ document.getElementById('tbl-loans').innerHTML=l;
+
+ document.getElementById('obs-loans').innerHTML=[
+  ['Euro facilities keep borrowing cheap','The largest term exposures — the B-19 plot (€22.05 L) and machinery loans — carry 4.0–4.85% Euro-linked rates, well below INR term pricing (8.25%) and holding the blended cost near 5%.'],
+  ['Debt is largely secured and asset-backed','About 60% of borrowings are secured term loans funding plots, plant and vehicles; a further third is revolving working-capital credit tied to export receivables and stock. Unsecured debt is a small ₹6.90 Cr.'],
+  ['Foreign-currency debt is a natural export hedge','Euro-denominated term loans are partly offset by foreign-currency export earnings, so rupee depreciation raises the loan value but also lifts realisations — the exposure is partially self-balancing.'],
+  ['Maturity is spread but front-loaded near-term','The €5.21 L machinery loan matured Apr-26 and the €0.72 L plot loan closes Oct-26; the bulk (B-19 and long machinery) runs to 2031–33, giving a manageable near-term repayment profile.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= INVENTORY ================= */
+(function(){
+ const S=D.stock; const snaps=['1-Apr-26','31-May-26','30-Jun-26'];
+ let h=`<thead class="hdr"><tr><th>Category</th>${snaps.map(s=>`<th>${s}</th>`).join('')}<th data-tip="Change in value from 1-Apr-26 opening to 30-Jun-26.">Δ Apr→Jun</th></tr></thead><tbody>`;
+ S.heads.forEach((head,i)=>{
+   const a=S['1-Apr-26'][i], c=S['30-Jun-26'][i];
+   h+=`<tr><td>${head}</td>${snaps.map(s=>`<td>${f2(S[s][i])}</td>`).join('')}<td class="${cls(c-a)}">${f2(c-a)}</td></tr>`;});
+ h+=`<tr class="tot"><td>Total Closing Stock</td>${snaps.map(s=>`<td>${f2(S.totals[s])}</td>`).join('')}<td class="${cls(S.totals['30-Jun-26']-S.totals['1-Apr-26'])}">${f2(S.totals['30-Jun-26']-S.totals['1-Apr-26'])}</td></tr></tbody>`;
+ document.getElementById('tbl-stock').innerHTML=h;
+
+ const cons=[['Opening Stock (1-Apr-26)',23.66],['Add: Purchases (Q1)',40.01],['Less: Closing Stock (30-Jun-26)',-34.08],['Material Consumed (Q1)',31.40]];
+ let c=`<thead class="hdr"><tr><th>Particulars</th><th>₹ Cr</th></tr></thead><tbody>`;
+ cons.forEach(([k,v])=>{const t=k.indexOf('Consumed')>-1;c+=`<tr class="${t?'tot':''}"><td>${k}</td><td class="${cls(v)}">${f2(v)}</td></tr>`;});
+ c+='</tbody>';
+ document.getElementById('tbl-consume').innerHTML=c;
+
+ document.getElementById('obs-inv').innerHTML=[
+  ['Inventory mix shifted toward raw material','Raw-material stock rose ₹10.49 Cr (₹18.96 → ₹29.45 Cr) over the quarter while finished-goods stock fell to near nil (₹2.72 → ₹0.02 Cr) — the plant built input stock and shipped out finished output.'],
+  ['Total stock up modestly','Closing stock grew ₹7.66 Cr net over the quarter, almost entirely in raw material and driven by procurement ahead of production.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= PROJECTIONS ================= */
+(function(){
+ const q=D.periods.q1, fy=D.periods.fy26;
+ const projRev=+(q.crrev*4).toFixed(2);
+ const revRatio=projRev/ fy.crrev; // scaling for variable lines vs FY26
+ // Variable lines scale with revenue at PY ratio; fixed held at PY absolute
+ const gpRatio=q.crgp/q.crrev; // Q1 GP ratio
+ const projGP=+(projRev*gpRatio).toFixed(2);
+ const projOI=+(q.croi*4).toFixed(2);
+ // indirect: split fixed vs variable (approx): director remun + insurance + rates held; rest variable
+ const fixedInd=1.50*4/4*4; // director remuneration 6.0 held annually
+ // simpler: fixed heads held at annualised Q1, variable scale — present line-wise below
+ const rows=[
+  ['Revenue', q.crrev, projRev, +(projRev/12).toFixed(2), fy.crrev,'run-rate'],
+  ['Gross Profit', q.crgp, projGP, +(projGP/12).toFixed(2), fy.crgp,'at Q1 GP ratio'],
+  ['Add: Other Income', q.croi, projOI, +(projOI/12).toFixed(2), fy.croi,'variable'],
+  ['Less: Indirect Expenses', q.crie, null, null, fy.crie,'see split'],
+  ['— Director Remuneration', 1.50, 6.00, 0.50, 6.00,'held'],
+  ['— Finance Cost', 1.16, 4.64, 0.39, null,'run-rate'],
+  ['— Freight Outward &amp; Clearing', 2.55, 10.20, 0.85, null,'variable'],
+  ['— Other Indirect (incl. employee, admin)', 1.76, 7.04, 0.59, null,'mixed'],
+  ['Net Profit before Depreciation &amp; Tax', q.crnp, null, null, fy.crnp,'derived'],
+  ['Less: Depreciation', '–', 'input', '–', 'input','year-end'],
+  ['Profit Before Tax', '–', 'on receipt', '–', 'on receipt',''],
+  ['Less: Tax @ ~25.17%', '–', 'on receipt', '–', 'on receipt','assumed'],
+  ['Profit After Tax', '–', 'on receipt', '–', 'on receipt','']
+ ];
+ // compute projected indirect total and NPBDT
+ const projInd=+(6.00+4.64+10.20+7.04).toFixed(2);
+ const npbdt=+(projGP+projOI-projInd).toFixed(2);
+ rows[3][2]=projInd; rows[3][3]=+(projInd/12).toFixed(2);
+ rows[8][2]=npbdt; rows[8][3]=+(npbdt/12).toFixed(2);
+
+ let h=`<thead class="hdr"><tr><th>Particulars</th><th>Q1 FY26-27 (Actual)</th><th>Projected FY2026-27</th><th>Avg. Monthly</th><th>F.Y. 2025-26</th><th>Basis</th></tr></thead><tbody>`;
+ rows.forEach(r=>{
+   const sub=r[0].startsWith('—');
+   const tot=(r[0].indexOf('Net Profit')===0||r[0].indexOf('Profit')===0);
+   const badge=r[5]==='held'?'<span class="held">held</span>':'';
+   const fmt=v=>v==null?'':(typeof v==='number'?f2(v):v);
+   h+=`<tr class="${sub?'sub':''} ${tot?'tot':''}"><td>${r[0]} ${badge}</td><td>${fmt(r[1])}</td><td>${fmt(r[2])}</td><td>${fmt(r[3])}</td><td>${fmt(r[4])}</td><td style="text-align:left;color:#93a5b5;font-size:11px">${r[5]}</td></tr>`;
+ });
+ h+='</tbody>';
+ document.getElementById('tbl-proj').innerHTML=h;
+
+ const asm=[
+  ['Revenue','Q1 run-rate ×4','₹230.80 Cr','Q1 actual ₹57.70 Cr annualised. Corroboration: FY2025-26 revenue ₹171.90 Cr; the Apr–May YoY revenue signal is −9.9%, a ~44 ppt gap to the run-rate — run-rate adopted per instruction, gap noted.'],
+  ['Gross Profit','Q1 GP ratio (30.0%)','held','Applied to projected revenue; Q1 trading margin carried forward.'],
+  ['Director Remuneration','PY absolute','₹6.00 Cr — held','₹0.50 Cr/month, unchanged from FY2025-26 run-rate.'],
+  ['Finance Cost','Q1 run-rate ×4','₹4.64 Cr','Reflects current borrowing mix; trues up as new facilities draw down.'],
+  ['Freight Outward &amp; Clearing','Variable to revenue','₹10.20 Cr','Scales with export volume.'],
+  ['Depreciation','Year-end charge','input','Not booked in interim accounts; PAT completes on receipt of the depreciation schedule.'],
+  ['Tax','Effective rate','~25.17% (assumed)','Domestic company u/s 115BAA assumed pending finalised effective rate from the audited FY2025-26 accounts.']
+ ];
+ let a=`<thead class="hdr"><tr><th>Parameter</th><th>Basis</th><th>Value</th><th>Note</th></tr></thead><tbody>`;
+ asm.forEach(r=>{a+=`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td style="text-align:left">${r[3]}</td></tr>`;});
+ a+='</tbody>';
+ document.getElementById('tbl-assump').innerHTML=a;
+
+ document.getElementById('obs-proj').innerHTML=[
+  ['Projected revenue ₹230.80 Cr on run-rate','Q1 annualised gives ₹230.80 Cr, ~34% above FY2025-26. The trailing two-month YoY revenue is negative (−9.9%), so the run-rate is the more optimistic of the two references and should firm up as H1 completes.'],
+  ['Profit before depreciation and tax ~₹40 Cr projected','On the run-rate and Q1 margins; the after-tax figure completes once the depreciation charge and finalised tax rate are available.'],
+  ['Fixed costs give operating leverage','Director remuneration and other held costs do not scale with revenue, so incremental turnover converts to profit at close to the gross margin.']
+ ].map(o=>`<div class="obscard"><b>${o[0]}</b><span>${o[1]}</span></div>`).join('');
+})();
+
+/* ================= NAV ================= */
+const TABS=[['overview','Overview'],['segment','Revenue Analysis'],['pnl','Profit & Loss'],['bs','Balance Sheet'],['loans','Borrowings'],['inv','Inventory'],['proj','Projections FY2026-27']];
+const nav=document.getElementById('nav');
+nav.innerHTML=TABS.map((t,i)=>`<button data-t="${t[0]}" class="${i===0?'active':''}">${t[1]}</button>`).join('');
+nav.querySelectorAll('button').forEach(b=>{b.onclick=()=>{
+  nav.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.getAttribute('data-t')).classList.add('active');
+  window.scrollTo(0,0);
+};});
+
+bindExpand(); bindTips();
+</script>
+</body>
+</html>
