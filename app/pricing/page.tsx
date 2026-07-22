@@ -1,46 +1,68 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { Check, Factory } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
+import { SectionHeader } from "@/components/layout/section-header";
 import { CTABanner } from "@/components/layout/cta-banner";
 import { Reveal } from "@/components/animations/reveal";
-import {
-  ENTITLEMENTS,
-  ENTITLEMENT_KEYS,
-  PLAN_TIERS,
-  TIER_INFO,
-  entitlementTier,
-  type PlanTier,
-} from "@/lib/entitlements";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Packages",
+  title: "Pricing",
   description:
-    "Four CFOxpert engagement tiers sized to your revenue — from the core monthly report to board-level governance and group structures.",
+    "Four ways to engage CFOxpert — from self-serve software at ₹3,000/month to a full board-level CFO function. Advice is never billed; only deliverables are.",
 };
 
-/**
- * Amendment A6 — the pricing page. Deliverables are rendered FROM the
- * entitlement taxonomy (lib/entitlements.ts), never retyped here: what a
- * tier claims to include and what the platform actually unlocks cannot
- * drift apart. Tiers show revenue bands, not price points — engagements
- * are priced on scope.
- */
+interface Tier {
+  name: string;
+  price: string;
+  priceNote?: string;
+  audience: string;
+  description: string;
+  cta: { label: string; href: string };
+  emphasised?: boolean;
+}
 
-const ownDeliverables = (tier: PlanTier) =>
-  ENTITLEMENT_KEYS.filter((key) => entitlementTier(key) === tier).map(
-    (key) => ENTITLEMENTS[key].label,
-  );
-
-/** Everything a tier includes beyond the previous one, for cumulative cards. */
-const TIER_EXTRAS: Record<PlanTier, string[]> = {
-  essential: ownDeliverables("essential"),
-  growth: ownDeliverables("growth"),
-  strategic: ownDeliverables("strategic"),
-  // No entitlement key is enterprise-exclusive yet; the tier's substance is
-  // scope (group/multi-entity structures per ADR-008), not extra tabs.
-  enterprise: ["Group & multi-entity reporting structures", "Bespoke engagement scope"],
-};
+const TIERS: Tier[] = [
+  {
+    name: "CFOxpert Pulse",
+    price: "₹3,000",
+    priceNote: "/ month",
+    audience: "Businesses ₹5–15 Cr turnover",
+    description:
+      "The software, self-serve. Your dashboard, your health score, your monthly numbers in one place. No advisory retainer.",
+    cta: { label: "Start with a Health Check", href: "/health-check" },
+  },
+  {
+    name: "Enterprise Value Diagnostic",
+    price: "₹40,000",
+    priceNote: "one-time",
+    audience: "Any size",
+    description:
+      "A full assessment across all six Enterprise Value Drivers, a real health score, and a clear statement of what to fix first. Credited in full against your first three months if you go on to a retainer.",
+    cta: { label: "Book a Diagnostic", href: "/contact" },
+  },
+  {
+    name: "CFO Core",
+    price: "₹60,000",
+    priceNote: "/ month",
+    audience: "Businesses ₹15–60 Cr turnover",
+    description:
+      "One package, one price. Monthly board-grade reporting across P&L, balance sheet, ratios, health score, cost structure and segment performance — plus ongoing CFO advisory. No tiers, no upsells.",
+    cta: { label: "Book a Conversation", href: "/contact" },
+    emphasised: true,
+  },
+  {
+    name: "CFO Enterprise",
+    price: "from ₹1,75,000",
+    priceNote: "/ month",
+    audience: "Businesses ₹60 Cr+",
+    description:
+      "Scoped to the business. Multi-entity, multi-location, and board-level engagement.",
+    cta: { label: "Talk to us", href: "/contact" },
+  },
+];
 
 export default function PricingPage() {
   return (
@@ -53,16 +75,15 @@ export default function PricingPage() {
           <Reveal>
             <p className="mb-5 inline-flex items-center gap-2 text-eyebrow font-bold uppercase text-teal">
               <span className="h-1.5 w-1.5 rounded-full bg-teal" />
-              Packages
+              Pricing
             </p>
             <h1 className="max-w-3xl font-display text-display-md font-medium text-navy">
-              One platform, sized to the{" "}
-              <em className="text-teal not-italic">stage</em> your business is at.
+              Four ways to engage. One way to{" "}
+              <em className="text-teal not-italic">start.</em>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-slate">
-              Four engagement tiers, banded by revenue. Every client sees the full
-              report — features outside your package stay visible, so you always
-              know what the next stage looks like.
+              Published prices, no hourly billing, and a diagnostic that pays for
+              itself if you go on to a retainer.
             </p>
           </Reveal>
         </Container>
@@ -71,67 +92,110 @@ export default function PricingPage() {
       <Section spacing="compact">
         <Container>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {PLAN_TIERS.map((tier, i) => {
-              const info = TIER_INFO[tier];
-              const prevTier = i > 0 ? PLAN_TIERS[i - 1] : undefined;
-              return (
-                <Reveal key={tier} delay={i * 0.06} className="h-full">
-                  <div className="flex h-full flex-col rounded-card border border-line bg-paper p-7">
-                    <p className="text-eyebrow font-bold uppercase text-teal">
-                      {info.label}
-                    </p>
-                    <p className="mt-2 font-display text-heading-md font-medium text-navy">
-                      {info.revenueBand}
-                    </p>
-                    <p className="mt-2 text-[14px] text-slate">{info.tagline}</p>
-                    <ul className="mt-6 flex flex-col gap-2.5 border-t border-line pt-6">
-                      {prevTier && (
-                        <li className="text-[13px] font-semibold text-navy">
-                          Everything in {TIER_INFO[prevTier].label}, plus:
-                        </li>
-                      )}
-                      {TIER_EXTRAS[tier].map((label) => (
-                        <li key={label} className="flex items-start gap-2 text-[13.5px] text-slate">
-                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal" />
-                          {label}
-                        </li>
-                      ))}
-                    </ul>
+            {TIERS.map((tier, i) => (
+              <Reveal key={tier.name} delay={i * 0.06} className="h-full">
+                <div
+                  className={cn(
+                    "flex h-full flex-col rounded-card border p-7",
+                    tier.emphasised
+                      ? "border-white/8 bg-gradient-to-br from-navy-deep via-navy to-[#1B3B6B] text-white shadow-elevation-3"
+                      : "border-line bg-paper"
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "text-eyebrow font-bold uppercase",
+                      tier.emphasised ? "text-teal-bright" : "text-teal"
+                    )}
+                  >
+                    {tier.name}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 font-display text-heading-md font-medium",
+                      tier.emphasised ? "text-white" : "text-navy"
+                    )}
+                  >
+                    {tier.price}
+                    {tier.priceNote && (
+                      <span
+                        className={cn(
+                          "ml-1.5 font-sans text-[13.5px] font-normal",
+                          tier.emphasised ? "text-white/60" : "text-slate-light"
+                        )}
+                      >
+                        {tier.priceNote}
+                      </span>
+                    )}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 text-[13px] font-semibold",
+                      tier.emphasised ? "text-white/80" : "text-navy"
+                    )}
+                  >
+                    {tier.audience}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-4 border-t pt-4 text-[14px]",
+                      tier.emphasised ? "border-white/15 text-white/72" : "border-line text-slate"
+                    )}
+                  >
+                    {tier.description}
+                  </p>
+                  <div className="mt-auto pt-6">
+                    <Button
+                      asChild
+                      variant={tier.emphasised ? "onDark" : "secondary"}
+                      className="w-full"
+                    >
+                      <Link href={tier.cta.href}>{tier.cta.label}</Link>
+                    </Button>
                   </div>
-                </Reveal>
-              );
-            })}
+                </div>
+              </Reveal>
+            ))}
           </div>
+        </Container>
+      </Section>
 
-          <Reveal delay={0.1}>
-            <div className="mt-5 flex flex-col gap-4 rounded-card border border-line bg-mist p-7 sm:flex-row sm:items-start">
-              <Factory className="h-5 w-5 shrink-0 text-teal" />
-              <div>
-                <p className="text-[14px] font-semibold text-navy">
-                  Industry add-on: {ENTITLEMENTS["report.inventory"].label}
-                </p>
-                <p className="mt-1 max-w-2xl text-[13.5px] text-slate">
-                  Stock, stores and production reporting for manufacturing
-                  businesses — added to any tier, because it depends on what you
-                  make, not how large you are.
-                </p>
-              </div>
+      <Section>
+        <Container size="narrow">
+          <Reveal>
+            <SectionHeader
+              eyebrow="How We Bill"
+              heading="Advice is never billed. Only deliverables are."
+              className="mb-6"
+            />
+            <p className="text-[17px] text-ink">
+              You will never receive an invoice for a phone call, an email, or a
+              conversation. If you want something new built — a specific model, an
+              additional report, a one-off analysis — that&apos;s a defined
+              deliverable at a published rate, agreed before we start.
+            </p>
+
+            {/*
+              PLACEHOLDER — add-on rate card table goes here.
+              The rates are not finalised yet. Replace this marked block with the
+              published rate table when they are.
+            */}
+            <div className="mt-8 rounded-card border border-dashed border-line bg-mist p-8 text-center text-[13.5px] text-slate-light">
+              [ADD-ON RATE CARD — TO BE ADDED]
             </div>
           </Reveal>
 
-          <Reveal delay={0.14}>
-            <p className="mt-8 max-w-2xl text-[13.5px] text-slate-light">
-              Current client engagements run on a single combined package with
-              every applicable feature enabled; these tiers describe how new
-              engagements are scoped. Pricing is set per engagement — it depends
-              on entity count, reporting cadence and data readiness.
+          <Reveal delay={0.1}>
+            <p className="mx-auto mt-14 max-w-2xl text-center text-lg font-medium leading-relaxed text-navy">
+              Every engagement starts the same way: an Enterprise Value Diagnostic.
+              ₹40,000, credited against your retainer.
             </p>
           </Reveal>
         </Container>
       </Section>
 
       <CTABanner
-        heading="Not sure which stage you're at?"
+        heading="Not sure where to start?"
         description="Start with a free Business Health Check — it tells you what your numbers say before any engagement is scoped."
       />
     </>

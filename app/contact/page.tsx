@@ -8,10 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sendToWebhook } from "@/lib/webhook";
 
-const INFO_CARDS = [
-  { title: "Call Us", lines: ["+91 9582722181", "+91 9899907075"] },
-  { title: "Email Us", lines: ["info@cfoxpert.in"] },
-  { title: "Head Office", lines: ["Paramount Legal Bistro LLP", "E-107, Sector-6, Near Noida Authority", "Noida – 201301, India"] },
+const INFO_CARDS: { title: string; lines: { text: string; href?: string }[] }[] = [
+  {
+    title: "Call Us",
+    lines: [
+      { text: "+91 9582727181", href: "tel:+919582727181" },
+      { text: "+91 9899907075", href: "tel:+919899907075" },
+    ],
+  },
+  { title: "Email Us", lines: [{ text: "hello@cfoxpert.in", href: "mailto:hello@cfoxpert.in" }] },
+  {
+    title: "Head Office",
+    lines: [
+      { text: "Paramount Legal Bistro LLP" },
+      { text: "E-107, Sector-6, Near Noida Authority" },
+      { text: "Noida – 201301, India" },
+    ],
+  },
 ];
 
 const HOURS = [
@@ -60,9 +73,15 @@ export default function ContactPage() {
               {INFO_CARDS.map((card) => (
                 <Card key={card.title} className="p-5">
                   <h4 className="mb-1.5 text-[14.5px] font-semibold text-navy">{card.title}</h4>
-                  {card.lines.map((line) => (
-                    <p key={line} className="text-[13.5px] text-slate">{line}</p>
-                  ))}
+                  {card.lines.map((line) =>
+                    line.href ? (
+                      <a key={line.text} href={line.href} className="block text-[13.5px] text-slate hover:text-navy">
+                        {line.text}
+                      </a>
+                    ) : (
+                      <p key={line.text} className="text-[13.5px] text-slate">{line.text}</p>
+                    )
+                  )}
                 </Card>
               ))}
             </div>

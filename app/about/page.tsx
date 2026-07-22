@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { User } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { SectionHeader } from "@/components/layout/section-header";
@@ -113,6 +114,32 @@ export default function AboutPage() {
               planning. Every dashboard, KPI, and monthly review we build is designed to move one
               of six underlying drivers.
             </p>
+          </Reveal>
+        </Container>
+      </Section>
+
+      {/* Founder section — placeholder structure and layout. Swap the image
+          placeholder for a real photo and replace the marked bio paragraphs;
+          no layout changes should be needed. */}
+      <Section>
+        <Container size="narrow">
+          <Reveal>
+            <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-[280px_1fr] md:gap-14">
+              <div className="flex aspect-[4/5] items-center justify-center rounded-card border border-line bg-mist">
+                <User className="h-16 w-16 text-slate-light" />
+              </div>
+              <div>
+                <p className="mb-4 inline-flex items-center gap-2 text-eyebrow font-bold uppercase text-teal">
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" />
+                  The Founder
+                </p>
+                <h2 className="mb-5 font-display text-heading-lg font-medium text-navy">
+                  [FOUNDER NAME]
+                </h2>
+                <p className="mb-5 text-[17px] text-ink">[FOUNDER BIO — TO BE ADDED]</p>
+                <p className="text-[17px] text-ink">[FOUNDER BIO — TO BE ADDED]</p>
+              </div>
+            </div>
           </Reveal>
         </Container>
       </Section>

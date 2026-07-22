@@ -10,9 +10,9 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { label: "Platform", href: "/platform" },
+  { label: "Pricing", href: "/pricing" },
   { label: "Business Health Check", href: "/health-check" },
   { label: "Knowledge Hub", href: "/knowledge" },
-  { label: "Packages", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -26,8 +26,8 @@ export const SITE_CONFIG = {
     line2: "Noida – 201301, India",
   },
   contact: {
-    phones: ["+91 9582722181", "+91 9899907075"],
-    email: "info@cfoxpert.in",
+    phones: ["+91 9582727181", "+91 9899907075"],
+    email: "hello@cfoxpert.in",
     website: "www.cfoxpert.in",
   },
   primaryCta: {
@@ -50,7 +50,7 @@ export const FOOTER_COLUMNS = [
     heading: "Company",
     links: [
       { label: "About", href: "/about" },
-      { label: "Packages", href: "/pricing" },
+      { label: "Pricing", href: "/pricing" },
       { label: "Knowledge Hub", href: "/knowledge" },
       { label: "Contact", href: "/contact" },
     ],
@@ -59,6 +59,7 @@ export const FOOTER_COLUMNS = [
     heading: "Contact",
     links: [
       { label: SITE_CONFIG.contact.phones[0], href: `tel:${SITE_CONFIG.contact.phones[0].replace(/\s/g, "")}` },
+      { label: SITE_CONFIG.contact.phones[1], href: `tel:${SITE_CONFIG.contact.phones[1].replace(/\s/g, "")}` },
       { label: SITE_CONFIG.contact.email, href: `mailto:${SITE_CONFIG.contact.email}` },
       { label: SITE_CONFIG.contact.website, href: `https://${SITE_CONFIG.contact.website}` },
     ],
