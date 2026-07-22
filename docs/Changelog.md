@@ -1,5 +1,18 @@
 # Changelog.md
 
+## 2026-07-22 (Amendment A4-c — analyst review & publish; A4-b VERIFIED live)
+
+- A4-b CLOSED: all three rungs verified on Preview by Parth — deterministic parse (clean XLSX → needs_review in seconds), honest failure + Retry (analysis-layout XLSX correctly refused by the parser, failed with the exact no-API-key reason, then succeeded via the Claude rung after the key was added), and native-PDF extraction. Staff membership backdated for Parth's user (analyst role in the platform-owner org, created_at older than the RPIL membership so org resolution still picks RPIL).
+- A4-c: THE PUBLISH VERB EXISTS — the only place staged numbers become report numbers (ADR-010 honored end to end):
+  - Migration 0015: staff SELECT on organizations + kpi_periods (M9 precedent — the review queue spans all client orgs; kpi WRITES stay service-role-only).
+  - `/dashboard/review` (queue: every open job across orgs) + `/dashboard/review/[jobId]` (gate results always visible, staged lines with include/KPI/segment controls, period selector). First internal-analyst surface; non-staff get an honest "analysts only" state. Review links added to the documents list for staff.
+  - `publishIngestionJob`: validates every selected line (exists, has an amount, valid KPI key, no two lines onto the same KPI+segment — the second would silently supersede the first under the latest-wins view); target period is an existing one or created inline (label/type/dates, prefilled from extraction); inserts `kpi_values` through the existing insert-only path with full provenance notes ("Published from <file> (<cell/page>) via ingestion review"); upserts every published label→KPI choice into `account_mappings` (publishing IS the mapping confirmation); job → published (real actor); audit entry.
+  - `rejectIngestionJob`: stage → rejected with a required reason (recorded in the job event history).
+- KNOWN BEHAVIOR (by design, worth remembering): a newly published period has the latest created_at, so it becomes the dashboard's default period immediately — fresh month published = dashboard shows the fresh month.
+- V1 boundary (recorded): amounts are NEVER hand-edited in review — a wrong number means reject + re-extract/re-upload; publish provenance stays "from the document", not "typed by an analyst".
+- Verification plan on Preview (migration 0015 auto-applies on push): open /dashboard/review as staff → Review the financials.xlsx job → map lines (e.g. a Balance Sheet line to Inventory/Receivables), create period from prefill → Publish → dashboard/report shows the values with the new period selected; re-upload the same file → mapping memory pre-fills the KPIs at 100% confidence; reject path once.
+- With A4-c verified, the FULL LOOP closes: upload → approve → extract → validate → review → publish → report. The A4 epic (and the frozen end-goal's automated-numbers path) is functionally complete; remaining A4-adjacent work is hardening + the analyst narrative panel (separate milestone).
+
 ## 2026-07-20 (Amendment A4-b — extraction service)
 
 - PRE-CONFIRMED with Parth before building (standing process): extraction triggers on entry to 'approved' — after upload AND after the analyst approve-gate for client uploads (staff uploads auto-approve, schema-enforced since 0013); it ends at needs_review. A4-c (review/publish) explicitly NOT built.

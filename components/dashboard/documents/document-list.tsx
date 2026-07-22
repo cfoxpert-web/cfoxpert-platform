@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FileText } from "lucide-react";
 import { Card } from "@/components/cards/card";
 import { cn } from "@/lib/utils";
@@ -52,9 +53,19 @@ export function DocumentList({
 }) {
   return (
     <Card className="p-6">
-      <h3 className="mb-4 font-display text-[16px] text-navy">
-        Uploaded documents
-      </h3>
+      <div className="mb-4 flex items-baseline justify-between">
+        <h3 className="font-display text-[16px] text-navy">
+          Uploaded documents
+        </h3>
+        {isStaff && (
+          <Link
+            href="/dashboard/review"
+            className="text-[12px] font-semibold text-teal hover:underline"
+          >
+            Open review queue →
+          </Link>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <p className="text-[13px] text-slate">
@@ -92,6 +103,14 @@ export function DocumentList({
                 PROCESSABLE_STAGES.has(doc.stage) && (
                   <ProcessButton jobId={doc.jobId} stage={doc.stage} />
                 )}
+              {isStaff && doc.jobId && doc.stage === "needs_review" && (
+                <Link
+                  href={`/dashboard/review/${doc.jobId}`}
+                  className="shrink-0 rounded-pill border border-line px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:border-teal hover:text-teal"
+                >
+                  Review
+                </Link>
+              )}
             </div>
           ))}
         </div>
