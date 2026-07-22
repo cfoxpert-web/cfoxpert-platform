@@ -39,7 +39,9 @@
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@supabase/supabase-js": "^2.110.1",
-    "@supabase/ssr": "^0.12.0"
+    "@supabase/ssr": "^0.12.0",
+    "@anthropic-ai/sdk": "^0.110.0",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

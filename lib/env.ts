@@ -52,6 +52,13 @@ const clientEnvSchema = z.object({
  */
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  /**
+   * Amendment A4-b: Claude API key for document extraction. Optional by
+   * the same deploy-before-provisioning rule; lib/ingestion gates on its
+   * presence — without it, PDF/messy-format extraction fails honestly
+   * ("AI extraction not configured") and spreadsheet parsing still works.
+   */
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 
 type Env = z.infer<typeof clientEnvSchema> & Partial<z.infer<typeof serverEnvSchema>>;
@@ -82,6 +89,7 @@ function loadEnv(): Env {
 
   const serverResult = serverEnvSchema.safeParse({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   });
   if (!serverResult.success) {
     console.error(

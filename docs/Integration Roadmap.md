@@ -104,3 +104,101 @@ Unchanged. Still correctly last: highest complexity, highest external risk, depe
 This is **CFOXPERT Platform Roadmap v1.0**. It is the single source of truth for implementation order and scope going forward. Future sessions implement one milestone at a time against this document and do not revisit its architecture unless a major business requirement changes the picture — in which case that change should be brought back for an explicit, scoped amendment, not an ad hoc in-flight redesign.
 
 **Next step:** Milestone 1 — Environment Configuration.
+
+---
+
+## Post-Freeze Amendments
+
+Per the freeze statement above, major business-requirement changes are recorded here as explicit, scoped amendments rather than as in-flight redesigns. These do not reorder the frozen list; they add/extend milestones with their own review cycle.
+
+### Amendment A1 — Flexible period comparison (MoM / YoY / QoQ / custom)
+**Requested:** 2026-07-11 (Parth). **Extends:** Milestones 10 (KPI Engine) + 11 (Dashboard Data). **Risk:** Medium. **Complexity:** M.
+
+**Requirement:** a client must be able to compare KPI values across any periods they choose — month-on-month, year-on-year, quarter-on-quarter, or an arbitrary custom pair (e.g. this month vs the same month last year).
+
+**Why it needs an amendment:** the current model can't express relationship-based comparison. `kpi_periods` carries only `period_label` (free text) + `period_type`; `getKpiSnapshot` treats the latest-created period as "current" and the next as "prior". Annual YoY (FY25→FY26) works today by accident of ordering; nothing else does.
+
+**Scope:**
+1. Add real `period_start` / `period_end` dates to `kpi_periods` (new migration) so periods can be *found* by relationship.
+2. A comparison resolver in the KPI query layer: given a current period + mode (MoM = −1 month, QoQ = −1 quarter, YoY = −12 months, or an explicit custom period), select the comparator. Keep the KPI Engine the single computation path — the resolver picks periods; the engine still does the math.
+3. A period + comparison selector on the dashboard (and, later, board packs).
+4. Populate enough historical monthly/quarterly data to compare against.
+
+**Sequence note:** build A1 **before** A2 — the financials-derived health score's trend line depends on the dated-period model.
+
+### Amendment A2 — Client health score computed from financials (distinct from lead self-assessment)
+**Requested:** 2026-07-11 (Parth). **New milestone.** **Depends on:** #10 (KPI Engine), A1 (dated periods), and a decision on where analyst input lives (overlaps M13 review-queue patterns). **Risk:** Medium. **Complexity:** L.
+
+**Requirement:** the Business Health score should work differently for a **lead** vs an **actual client**. Lead (prospect) keeps the existing six-question founder self-assessment (`lib/health-check/score-engine.ts`). Client (has financials) should be **computed from actual financial data**, not self-reported — may reuse the same six Enterprise Value drivers.
+
+**Honest caveat (raised at request time):** only about half the six drivers are derivable from financials — Financial Strength (fully), Operational Excellence & Strategic Growth (partly), Capital & Valuation (computed). **Governance & Leadership and Technology & Intelligence are not in the numbers** and must stay qualitative (questionnaire or analyst assessment). So the real design is a **hybrid**, not "purely from financials."
+
+**Scope:**
+1. Define per-driver financial formulas + benchmark bands, reusing the KPI Engine's benchmark-position logic (single computation path; benchmark bands are data per ADR-004 / industry classification per ADR-008). No parallel scorer.
+2. Compute the financial drivers from KPI data; take the qualitative drivers (governance, technology) from the questionnaire or an analyst assessment surface.
+3. Combine with the existing driver weights; write the result as an insert-only `health_scores` row (ADR-006), recomputed per period so the score gains a trend line (uses A1's dated periods).
+
+---
+
+## Strategic realignment (2026-07-13)
+
+Triggered by Parth reviewing all project work against two concrete reference reports — `CFOxpert_XYZZ002_FY26_Board_Report_Interactive.html` (10-tab generic template) and `RPIL_Board_Report_June2026_8.html` (6-tab real client report, branch-level) — plus the original 4-tier package sheet (`CFOXPERT_ver_2.docx`).
+
+**Verdict:** foundations are correct (auth, org/data model, mock seam, flag-gated real data, KPI engine, A1 comparison resolver, entitlement columns). Nothing is thrown away. The gap: the "final report" target was never frozen against a concrete reference, so the roadmap optimized infrastructure without a fixed shape to build toward. Amendments A3–A6 fix that.
+
+**End-goal shape (now frozen):** a multi-tab client report — Overview / P&L Comparison / Balance Sheet / Key Ratios vs Benchmarks / Health Score / Cost Structure / Segment (unit-wise) / Inventory & Production / Governance watch-list / Recommendations / Roadmap-Ambition / Projections — eventually generated from client-uploaded Trial Balance / P&L / Balance Sheet with minimal manual intervention **on the numbers** (narrative/advisory sections stay human-authored by design). One combined feature package for now; a future pricing page unlocks tiers.
+
+**Gap audit (reference tabs vs live platform):** Overview is live (8-KPI dashboard + charts). Health Score is a mock placeholder pending A2. Everything else — P&L, Balance Sheet, Ratios, Cost Structure, Segment/unit-wise (no "branch" concept in schema yet), Inventory & Production, Governance, Recommendations, Roadmap/Ambition, Projections — is not built. Document-upload → auto-populated report does not exist as a concept; every live number arrived via hand-run SQL (named as its own epic, A4).
+
+**Recommended build sequence:** A5 + A3-data → A3-UI (+ A2 for the Health Score tab) → A6 → A4. A5/A3-data are tightly coupled and lowest-risk; A3-UI is the visible payoff; A2 slots in where the Health Score tab is built; A6 is contained and monetization-enabling; A4 goes last because it depends on A3's data shape being final.
+
+### Amendment A3 — Multi-tab report architecture
+**Requested:** 2026-07-13 (Parth). **Extends:** M10/M11/A1. **Risk:** Moderate. **Complexity:** L (split).
+
+Build P&L / Balance Sheet / Ratios / Cost Structure / Segment / Inventory tabs on the client dashboard, reusing the KPI engine and the A1 comparison resolver. Mostly computed/mechanical; high visible payoff. **Split into two milestones:** **A3-data** (schema + KPI definitions + seed — the data foundation for every tab) and **A3-UI** (tab shell + rendering). Ratios are computed at read time through the engine (single computation path) — never stored as values.
+
+### Amendment A4 — Document ingestion pipeline (upload TB/P&L/BS → auto-populated report)
+**Requested:** 2026-07-13 (Parth). **New epic, sequenced last.** **Depends on:** A3's data shape being final. **Risk:** High. **Complexity:** XL.
+
+Hardest, highest-payoff. **Pushback recorded and accepted:** "least manual intervention" applies to the *numbers*, not the *judgment*. Recommendations, Governance commentary, and Roadmap/Ambition are the CFO's professional read — that is the paid value in "Virtual CFO as a Service." Design intent: fully automate extraction + mapping of financial figures; keep a lightweight human-confirm step before numbers publish (consistent with the insert-only, audit-logged pattern); keep narrative sections as an editable analyst panel, not auto-generated text.
+
+#### A4 scoping pass (2026-07-14) — scoped, ready to build
+
+**Decisions taken with Parth:** (1) source documents are a MIX — Tally/Excel/ERP exports, digital PDFs; v1 is built for spreadsheet + digital-PDF fidelity, scans are best-effort (the review gate catches what extraction can't). (2) BOTH clients and analysts can upload, but nothing is processed until an analyst approves the job — approval gates the queue, not just the publish. (3) Review happens in an in-portal, staff-gated review UI — the platform's first internal-analyst surface (CRM UI stays deferred; this one has a concrete workflow to design around).
+
+**Pipeline (job stages):** `received → approved → extracting → needs_review → published` (terminal alternatives: `rejected`, `failed`). Client-uploaded jobs sit at `received` until an analyst approves; analyst uploads may auto-approve. Two human gates by design: approve-to-process (cost + garbage-input control) and confirm-to-publish (correctness control).
+
+**Extraction ladder — deterministic first, AI second, human always:**
+1. **Deterministic parsers** for known structured formats (clean Tally XLSX/CSV exports): no AI involved, cell-level provenance. The format library grows per client.
+2. **Claude extraction** for everything else: `claude-opus-4-8` via the Messages API with **structured outputs** (`output_config.format` json_schema — guaranteed-parseable line items), PDFs passed natively as document blocks, spreadsheets parsed server-side to text first. Server-only `ANTHROPIC_API_KEY`. Grounding is ONE document from ONE org per request — no cross-client context, ever (AI Design.md non-goal, enforced by construction).
+3. **Analyst review** of every number before publish, regardless of which rung extracted it.
+
+This makes A4 (not M13) the platform's **first AI feature**; AI Design.md's "assistive, not autonomous" rule applies verbatim: the model proposes staged rows; only a staff-confirmed action publishes.
+
+**Schema (new migrations):**
+- `client_documents` — org-scoped metadata + private Supabase Storage bucket (org-scoped paths, storage RLS, type/size limits; uploads are untrusted content, never rendered raw).
+- `ingestion_jobs` — the pipeline entity. Its own stage enum + an insert-only `ingestion_job_events` history (mirrors the status_history PATTERN but does NOT extend `work_status` — pipeline stages would pollute the shared workflow enum).
+- `extracted_lines` — staging: source label as printed, amount, statement type, period/segment hints, page/cell provenance, confidence, proposed `kpi_definitions.key`. Staging is mutable until publish; published values are never edited (ADR-006 untouched).
+- `account_mappings` — org-scoped mapping MEMORY: normalized source label → kpi key (+ segment). Analyst-confirmed once, applied deterministically on every later upload; AI only proposes for labels with no confirmed mapping. The pipeline gets more deterministic with every document.
+
+**Deterministic validation gates (pre-review, never silently passed):** TB debits = credits; BS assets = liabilities + equity; P&L GP/NP recompute from components; extracted totals vs stated totals; period dates parse and match the declared period.
+
+**Publish semantics:** staff-gated server action inserts `kpi_periods` (if new, with real dates) + `kpi_values` through the existing insert-only path — provenance note carries document + page/cell ref (the same note convention the hand-run SQL era used), audit_logs entry, corrections as new rows. Ratios/health score still compute at read time; nothing new is stored derived.
+
+**Milestone split:** **A4-a** (M): schema + storage + upload surfaces (client Documents page becomes real; staff upload) + job queue at `received`. **A4-b** (L): extraction service (parser ladder + Claude structured outputs), staging, validation gates. **A4-c** (L): staff review UI (extracted vs source side-by-side, mapping confirmation feeding `account_mappings`), publish action. Flag: `docIngestion` (dev rollout — distinct from entitlements per A6).
+
+**Non-goals (v1, recorded):** no auto-publish under any condition; no narrative generation (analyst panel is a separate future milestone); no OCR guarantee on scans; no live ERP integration (M15); no client-visible extraction detail beyond coarse job status.
+
+**Risks:** extraction accuracy on messy PDFs (mitigated by gates + mandatory review + mapping memory); Tally/ERP format diversity (parser library grows incrementally; Claude rung is the fallback); per-document API cost (Opus 4.8 at $5/$25 per MTok — a full statement pack is well under a dollar; approval gate prevents abuse).
+
+### Amendment A5 — Period granularity (monthly + quarterly)
+**Requested:** 2026-07-13 (Parth). **Extends:** A1. **Risk:** Low. **Complexity:** S–M.
+
+`kpi_periods` holds only FY25/FY26. Parth's comparison examples ("June 2026 vs March 2026", "Q1 FY26-27 vs Q4 FY25-26") need monthly and quarterly periods. The A1 resolver already supports mom/qoq/custom by date matching — primarily a **data gap**, not a logic gap. Seed source: the embedded `const D`/`DET`/`SS` data objects in `RPIL_Board_Report_June2026_8.html` (real data, same provenance-in-`kpi_values.note` pattern as FY25/FY26). Note: `_8` restates FY26 Gross Profit to the audited-FS basis — requires an insert-only correction row (ADR-006).
+
+### Amendment A6 — Single combined package + entitlements + pricing page
+**Requested:** 2026-07-13 (Parth). **Depends on:** A3-UI (tabs must exist to be entitlement-gated). **Risk:** Low-Med. **Complexity:** M.
+
+One package for now: all features visible, non-applicable ones greyed out; segregate into real tiers later. Entitlement taxonomy from `CFOXPERT_ver_2.docx`'s 4 tiers (Essential ₹5-25Cr / Growth ₹25-50Cr / Strategic ₹50-100Cr / Enterprise ₹100Cr+) — each "Dashboard Deliverable" bullet becomes an entitlement key. Starting tab→tier map: Overview/P&L/BS/Ratios/Cost Structure → Essential+; Health Score → Essential+; Segment → Growth+; Projections → Growth+ (Forecasting) → Strategic (Modelling); Governance → Strategic+; Recommendations & Roadmap/Ambition → Strategic+; Inventory & Production → industry add-on (manufacturing), not tier-locked.
+
+**Do not conflate mechanisms:** this is a per-organization DB entitlement (the `organizations.entitlements` jsonb + `plan_tier` columns already exist per ADR-008) — a different thing from `NEXT_PUBLIC_FEATURE_FLAGS` (a dev rollout switch).

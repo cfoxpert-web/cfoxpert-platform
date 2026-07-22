@@ -1,5 +1,15 @@
+import {
+  resolveEntitlements,
+  type EntitlementKey,
+} from "../entitlements";
 import { isFeatureEnabled } from "../feature-flags";
-import { getKpiSnapshot, type KpiSnapshot } from "../kpi/queries";
+import {
+  getKpiSnapshot,
+  getOrgPeriods,
+  type KpiSnapshot,
+  type PeriodOption,
+} from "../kpi/queries";
+import type { ComparisonMode } from "../kpi/period-comparison";
 import { createClient } from "../supabase/server";
 
 /**
@@ -17,6 +27,13 @@ export type DashboardData = {
   organizationName: string;
   snapshot: KpiSnapshot | null; // null = org exists but no KPI periods yet
   healthScore: { score: number; grade: string } | null;
+  periods: PeriodOption[]; // for the dashboard's period/comparison selector
+};
+
+export type DashboardQuery = {
+  periodLabel?: string;
+  compare?: ComparisonMode;
+  comparePeriodLabel?: string;
 };
 
 /**
@@ -29,6 +46,8 @@ export type DashboardData = {
 export async function getCurrentUserOrganization(): Promise<{
   id: string;
   name: string;
+  /** Effective entitlements (A6): tier/package + jsonb overrides, resolved. */
+  entitlements: EntitlementKey[];
 } | null> {
   const supabase = await createClient();
   const {
@@ -38,7 +57,9 @@ export async function getCurrentUserOrganization(): Promise<{
 
   const { data } = await supabase
     .from("organization_members")
-    .select("organization_id, created_at, organizations ( id, name )")
+    .select(
+      "organization_id, created_at, organizations ( id, name, plan_tier, entitlements, industry )",
+    )
     .eq("user_id", user.id) // REQUIRED: RLS shows teammates' membership
     // rows in shared orgs by design (team views), so visibility alone
     // must never drive resolution. Caught by live testing.
@@ -52,18 +73,45 @@ export async function getCurrentUserOrganization(): Promise<{
     : row?.organizations;
   if (!org) return null;
 
-  return { id: org.id as string, name: org.name as string };
+  return {
+    id: org.id as string,
+    name: org.name as string,
+    entitlements: resolveEntitlements({
+      planTier: (org.plan_tier as string) ?? "",
+      overrides: org.entitlements,
+      industry: (org.industry as string | null) ?? null,
+    }),
+  };
 }
 
-export async function getDashboardData(): Promise<DashboardData | null> {
+/**
+ * Amendment A3 — the report tabs' shared fetch: snapshot + period list,
+ * without the Overview-only extras (health score). Callers (server tab
+ * components) have already passed the flag/org gate in the page.
+ */
+export async function getReportSnapshot(
+  organizationId: string,
+  query?: DashboardQuery,
+): Promise<{ snapshot: KpiSnapshot | null; periods: PeriodOption[] }> {
+  const [snapshot, periods] = await Promise.all([
+    getKpiSnapshot(organizationId, query),
+    getOrgPeriods(organizationId),
+  ]);
+  return { snapshot, periods };
+}
+
+export async function getDashboardData(
+  query?: DashboardQuery,
+): Promise<DashboardData | null> {
   if (!isFeatureEnabled("realDashboardData")) return null;
 
   const org = await getCurrentUserOrganization();
   if (!org) return null;
 
   const supabase = await createClient();
-  const [snapshot, scoreRow] = await Promise.all([
-    getKpiSnapshot(org.id),
+  const [snapshot, periods, scoreRow] = await Promise.all([
+    getKpiSnapshot(org.id, query),
+    getOrgPeriods(org.id),
     supabase
       .from("health_scores")
       .select("overall_score, grade")
@@ -79,5 +127,6 @@ export async function getDashboardData(): Promise<DashboardData | null> {
     healthScore: scoreRow
       ? { score: Number(scoreRow.overall_score), grade: scoreRow.grade as string }
       : null,
+    periods,
   };
 }

@@ -14,7 +14,26 @@ import { EnterpriseValueEngine } from "@/components/health-score/enterprise-valu
 const TRUST_ITEMS = [
   "15-minute diagnostic",
   "No cost, no obligation",
-  "Trusted by manufacturers & exporters",
+  "Built for manufacturers & exporters",
+];
+
+const NOT_ITEMS = [
+  {
+    title: "We are not your accountant.",
+    body: "Your books, vouchers, entries and Tally stay exactly where they are. We read what your accounting team produces — we don't produce it.",
+  },
+  {
+    title: "We are not your CA.",
+    body: "Statutory audit, income tax, GST, TDS, ROC filings. All of it stays with your CA, and we work with them, not around them. If anything, they get cleaner numbers from us.",
+  },
+  {
+    title: "We are not a one-time report.",
+    body: "A valuation report or a consultant's deck lands once, gets read once, and sits in a drawer. We're in the business every month, and the score is tracked over time — the number only means something if it moves.",
+  },
+  {
+    title: "We are not a per-hour advisor.",
+    body: "You will never get a bill for a phone call, and you will never hesitate to call because of what it might cost. Advice is included. We charge for defined deliverables, and the rate card is published.",
+  },
 ];
 
 export default function HomePage() {
@@ -59,7 +78,7 @@ export default function HomePage() {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <DashboardCard title="CEO Command Center">
+              <DashboardCard title="CEO Command Center" live={false} note="Illustrative">
                 <div className="grid grid-cols-2 gap-3">
                   <MetricTile
                     wide
@@ -91,6 +110,42 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={0.1}>
             <ChallengeGrid />
+          </Reveal>
+        </Container>
+      </Section>
+
+      {/* ===== WHAT WE ARE NOT ===== */}
+      <Section>
+        <Container>
+          <Reveal>
+            <SectionHeader
+              eyebrow="Positioning"
+              heading="Let's be clear about what CFOxpert is not."
+              description="You already have people doing the work below. We don't replace them, and we don't want to."
+              className="mb-12"
+            />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+              {NOT_ITEMS.map((item) => (
+                <div
+                  key={item.title}
+                  className="bg-white p-7 transition-colors duration-250 hover:bg-mist-2"
+                >
+                  <h3 className="mb-2 text-base font-semibold text-navy">{item.title}</h3>
+                  <p className="text-sm text-slate">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="mx-auto mt-12 max-w-3xl text-center text-lg font-medium leading-relaxed text-navy">
+              What we are: the finance function that sits above your accounting — the one a
+              ₹200 Cr company has in-house and a ₹30 Cr company usually can&apos;t justify hiring.
+              Cash flow you can see coming. Costs you can defend. A board-grade view of the
+              business, every month. And a business that is worth more when you decide to sell
+              it, raise against it, or hand it over.
+            </p>
           </Reveal>
         </Container>
       </Section>

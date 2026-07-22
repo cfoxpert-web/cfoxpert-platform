@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Card } from "@/components/cards/card";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { RevenueChart } from "@/components/charts/revenue-chart";
@@ -25,8 +26,12 @@ import {
   MOCK_QUICK_ACTIONS,
 } from "@/lib/mock-data/dashboard";
 
-import { getDashboardData } from "@/lib/dashboard/data";
+import { getDashboardData, type DashboardQuery } from "@/lib/dashboard/data";
 import { toKpiCardData } from "@/lib/dashboard/map-kpis";
+import { isComparisonMode } from "@/lib/kpi/period-comparison";
+import { PeriodComparisonSelector } from "@/components/dashboard/period-comparison-selector";
+import { ReportEmpty } from "@/components/dashboard/report/report-empty";
+import { getClientHealthScore } from "@/lib/dashboard/health";
 
 /**
  * Milestone 11: the dashboard's data seam, swapped. With the
@@ -40,20 +45,65 @@ import { toKpiCardData } from "@/lib/dashboard/map-kpis";
  * Remaining widgets (charts, actions, board packs, notifications, tasks,
  * documents) stay mock until their own milestones deliver real sources.
  */
-export async function CommandCenter() {
-  const real = await getDashboardData();
-  const kpis = real?.snapshot ? toKpiCardData(real.snapshot.kpis) : null;
-  const kpiRow = kpis && kpis.length > 0 ? kpis : MOCK_KPIS;
-  const healthScore = real?.healthScore ?? { score: 82, grade: "A-" };
+export async function CommandCenter({
+  period,
+  compare,
+  comparePeriod,
+}: {
+  period?: string;
+  compare?: string;
+  comparePeriod?: string;
+} = {}) {
+  const query: DashboardQuery = {
+    periodLabel: period,
+    compare: isComparisonMode(compare) ? compare : undefined,
+    comparePeriodLabel: comparePeriod,
+  };
+  const real = await getDashboardData(query);
+  const kpis = real?.snapshot
+    ? toKpiCardData(real.snapshot.kpis, real.snapshot.comparisonLabel)
+    : null;
+  // Real-data path with an empty period shows an honest empty state; the
+  // mock fallback is ONLY for mock mode (flag off / no org resolved).
+  const kpiRow = kpis && kpis.length > 0 ? kpis : real ? null : MOCK_KPIS;
+
+  // Health score (A2): computed from financials at read time; falls back to
+  // a persisted lead-check score if one exists; mock ONLY in mock mode.
+  // null on the real path = honest "Not yet assessed" card.
+  const computedHealth = real
+    ? await getClientHealthScore(real.organizationId, query.periodLabel)
+    : null;
+  const healthScore = computedHealth
+    ? { score: computedHealth.overallScore, grade: computedHealth.grade as string }
+    : real
+      ? real.healthScore
+      : { score: 82, grade: "A-" };
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Period + comparison selector (real data only). Suspense: the
+          selector reads useSearchParams(). */}
+      {real?.snapshot && real.periods.length > 0 && (
+        <Suspense>
+          <PeriodComparisonSelector
+            periods={real.periods}
+            currentPeriod={real.snapshot.periodLabel}
+            mode={real.snapshot.comparisonMode}
+            comparePeriodLabel={real.snapshot.comparisonLabel}
+          />
+        </Suspense>
+      )}
+
       {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpiRow.map((kpi) => (
-          <KPICard key={kpi.id} {...kpi} />
-        ))}
-      </div>
+      {kpiRow ? (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {kpiRow.map((kpi) => (
+            <KPICard key={kpi.id} {...kpi} />
+          ))}
+        </div>
+      ) : (
+        <ReportEmpty periodLabel={real?.snapshot?.periodLabel} />
+      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -72,7 +122,19 @@ export async function CommandCenter() {
       {/* Working capital + health score */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <WorkingCapitalCard data={MOCK_WORKING_CAPITAL} />
-        <HealthScoreCard score={healthScore.score} grade={healthScore.grade} />
+        <HealthScoreCard
+          score={healthScore?.score ?? null}
+          grade={healthScore?.grade ?? null}
+          breakdownHref={
+            real
+              ? `/dashboard?tab=health${
+                  real.snapshot
+                    ? `&period=${encodeURIComponent(real.snapshot.periodLabel)}`
+                    : ""
+                }`
+              : undefined
+          }
+        />
       </div>
 
       {/* Action tracker + board packs */}

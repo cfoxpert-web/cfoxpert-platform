@@ -13,7 +13,7 @@ const SECTIONS = [
   { heading: "Client Portal Use", body: "Access to the Client Portal is limited to authorized users of engaged client organizations. Credentials must not be shared." },
   { heading: "Limitation of Liability", body: "CFOxpert's liability is limited to the fees paid for the specific engagement in question, to the extent permitted by law." },
   { heading: "Governing Law", body: "These terms are governed by the laws of India, with jurisdiction in Noida, Uttar Pradesh." },
-  { heading: "Contact", body: "Questions about these terms can be directed to info@cfoxpert.in." },
+  { heading: "Contact", body: "Questions about these terms can be directed to hello@cfoxpert.in." },
 ];
 
 /**

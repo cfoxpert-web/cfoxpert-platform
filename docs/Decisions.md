@@ -112,6 +112,38 @@ This is the single log of every consequential architectural decision made on the
 
 ---
 
+## ADR-009: Legacy `plan_tier` values mean the single combined package; tier gating activates only by assigning one of the four real tier values
+
+**Date:** 2026-07-13
+
+**Decision:** Migration 0012 adds the four package tiers from the CFOXPERT package sheet (`essential`/`growth`/`strategic`/`enterprise`) to the `plan_tier` enum but moves no organization onto them. `lib/entitlements.ts` — the ONLY interpreter of `plan_tier` and the `entitlements` jsonb (never SQL, per migration 0001's contract) — treats the legacy values (`internal`/`trial`/`standard`/`premium`) as the single combined package: every tier-gated entitlement granted. Industry add-ons (Inventory & Production → manufacturing) gate on `organizations.industry`, not tier; explicit jsonb overrides win in both directions. Report tabs an org isn't entitled to stay **visible but greyed** with a lock, and their data is never fetched.
+
+**Why:** A6's requirement is "one package for now, segregate into real tiers later" — so the current package must be the *absence* of tier assignment, not a fifth pseudo-tier that would need migrating away from. Moving a client onto a real tier becomes a one-row data change with no deploy, which is exactly the monetization switch A6 exists to enable. Greying rather than hiding keeps the upgrade surface visible (the pricing page renders from the same taxonomy module, so marketing claims and platform gates cannot drift).
+
+**Alternatives considered:**
+- Map legacy values onto tiers (e.g. `premium` → `strategic`) — rejected: those values never meant tiers, and silently downgrading a client's visible tabs on deploy is a support incident, not a migration.
+- Reuse `NEXT_PUBLIC_FEATURE_FLAGS` for gating — rejected explicitly in the roadmap: flags answer "is this capability deployed?", entitlements answer "has this client paid for it?"; conflating them makes every sale a deploy.
+- Hide unentitled tabs — rejected: the package sheet sells progression; an invisible feature can't create demand, and "all features visible, non-applicable greyed out" was the recorded requirement.
+
+---
+
+## ADR-010: In document ingestion, the LLM only ever proposes — a deterministic-plus-human path is the only way numbers publish
+
+**Date:** 2026-07-14
+
+**Decision:** A4's pipeline never lets model output touch `kpi_values` directly. Extraction follows a ladder — deterministic parsers for known formats first, Claude (structured outputs, one org's one document per request) as the fallback — and everything lands in a mutable staging table (`extracted_lines`). Publishing requires deterministic validation gates (TB balances, BS equation, P&L recomputation) plus an explicit staff-confirmed action, which writes through the existing insert-only `kpi_periods`/`kpi_values` path with document-level provenance and an audit entry. Analyst-confirmed label→KPI mappings persist in org-scoped `account_mappings`, so repeated uploads bypass the model entirely for known labels. Client uploads additionally wait at `received` until an analyst approves processing.
+
+**Why:** The board report's numbers are the product; a hallucinated digit is a trust-ending event, not a bug. Structured outputs guarantee *parseable* extraction, not *correct* extraction — correctness comes from arithmetic identities the statements must satisfy and from the analyst who signs off. The mapping memory makes the system MORE deterministic over time instead of more model-dependent, and the approve-to-process gate bounds both garbage input and API spend. This also instantiates AI Design.md's standing rule ("drafts, not decisions; nothing reaches a client unreviewed") in the platform's first real AI feature.
+
+**Alternatives considered:**
+- Auto-publish when validation gates pass — rejected: gates prove internal consistency, not fidelity to the source document; a consistently-wrong extraction passes gates.
+- LLM-per-upload with no mapping memory — rejected: pays extraction risk and cost on every upload for labels a human already confirmed; learning nothing across uploads is the strictly worse version of the same pipeline.
+- Extending the shared `work_status` enum for pipeline stages — rejected: `open/in_progress/resolved` is THE generic workflow shape (migration 0005); ingestion stages are pipeline states, so the job gets its own enum and mirrors the history *pattern* instead.
+
+**Addendum — client-document data handling on the Claude API (2026-07-20, decided by Parth before A4-b shipped):** extraction uses Anthropic's standard commercial API: inputs/outputs are not used for model training by default and are retained by Anthropic for a limited period (~30 days) for abuse monitoring, then deleted. A client's document leaves CFOxpert's Supabase infrastructure for the duration of the extraction call, one document from one organization per request. This is DISCLOSED, not silent: the Privacy Policy carries an AI-assisted-processing section naming Anthropic and the no-training/limited-retention terms, and the same line belongs in client engagement terms. Alternatives considered: zero-data-retention agreement (enterprise-tier, revisit if a client demands it); deterministic-only processing (rejected as default — PDFs are half the intake; remains the automatic behavior whenever `ANTHROPIC_API_KEY` is absent).
+
+---
+
 ## Template for future entries
 
 ```

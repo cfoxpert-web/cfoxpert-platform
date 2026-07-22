@@ -42,6 +42,8 @@ export const FLAG_DEFAULTS = {
   realDashboardData: false,
   /** Milestone 13: AI-generated commentary/insight drafts. */
   aiInsights: false,
+  /** Amendment A4: document upload + ingestion pipeline. */
+  docIngestion: false,
 } as const;
 
 export type FeatureFlag = keyof typeof FLAG_DEFAULTS;

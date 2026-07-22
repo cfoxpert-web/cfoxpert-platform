@@ -86,7 +86,20 @@ export interface KPIData {
     direction: "up" | "down" | "flat";
     label: string;
   };
-  icon: "revenue" | "margin" | "cashcycle" | "workingcapital" | "healthscore" | "actions";
+  icon:
+    | "revenue"
+    | "margin"
+    | "cashcycle"
+    | "workingcapital"
+    | "healthscore"
+    | "actions"
+    | "grossprofit"
+    | "otherincome"
+    | "netprofit"
+    | "receivables"
+    | "payables"
+    | "cashbank"
+    | "inventory";
 }
 
 export interface TimeSeriesPoint {

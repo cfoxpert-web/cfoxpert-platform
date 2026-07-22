@@ -1,6 +1,8 @@
 # AI Design.md
 
-**Status: not yet built.** AI Services is Milestone 13 in the frozen roadmap, sequenced after CRM, KPI Engine, and Dashboard Data specifically because it needs real data to generate insight from — generating commentary on mock data was explicitly rejected as not being a real milestone.
+**Status: first consumer scoped (A4), M13 still not built.** AI Services is Milestone 13 in the frozen roadmap, sequenced after CRM, KPI Engine, and Dashboard Data specifically because it needs real data to generate insight from — generating commentary on mock data was explicitly rejected as not being a real milestone.
+
+**Update 2026-07-14:** the platform's FIRST AI feature will be A4's document extraction (scoped in `Integration Roadmap.md`), not M13's commentary. It resolves two of the open questions below for that feature: model/provider = Claude (`claude-opus-4-8`, Messages API, structured outputs, server-only key), and human review = a staff-gated in-portal review queue. The guiding principle holds verbatim: the model proposes staged rows; only a staff-confirmed action publishes (ADR-010). Grounding is one document from one organization per request — cross-client leakage is impossible by construction, not by filtering.
 
 ## Guiding principle: assistive, not autonomous
 

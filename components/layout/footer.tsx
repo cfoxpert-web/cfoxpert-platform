@@ -12,7 +12,7 @@ export function Footer() {
             <Logo heightClass="h-6" />
           </div>
           <p>
-            {SITE_CONFIG.legalEntity}
+            Operated by {SITE_CONFIG.legalEntity}
             <br />
             {SITE_CONFIG.address.line1}
             <br />
