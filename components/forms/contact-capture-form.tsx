@@ -39,7 +39,7 @@ export function ContactCaptureForm({
           </label>
           <Input
             id="cc-name"
-            placeholder="e.g. Parth Sharma"
+            placeholder="e.g. Rajesh Kumar"
             error={!!errors.name}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "cc-name-error" : undefined}

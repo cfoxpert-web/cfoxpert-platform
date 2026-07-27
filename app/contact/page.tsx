@@ -121,13 +121,13 @@ export default function ContactPage() {
                       <label htmlFor="ct-name" className="mb-2 block text-[13px] font-semibold text-navy">
                         Full name
                       </label>
-                      <Input id="ct-name" name="name" required placeholder="e.g. Parth Sharma" />
+                      <Input id="ct-name" name="name" required placeholder="e.g. Rajesh Kumar" />
                     </div>
                     <div>
                       <label htmlFor="ct-company" className="mb-2 block text-[13px] font-semibold text-navy">
                         Company name
                       </label>
-                      <Input id="ct-company" name="company" placeholder="e.g. Shitla Paper Products" />
+                      <Input id="ct-company" name="company" placeholder="e.g. Sunrise Industries Pvt Ltd" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

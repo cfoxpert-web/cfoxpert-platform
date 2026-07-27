@@ -10,7 +10,10 @@ import type { HealthCheckQuestion } from "@/constants/health-check-questions";
 interface QuestionCardProps {
   question: HealthCheckQuestion;
   value: number | undefined;
-  onAnswer: (score: number) => void;
+  /** Selected option index — selection identity. Scores may collide
+      (two turnover bands both score 80), so never compare by score. */
+  selectedIndex?: number;
+  onAnswer: (score: number, optionIndex?: number) => void;
   onBack: () => void;
   onNext: () => void;
   isFirst: boolean;
@@ -20,6 +23,7 @@ interface QuestionCardProps {
 export function QuestionCard({
   question,
   value,
+  selectedIndex,
   onAnswer,
   onBack,
   onNext,
@@ -43,11 +47,11 @@ export function QuestionCard({
         {question.type === "options" && (
           <div className="flex flex-col gap-2.5">
             {question.options.map((option, i) => {
-              const selected = value === option.score;
+              const selected = selectedIndex === i;
               return (
                 <button
                   key={i}
-                  onClick={() => onAnswer(option.score)}
+                  onClick={() => onAnswer(option.score, i)}
                   className={cn(
                     "flex items-center justify-between gap-4 rounded-sm border-[1.5px] border-line px-5 py-[18px] text-left text-[15px] font-medium text-ink transition-all duration-150 hover:border-slate-light hover:bg-mist",
                     selected && "border-teal bg-teal-light text-navy"

@@ -23,6 +23,10 @@ export default function HealthCheckPage() {
   const [phase, setPhase] = useState<Phase>("contact");
   const [contact, setContact] = useState<ContactDetailsInput | null>(null);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  // Which option INDEX was picked per question — selection identity for the
+  // UI. Two options may legitimately share a score (e.g. two turnover bands
+  // both scoring 80); comparing by score alone highlighted both.
+  const [choices, setChoices] = useState<Record<string, number>>({});
   const [result, setResult] = useState<HealthCheckResult | null>(null);
 
   const totalQuestions = HEALTH_CHECK_QUESTIONS.length;
@@ -35,8 +39,11 @@ export default function HealthCheckPage() {
     setPhase("questions");
   }
 
-  function handleAnswer(score: number) {
+  function handleAnswer(score: number, optionIndex?: number) {
     setAnswers((prev) => ({ ...prev, [currentQuestion.key]: score }));
+    if (optionIndex !== undefined) {
+      setChoices((prev) => ({ ...prev, [currentQuestion.key]: optionIndex }));
+    }
   }
 
   function handleNext() {
@@ -77,6 +84,7 @@ export default function HealthCheckPage() {
             <QuestionCard
               question={currentQuestion}
               value={answers[currentQuestion.key]}
+              selectedIndex={choices[currentQuestion.key]}
               onAnswer={handleAnswer}
               onBack={back}
               onNext={handleNext}

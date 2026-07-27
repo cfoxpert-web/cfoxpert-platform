@@ -1,5 +1,11 @@
 # Changelog.md
 
+## 2026-07-27 (health-check fixes: duplicate-score selection bug, placeholders)
+
+- BUG (Parth, on production): choosing "₹50–100 Crore" turnover also highlighted "More than ₹250 Crore" — both options carry score 80 and the UI compared BY SCORE. Fixed properly: selection identity is now the option INDEX (new `choices` state + `selectedIndex` prop); the score-keyed AnswerMap that the engine and persistence consume is untouched. Lesson: never use a non-unique value as selection identity.
+- Placeholders de-personalized: "e.g. Parth Sharma" → "e.g. Rajesh Kumar" (health check + contact), "e.g. Shitla Paper Products" → generic (a near-real client name was rendering as a form hint).
+- Lead capture verified live by Parth: production health-check submission landed in health_check_submissions with score. Notification/extraction workflow + questionnaire v2 proposal pending his decisions.
+
 ## 2026-07-27 (LIVE on cfoxpert.in + pre-publish audit fixes)
 
 - LAUNCHED: cfoxpert.in live over HTTPS (www.cfoxpert.in primary, apex 308-redirects to it; GoDaddy nameservers kept — apex A 76.76.21.21 + www CNAME to Vercel). Production env vars + flags set; both client logins verified on the live domain.
