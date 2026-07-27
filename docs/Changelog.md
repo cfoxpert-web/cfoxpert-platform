@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-07-27 (LIVE on cfoxpert.in + pre-publish audit fixes)
+
+- LAUNCHED: cfoxpert.in live over HTTPS (www.cfoxpert.in primary, apex 308-redirects to it; GoDaddy nameservers kept — apex A 76.76.21.21 + www CNAME to Vercel). Production env vars + flags set; both client logins verified on the live domain.
+- PRE-PUBLISH AUDIT (full repo content sweep) surfaced and this commit fixes the code-side items:
+  - SEO: `app/robots.ts` (crawl marketing, disallow /dashboard, /client-login, /r/) + `app/sitemap.ts` (marketing routes + 10 knowledge articles), both on the canonical www host; metadataBase already agreed.
+  - CONTENT PASS (no fake numbers in front of clients, mock mode byte-identical for demos): Overview's Revenue Trend now renders REAL recorded monthly revenue (₹ lakhs, needs ≥2 points); Cash Flow / Working Capital / Action Tracker / Board Packs / Notifications / Activity / Tasks widgets are mock-mode-only; Documents widget on the real path shows the client's real recent uploads; Quick Actions link to surfaces that exist (Upload Financials, Health Score, Knowledge Hub, Contact). Board Packs / Action Tracker / Notifications PAGES show an honest "your analyst will activate this" state on the real path (`ComingSoon` component).
+- LEAD-CAPTURE FIX (operational, Parth): `healthCheckPersistence:on` added to Production flags — health-check submissions now persist with scores; previously they went only to an unset webhook (lost). Recorded as a launch lesson.
+- STILL PENDING (Parth's court, from the audit): founder name/bio/photo for the About page ([FOUNDER NAME] renders live today); Privacy/Terms real dates + legal review (DPDP); his read-through of the 10 Knowledge Hub articles; keep-or-remove decision on /r/sample-exports; ANTHROPIC_API_KEY creation; Vercel Pro + Supabase Pro upgrades; hello@cfoxpert.in mailbox confirmation.
+
 ## 2026-07-27 (Sheetal VERIFIED live; mock health-score page fixed)
 
 - Sheetal onboarding VERIFIED on Preview by Parth: login works, org resolves, Q1 FY27 default period, all cards match the Board MIS artefact (rev ₹57.66Cr, GP ₹14.88Cr, NP ₹8.98Cr, receivables ₹36.02Cr…), health score computes from financials (60/B — CCC 80 days and borrowings/revenue 0.44x correctly flagged), Documents empty, tenant isolation held.

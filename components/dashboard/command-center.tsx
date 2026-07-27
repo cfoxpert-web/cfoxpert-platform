@@ -28,10 +28,22 @@ import {
 
 import { getDashboardData, type DashboardQuery } from "@/lib/dashboard/data";
 import { toKpiCardData } from "@/lib/dashboard/map-kpis";
+import { getClientDocuments } from "@/lib/documents/queries";
+import { DOCUMENT_KINDS } from "@/lib/documents/model";
+import { getMonthlySeries } from "@/lib/kpi/queries";
 import { isComparisonMode } from "@/lib/kpi/period-comparison";
 import { PeriodComparisonSelector } from "@/components/dashboard/period-comparison-selector";
 import { ReportEmpty } from "@/components/dashboard/report/report-empty";
 import { getClientHealthScore } from "@/lib/dashboard/health";
+import type { DocumentItem, QuickAction, TimeSeriesPoint } from "@/types";
+
+/** Real quick actions — every link goes somewhere that exists today. */
+const REAL_QUICK_ACTIONS: QuickAction[] = [
+  { id: "qa1", label: "Upload Financials", href: "/dashboard/documents" },
+  { id: "qa2", label: "View Health Score", href: "/dashboard?tab=health" },
+  { id: "qa3", label: "Knowledge Hub", href: "/knowledge" },
+  { id: "qa4", label: "Message CFOxpert", href: "/contact" },
+];
 
 /**
  * Milestone 11: the dashboard's data seam, swapped. With the
@@ -79,6 +91,35 @@ export async function CommandCenter({
       ? real.healthScore
       : { score: 82, grade: "A-" };
 
+  // Pre-launch content pass: on the real path the lower widgets carry REAL
+  // data or don't render — no fake numbers in front of clients. Mock mode
+  // keeps every illustrative widget for demos, byte-identical.
+  let revenueSeries: TimeSeriesPoint[] = [];
+  let recentDocuments: DocumentItem[] = [];
+  if (real) {
+    const [series, docs] = await Promise.all([
+      getMonthlySeries(real.organizationId, "revenue"),
+      getClientDocuments(real.organizationId),
+    ]);
+    revenueSeries = series
+      .filter((p) => p.segment === null)
+      .map((p) => ({
+        month: p.periodLabel.split(" ")[0] ?? p.periodLabel,
+        value: Math.round(p.value / 100000), // rupees → ₹ lakhs (chart unit)
+      }));
+    recentDocuments = docs.slice(0, 3).map((d) => ({
+      id: d.id,
+      name: d.fileName,
+      category:
+        DOCUMENT_KINDS.find((k) => k.key === d.kind)?.label ?? "Document",
+      updatedLabel: new Date(d.uploadedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }),
+    }));
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Period + comparison selector (real data only). Suspense: the
@@ -105,23 +146,37 @@ export async function CommandCenter({
         <ReportEmpty periodLabel={real?.snapshot?.periodLabel} />
       )}
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-6">
-          <h3 className="mb-1 font-display text-[16px] text-navy">Revenue Trend</h3>
-          <p className="mb-2 text-[12.5px] text-slate">Last 6 months, ₹ lakhs</p>
-          <RevenueChart data={MOCK_REVENUE_SERIES} />
-        </Card>
-        <Card className="p-6">
-          <h3 className="mb-1 font-display text-[16px] text-navy">Cash Flow</h3>
-          <p className="mb-2 text-[12.5px] text-slate">Inflow vs outflow, ₹ lakhs</p>
-          <CashFlowChart data={MOCK_CASH_FLOW_SERIES} />
-        </Card>
-      </div>
+      {/* Charts row. Real path: revenue trend from recorded monthly values
+          (needs ≥2 points to be a trend); cash flow has no real source yet
+          and renders only in mock mode. */}
+      {(!real || revenueSeries.length >= 2) && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card className="p-6">
+            <h3 className="mb-1 font-display text-[16px] text-navy">Revenue Trend</h3>
+            <p className="mb-2 text-[12.5px] text-slate">
+              {real ? "Recorded months, ₹ lakhs" : "Last 6 months, ₹ lakhs"}
+            </p>
+            <RevenueChart data={real ? revenueSeries : MOCK_REVENUE_SERIES} />
+          </Card>
+          {!real && (
+            <Card className="p-6">
+              <h3 className="mb-1 font-display text-[16px] text-navy">Cash Flow</h3>
+              <p className="mb-2 text-[12.5px] text-slate">Inflow vs outflow, ₹ lakhs</p>
+              <CashFlowChart data={MOCK_CASH_FLOW_SERIES} />
+            </Card>
+          )}
+        </div>
+      )}
 
-      {/* Working capital + health score */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <WorkingCapitalCard data={MOCK_WORKING_CAPITAL} />
+      {/* Working capital (mock-only) + health score */}
+      <div
+        className={
+          real
+            ? "grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1fr]"
+            : "grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]"
+        }
+      >
+        {!real && <WorkingCapitalCard data={MOCK_WORKING_CAPITAL} />}
         <HealthScoreCard
           score={healthScore?.score ?? null}
           grade={healthScore?.grade ?? null}
@@ -137,21 +192,31 @@ export async function CommandCenter({
         />
       </div>
 
-      {/* Action tracker + board packs */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ActionTracker items={MOCK_ACTION_ITEMS} />
-        <BoardPackWidget packs={MOCK_BOARD_PACKS} />
-      </div>
+      {/* Illustrative widgets — mock mode only (their real sources are
+          future milestones; their pages show honest coming-soon states). */}
+      {!real && (
+        <>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ActionTracker items={MOCK_ACTION_ITEMS} />
+            <BoardPackWidget packs={MOCK_BOARD_PACKS} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <NotificationsPanel items={MOCK_NOTIFICATIONS} />
+            <RecentActivity items={MOCK_ACTIVITIES} />
+            <TasksWidget items={MOCK_TASKS} />
+            <DocumentsWidget items={MOCK_DOCUMENTS} />
+          </div>
+        </>
+      )}
 
-      {/* Sidebar-style widgets */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <NotificationsPanel items={MOCK_NOTIFICATIONS} />
-        <RecentActivity items={MOCK_ACTIVITIES} />
-        <TasksWidget items={MOCK_TASKS} />
-        <DocumentsWidget items={MOCK_DOCUMENTS} />
-      </div>
+      {/* Real path: the documents widget is real (top 3 recent uploads). */}
+      {real && recentDocuments.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <DocumentsWidget items={recentDocuments} />
+        </div>
+      )}
 
-      <QuickActions items={MOCK_QUICK_ACTIONS} />
+      <QuickActions items={real ? REAL_QUICK_ACTIONS : MOCK_QUICK_ACTIONS} />
     </div>
   );
 }
