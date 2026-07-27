@@ -5,16 +5,28 @@ import type { DriverScore, HealthCheckResult } from "@/types";
 export type AnswerMap = Record<string, number>; // question key -> score (0-100)
 
 /**
- * Capital & Valuation has no question of its own. Valuation isn't something
- * a founder can self-report — it's a function of everything else, weighted
- * with company scale. This mirrors the reasoning documented in the original
- * Health Check build: 75% average of the other five driver scores, 25% the
- * revenue-benchmark answer.
+ * Capital & Valuation has no driver question of its own. Valuation isn't
+ * something a founder can self-report — it's a function of everything else,
+ * weighted with company scale. Original rule: 75% average of the other five
+ * driver scores, 25% the revenue-benchmark answer.
+ *
+ * Questionnaire v2 (2026-07-27) added the ONE part of this driver a founder
+ * CAN self-report: diligence readiness ("three years of clean financials
+ * tomorrow?"). When that answer exists the blend becomes 55/20/25
+ * (others/revenue/diligence); older answer maps without it keep the exact
+ * original 75/25 — backward compatible with every persisted submission.
  */
-function computeCapitalScore(driverScoresByKey: Record<DriverKey, number>, revenueScore: number): number {
+function computeCapitalScore(
+  driverScoresByKey: Record<DriverKey, number>,
+  revenueScore: number,
+  diligenceScore?: number,
+): number {
   const others: DriverKey[] = ["financial", "operational", "growth", "governance", "technology"];
   const avgOthers = others.reduce((sum, key) => sum + driverScoresByKey[key], 0) / others.length;
-  return Math.round(avgOthers * 0.75 + revenueScore * 0.25);
+  if (diligenceScore === undefined) {
+    return Math.round(avgOthers * 0.75 + revenueScore * 0.25);
+  }
+  return Math.round(avgOthers * 0.55 + revenueScore * 0.2 + diligenceScore * 0.25);
 }
 
 export function computeDriverScores(answers: AnswerMap): DriverScore[] {
@@ -31,7 +43,7 @@ export function computeDriverScores(answers: AnswerMap): DriverScore[] {
   return ENTERPRISE_VALUE_DRIVERS.map((driver) => {
     const score =
       driver.key === "capital"
-        ? computeCapitalScore(scoresByKey, revenueScore)
+        ? computeCapitalScore(scoresByKey, revenueScore, answers["diligence"])
         : Math.round(scoresByKey[driver.key] ?? 50);
     return { key: driver.key, score, weight: driver.defaultWeight };
   });

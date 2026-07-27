@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-07-27 (Questionnaire v2 + staff Leads page + phone capture)
+
+- QUESTIONNAIRE v2 (Parth-approved, all 8): every answer is now something a founder KNOWS, not estimates — receivables days instead of cash-stress feelings, "do you know last month's profit?" instead of abstract visibility, ₹5-lakh approval authority instead of a governance slider (slider retired from the set; component still supports the type), biggest-customer % instead of "how much would it hurt". Same keys, same score ladders, zero engine changes for Q1–6. Turnover >₹250Cr rescored 80→82 (unique-score hygiene after the selection bug).
+- NEW Q7 "diligence" (valuation readiness — 3 years of clean financials tomorrow?): feeds the COMPUTED Capital & Valuation driver, the one slice a founder can self-report. Blend becomes 55/20/25 (other drivers / revenue scale / diligence) WHEN the answer exists; older answer maps keep the exact 75/25 — every persisted submission recomputes identically.
+- NEW Q8 "biztype" (Manufacturing/Trading/Services/Other): category CODES 1–4 in the answers map, not scores; engine ignores it; used for lead qualification + future benchmark classification.
+- Migration 0017 + persistence fix: the contact form always ASKED for a mobile number and the platform dropped it at insert (no column, its whole life). `submitted_phone` now stored. The most actionable field on an Indian SME lead, recovered.
+- STAFF LEADS PAGE `/dashboard/leads` (analysts only; linked from the review queue): every submission newest-first — name, company, email, phone, turnover band + business type (reverse-mapped from unique answer scores), score/grade badge, timestamp. Uses the M9 staff read policies; non-staff get the honest empty state.
+- Notification path (Parth, click-work): Zapier catch-hook as NEXT_PUBLIC_WEBHOOK_URL → email on every submission; the code has fired this payload since M8.
+
 ## 2026-07-27 (health-check fixes: duplicate-score selection bug, placeholders)
 
 - BUG (Parth, on production): choosing "₹50–100 Crore" turnover also highlighted "More than ₹250 Crore" — both options carry score 80 and the UI compared BY SCORE. Fixed properly: selection identity is now the option INDEX (new `choices` state + `selectedIndex` prop); the score-keyed AnswerMap that the engine and persistence consume is untouched. Lesson: never use a non-unique value as selection identity.

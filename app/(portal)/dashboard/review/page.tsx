@@ -50,9 +50,17 @@ export default async function ReviewQueuePage() {
     <DashboardLayout title="Review Queue">
       <div className="mx-auto max-w-3xl">
         <Card className="p-6">
-          <h3 className="mb-1 font-display text-[16px] text-navy">
-            Ingestion review queue
-          </h3>
+          <div className="flex items-baseline justify-between">
+            <h3 className="mb-1 font-display text-[16px] text-navy">
+              Ingestion review queue
+            </h3>
+            <Link
+              href="/dashboard/leads"
+              className="text-[12px] font-semibold text-teal hover:underline"
+            >
+              Leads →
+            </Link>
+          </div>
           <p className="mb-4 text-[12.5px] text-slate-light">
             Every open document job across all clients. Jobs awaiting review
             carry staged numbers — nothing reaches a report until you publish

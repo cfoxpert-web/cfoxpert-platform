@@ -60,6 +60,9 @@ export async function persistHealthCheckSubmission(
     .insert({
       submitted_name: contact.name,
       submitted_email: contact.email,
+      // Migration 0017 — the phone was captured by the form but dropped
+      // here for the platform's whole life until 2026-07-27. Never again.
+      submitted_phone: contact.phone,
       company_name: null,
       answers,
       source: "website",
