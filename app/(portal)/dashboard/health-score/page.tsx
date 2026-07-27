@@ -1,10 +1,22 @@
+import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card } from "@/components/cards/card";
 import { ScoreRing } from "@/components/health-score/score-ring";
 import { DriverBarChart } from "@/components/charts/driver-bar-chart";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { MOCK_PORTAL_HEALTH_RESULT } from "@/lib/mock-data/health-score";
 
+/**
+ * On the real-data path this page must never show the mock 72/A- —
+ * the REAL score (computed from the client's financials, A2) lives on
+ * the dashboard's Health Score tab, so send the viewer there. The mock
+ * render survives only in mock mode (flag off), byte-identical.
+ */
 export default function HealthScorePage() {
+  if (isFeatureEnabled("realDashboardData")) {
+    redirect("/dashboard?tab=health");
+  }
+
   const result = MOCK_PORTAL_HEALTH_RESULT;
 
   return (

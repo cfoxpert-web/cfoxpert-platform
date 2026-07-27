@@ -1,5 +1,11 @@
 # Changelog.md
 
+## 2026-07-27 (Sheetal VERIFIED live; mock health-score page fixed)
+
+- Sheetal onboarding VERIFIED on Preview by Parth: login works, org resolves, Q1 FY27 default period, all cards match the Board MIS artefact (rev ₹57.66Cr, GP ₹14.88Cr, NP ₹8.98Cr, receivables ₹36.02Cr…), health score computes from financials (60/B — CCC 80 days and borrowings/revenue 0.44x correctly flagged), Documents empty, tenant isolation held.
+- BUG (caught by Parth, affected RPIL too): the sidebar "Business Health Score" page still rendered the MOCK 72/A- result on the real-data path — contradicting the real financial score on the dashboard tab. Fixed: on the real path the page redirects to /dashboard?tab=health (the single real score surface); mock mode unchanged.
+- REMAINING MOCK SURFACES visible to real clients (recorded for the launch content pass, decision pending): Overview's Revenue Trend / Cash Flow charts (real monthly series exists — could go real), Board Packs, Action Tracker, Notifications pages. Each needs either real data or an honest "coming soon" state before client-facing launch polish is called done.
+
 ## 2026-07-25 (Client #2 — Sheetal Mercantile onboarded)
 
 - DISCOVERY-FIRST (per Parth's brief): confirmed and reported that reports are DATA rendered by the portal, not hosted HTML — the brief's per-client-URL mental model was corrected before any code. The unlisted `/r/sample-exports` demo route (fictional entity, unauthenticated by design) was explicitly ruled OUT for real client artefacts.
