@@ -1,5 +1,13 @@
 # Changelog.md
 
+## 2026-07-25 (Client #2 — Sheetal Mercantile onboarded)
+
+- DISCOVERY-FIRST (per Parth's brief): confirmed and reported that reports are DATA rendered by the portal, not hosted HTML — the brief's per-client-URL mental model was corrected before any code. The unlisted `/r/sample-exports` demo route (fictional entity, unauthenticated by design) was explicitly ruled OUT for real client artefacts.
+- Migration 0016: Sheetal Mercantile (Private) Limited created exactly the RPIL way — org (Manufacturing / Flexible Packaging & Printing / ₹100Cr+, 'standard' tier = combined package per ADR-009) + dated periods (FY26, Apr–Jun 2026, Q1 FY27; Q1 created last so it is Sheetal's default dashboard period) + 44 insert-only kpi_values with provenance notes, from the Board MIS Q1 FY2026-27 artefact's embedded data. Basis caveat carried on every P&L note: NP before tax and year-end depreciation (trading basis). Internal arithmetic of the artefact verified before seeding (GP/NP identities, borrowing splits). Idempotent; zero RPIL rows touched.
+- USER PROVISIONING deliberately NOT in the repo: Supabase dashboard invite (client sets own password via emailed link) + one membership insert run by Parth — no credential exists in code, env, or commits (brief's guardrail exceeded: not even a hash to manage).
+- Tenant isolation is structural (RLS + session-scoped org resolution; no per-client URLs exist to guess) — re-verified live as part of this onboarding's checklist rather than re-proven by new code.
+- Known scope gaps vs the artefact, stated up front: no Projections tab (roadmap; A6 entitlement keys already exist) and no dedicated Borrowings tab (borrowings render as statement lines/ratios). Optional auth-gated artefact viewer offered, not yet requested.
+
 ## 2026-07-22 (Amendment A4-c — analyst review & publish; A4-b VERIFIED live)
 
 - A4-b CLOSED: all three rungs verified on Preview by Parth — deterministic parse (clean XLSX → needs_review in seconds), honest failure + Retry (analysis-layout XLSX correctly refused by the parser, failed with the exact no-API-key reason, then succeeded via the Claude rung after the key was added), and native-PDF extraction. Staff membership backdated for Parth's user (analyst role in the platform-owner org, created_at older than the RPIL membership so org resolution still picks RPIL).
