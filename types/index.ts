@@ -148,12 +148,11 @@ export interface TaskItem {
   done: boolean;
 }
 
-export type DocumentCategory = "Financial Statements" | "Board Packs" | "Compliance" | "Contracts";
-
 export interface DocumentItem {
   id: string;
   name: string;
-  category: DocumentCategory;
+  /** Display label only (mock categories or real document kinds) — nothing branches on it. */
+  category: string;
   updatedLabel: string;
 }
 
