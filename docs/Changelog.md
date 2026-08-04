@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-08-04 (Client report artefacts — byte-for-byte, auth-gated)
+
+- Closes the last open acceptance criterion from the Sheetal onboarding brief ("report renders identically to the supplied file") — Parth re-supplied the artefact to request it.
+- Migration 0018: `client_reports` registry — per-org published HTML board reports stored VERBATIM (title, period, html, published_at; unique live per org+title; member/staff SELECT via RLS, writes migration/service-role only). Deliberately NOT public/: the unlisted /r/ pattern stays demo-only.
+- Migration 0019: Sheetal's `Board MIS Report — Q1 F.Y. 2026-27` seeded verbatim (dollar-quoted, collision-checked, idempotent).
+- `/dashboard/reports/[id]` route handler serves the stored HTML byte-for-byte as a full document: signed-in required, row fetched with the AUTHENTICATED client so RLS decides visibility — another org's report id 404s identically to a nonexistent one; noindex + no-store headers.
+- Board Packs page real path upgraded: lists the org's published reports (opens in a new tab); zero reports keeps the honest coming-soon; mock mode unchanged. RPIL untouched (no report rows).
+- Verification on production after push: Sheetal login → Board Packs → open report → all 7 tabs/drill-downs/tooltips work (self-contained JS); RPIL login → still coming-soon; logged-out direct URL → login redirect; cross-org id guess → 404.
+
 ## 2026-07-27 (Questionnaire v2 + staff Leads page + phone capture)
 
 - QUESTIONNAIRE v2 (Parth-approved, all 8): every answer is now something a founder KNOWS, not estimates — receivables days instead of cash-stress feelings, "do you know last month's profit?" instead of abstract visibility, ₹5-lakh approval authority instead of a governance slider (slider retired from the set; component still supports the type), biggest-customer % instead of "how much would it hurt". Same keys, same score ladders, zero engine changes for Q1–6. Turnover >₹250Cr rescored 80→82 (unique-score hygiene after the selection bug).
