@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         source: "/r/sample-exports",
         destination: "/r/sample-exports.html",
       },
+      {
+        source: "/r/sample-trading-industries",
+        destination: "/r/sample-trading-industries.html",
+      },
     ];
   },
   async headers() {
