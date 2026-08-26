@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RPIL Board Report — Q1 FY2026-27 (as of June 2026)</title>
+<style>
+:root{
+  --navy:#0f2340; --navy2:#16335c; --gold:#c8973a; --gold-l:#f0d9a8;
+  --bg:#f4f6fa; --card:#ffffff; --ink:#1c2733; --sub:#5b6b7f;
+  --green:#1f8a53; --red:#c0392b; --amber:#b6821a; --border:#e3e8f0;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:28px 36px;}
+header h1{margin:0 0 4px;font-size:22px;letter-spacing:.3px;}
+header p{margin:0;color:#c9d4e4;font-size:13px;}
+.tag{display:inline-block;background:var(--gold);color:var(--navy);font-weight:700;font-size:11px;padding:3px 10px;border-radius:12px;margin-top:8px;}
+nav{display:flex;gap:2px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;overflow-x:auto;}
+nav button{border:none;background:none;padding:14px 18px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;}
+nav button:hover{color:var(--navy);background:#f7f9fc;}
+nav button.active{color:var(--navy);border-bottom:3px solid var(--gold);}
+main{max-width:1180px;margin:0 auto;padding:22px 20px 60px;}
+.tabpage{display:none;animation:fade .25s ease;}
+.tabpage.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+h2.sec{font-size:17px;color:var(--navy);border-left:4px solid var(--gold);padding-left:10px;margin:26px 0 4px;}
+h3.subsec{font-size:14px;color:var(--navy2);margin:20px 0 6px;}
+.unitcap{font-size:11.5px;color:var(--sub);font-style:italic;margin:0 0 12px 14px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:10px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;box-shadow:0 1px 3px rgba(15,35,64,.04);}
+.kpi .lbl{font-size:11.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.kpi .val{font-size:22px;font-weight:700;color:var(--navy);margin:6px 0 2px;}
+.kpi .unit{font-size:10.5px;color:var(--sub);font-weight:600;}
+.kpi .delta{font-size:12px;font-weight:600;margin-top:4px;}
+.up{color:var(--green);} .down{color:var(--red);} .flat{color:var(--amber);}
+.info{width:15px;height:15px;border-radius:50%;background:#e6ebf3;color:var(--navy2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:help;}
+#gtip{position:fixed;display:none;background:var(--navy);color:#fff;font-size:11.5px;line-height:1.45;padding:10px 12px;border-radius:8px;max-width:280px;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,.28);pointer-events:none;}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,35,64,.04);}
+th,td{padding:9px 12px;font-size:13px;text-align:right;border-bottom:1px solid var(--border);}
+th:first-child,td:first-child{text-align:left;}
+th{background:var(--navy);color:#fff;font-weight:600;font-size:12px;}
+tr:hover td{background:#f7f9fc;}
+tr.total td{font-weight:700;background:#f0f3f9;}
+tr.sub td{color:var(--sub);}
+.badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.badge.up{background:#e6f6ed;color:var(--green);}
+.badge.down{background:#fbeceb;color:var(--red);}
+.badge.flat{background:#fbf1de;color:var(--amber);}
+.grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media(max-width:820px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,35,64,.04);}
+.bar-wrap{margin:12px 0;}
+.bar-lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--sub);margin-bottom:3px;}
+.bar-lbl .mixval{font-size:14px;font-weight:700;color:var(--navy);}
+.bar-lbl .mixpct{font-size:11px;color:var(--sub);font-weight:600;margin-left:6px;}
+.bar-bg{background:#e9edf4;border-radius:6px;height:12px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy2),var(--gold));}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;}
+.pill{background:#eef2f9;color:var(--navy2);font-size:11.5px;padding:4px 10px;border-radius:14px;font-weight:600;}
+.freezer{overflow-x:auto;border-radius:10px;box-shadow:0 1px 3px rgba(15,35,64,.04);}
+.freezer table{border-radius:0;box-shadow:none;}
+.freezer td:first-child,.freezer th:first-child{min-width:210px;text-align:left;}
+tr.rehdr td{background:var(--navy) !important;color:#fff;font-weight:600;font-size:11.5px;padding:7px 12px;border-bottom:none;}
+tr.rehdr:hover td{background:var(--navy) !important;}
+.freezer tr.total td:first-child{background:#f0f3f9;}
+.freezer tr.mband td{background:var(--navy2) !important;color:#fff;font-weight:700;font-size:12px;letter-spacing:.3px;}
+.freezer tr.mband td:first-child{background:var(--navy2) !important;}
+.freezer tr:hover td:first-child{background:#f7f9fc;}
+.freezer tr.mband:hover td, .freezer tr.mband:hover td:first-child{background:var(--navy2) !important;}
+.obs{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:8px;padding:13px 18px;margin-bottom:10px;font-size:13px;line-height:1.65;}
+.exp{cursor:pointer;}
+.exp .caret{display:inline-block;color:var(--gold);font-size:10px;margin-right:6px;transition:transform .15s;}
+.exp.open .caret{transform:rotate(90deg);}
+tr.child{display:none;}
+tr.child.show{display:table-row;}
+tr.child td{background:#f9fbfe !important;color:var(--sub);font-size:12.3px;}
+tr.child td:first-child{padding-left:36px;}
+.foot{text-align:center;color:var(--sub);font-size:11.5px;margin-top:40px;}
+.subtle{color:var(--sub);font-size:12.5px;margin-top:-6px;margin-bottom:14px;}
+.scroller{overflow-x:auto;}
+.factline{font-size:12.8px;line-height:1.7;color:var(--ink);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Reliable Packaging Industries Ltd — Board MIS Report</h1>
+  <p>Greater Noida (Corrugated Packaging) · Dhaulana Unit-2 (Glass Processing) · Telangana | Prepared by CFOxpert Advisory</p>
+  <span class="tag">PERIOD: Q1 FY2026-27 (April–June 2026) · POSITION AS ON 30 June 2026</span>
+</header>
+
+<nav id="tabnav"></nav>
+<main id="main"></main>
+<div id="gtip"></div>
+
+<script>
+// ================= DATA LAYER (verified against branch books & F.Y. 2025-26 financial statements) =================
+const D = {
+  // Q1 FY2026-27 P&L per branch
+  // Q1 FY2026-27 and F.Y. 2025-26 per the working finalised in consultation with the company's accountants.
+  // Greater Noida includes the Branch Office (Telangana); GP = revenue less material consumption (net of stock change) less direct expenses per branch trading.
+  q1:{
+    grn:{name:"Greater Noida", full:"Greater Noida (Corrugated / Kraft Paper, incl. Branch Office)", rev:396837353.53, gp:68194275.83, oi:4322.67, np:29407178.98},
+    dha:{name:"Dhaulana", full:"Dhaulana Unit-2 (Toughened Glass)", rev:129380320.45, gp:25801236.56, oi:0, np:4811819.93}
+  },
+  fy:{
+    grn:{rev:1408548572.49, gp:211304380.89, pbt:49911579.49},
+    dha:{rev:372700608.63, gp:99812204.86, pbt:27915787.73}
+  },
+  fyTotals:{rev:1781249181.12, gp:311116585.75, pbt:77827367.22, pat:58139339.19},
+  // Balance sheet: 31-Mar-2026 vs 30-Jun-2026, per branch
+  // GrN & Tel: per branch trial balance (opening = 31-Mar-26); Dhaulana Mar: per F.Y. 2025-26 FS notes; Telangana trade lines net of inter-branch balances
+  bs:{
+    grn:{ fa:[135820172,149210254], stock:[82155841,92482262], debtors:[163891501,187005026],
+          cash:[6536120,8282011], creditors:[109412365,113477012], sec:[249642130,246607796], unsec:[93618265,118298265] },
+    dha:{ fa:[153980597.23,157311085.69], stock:[41155287,26337521], debtors:[58707972.13,80065362.83],
+          cash:[817462.08,902432.97], creditors:[6682670,-1756308.25], sec:[0,0], unsec:[0,0] },
+    tel:{ fa:[464361.99,464361.99], stock:[0,0], debtors:[14058655.32,13503426.47],
+          cash:[0,0], creditors:[0,0], sec:[0,0], unsec:[0,0] }
+  },
+  bsLines:[
+    ["fa","Fixed Assets","Net block of property, plant & equipment and intangibles per branch books."],
+    ["stock","Inventories","Stock-in-hand per branch books: raw material, WIP, finished goods, stores & packing."],
+    ["debtors","Trade Receivables","Amounts receivable from customers per branch books. Telangana figures are stated net of inter-branch balances, which eliminate on consolidation."],
+    ["cash","Cash & Bank","Cash in hand and balances with banks."],
+    ["creditors","Trade Payables","Amounts payable to suppliers per branch books, net of debit balances (advances) within the creditors group. Telangana figures are stated net of inter-branch balances."],
+    ["sec","Secured Borrowings","Working-capital limits (cash credit / overdraft) and secured term loans. Held in Greater Noida books; other units are funded through the inter-unit account."],
+    ["unsec","Unsecured Borrowings","Loans from directors / promoters and other corporates. Held in Greater Noida books."]
+  ],
+  // F.Y. 2025-26 inventory mix (Note 2.13)
+  invMix:[
+    ["Raw Materials",62739283.66,36970184.15,99709467.81],
+    ["Finished Goods",13262907.92,1813208.40,15076116.32],
+    ["Semi-Finished Goods",251296.41,0,251296.41],
+    ["Scrap",1407633.25,0,1407633.25],
+    ["Stores & Spares",4349800.76,1467967.39,5817768.15],
+    ["Packing Material",144919,903927.06,1048846.06]
+  ],
+  invMixTotal:[82155841,41155287,123311128],
+  // Q1 material flow (value basis; quantities to be incorporated on receipt of item-wise stock data)
+  matFlow:{
+    grn:{opening:82155841, purchases:323029389.33, stores:1392733.94, closing:92482262},
+    dha:{opening:41155287, purchases:63627309.89, stores:3145375.00, closing:26337521}
+  }
+};
+
+// Line-item detail for drill-downs (verified to tie to parent totals)
+const DET={
+  salesLabels:["Sales — Central","Sales — Local","Less: Sales Returns","Sales — Scrap"],
+  sales:{ grn:[82841605.19,296516340.56,-3176339.97,20655747.75],
+          dha:[29976519.50,100149725.66,-2691699.21,1945774.50],
+          tel:[24719596.79,0,0,0] },
+  gpBridge:[
+    ["Add: Increase / (Decrease) in Stocks",10326421,-14817766,0],
+    ["Less: Purchases & Consumables",-324457821.52,-63874788.12,-24685438.60],
+    ["Less: Freight Inward",-39845,0,0],
+    ["Less: Wages, Labour & Job Work (incl. June estimate)",-11748915.57,-15741541,0],
+    ["Less: Power, Fuel & Direct Expenses",-2103963.86,-7192914,0]
+  ],
+  indirect:[
+    ["Employee & Establishment",7586741,3191763,0],
+    ["Salaries — June estimate",4000000,1600000,0],
+    ["Director Remuneration (incl. June estimate)",0,5550000,0],
+    ["Administrative & Office",1457141.95,2817615.99,0],
+    ["Repair & Maintenance",6364363.12,2518335.81,0],
+    ["Selling, Freight & Other Charges",9540425.05,1250738.83,0],
+    ["Finance Cost",5225044.31,96727.91,0],
+    ["Depreciation (incl. June estimate)",3150000,1200000,0]
+  ],
+  dhaPurch:[
+    ["Glass",49870688.82],["Packing Material",4543025.40],["Inks",3750066.24],
+    ["Consumables / General",3145375.00],["Adhesive",2461340.60],
+    ["Raw Material — Others",79488.06],["Die, Plate & Printing Block",24804.00],["Less: Regrouped to other heads per the accountants\u2019 working (net)",-247478.23]
+  ],
+  storesQ1:[
+    ["Consumable Items",639282,5156345.60,628688,5294622.20],
+    ["Machine-wise Spare Parts",50552,5583722.03,50548,3546893.89],
+    ["General Spare Parts",7131.4,1009773.67,6089,638066.15],
+    ["Tools & Dies",66,27554.97,40,17842.29]
+  ]
+};
+
+// ---------- helpers ----------
+function crNum(n,dec=2){
+  const neg=n<0; n=Math.abs(n);
+  let s=(n/1e7).toFixed(dec);
+  let [int,frac]=s.split(".");
+  let last3=int.slice(-3), rest=int.slice(0,-3);
+  if(rest!=="") last3=","+last3;
+  return (neg?"(":"")+rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+last3+(dec?("."+frac):"")+(neg?")":"")+" Cr.";
+}
+function pct(n,dec=1){ if(n===null||n===undefined||isNaN(n)||!isFinite(n)) return "n/a"; return (n*100).toFixed(dec)+"%"; }
+function chg(a,b){ return (b-a)/a; }
+function aCls(d){ return d>0?"up":(d<0?"down":"flat"); }
+function aSym(d){ return d>0?"▲":(d<0?"▼":"→"); }
+function info(text){ return `<span class="info" data-tip="${text.replace(/"/g,'&quot;')}">i</span>`; }
+function ind(u){ return u.gp + u.oi - u.np; } // indirect expenses
+
+// ---------- Q1 aggregates ----------
+const Q = D.q1, F = D.fy;
+const totRev = Q.grn.rev+Q.dha.rev;
+const totGP  = Q.grn.gp+Q.dha.gp;
+const totOI  = Q.grn.oi+Q.dha.oi;
+const totInd = ind(Q.grn)+ind(Q.dha);
+const totNP  = Q.grn.np+Q.dha.np;
+const gpPct=totGP/totRev, npPct=totNP/totRev;
+const FT = D.fyTotals;
+
+console.log("Q1 identity check GP+OI-Ind =", (totGP+totOI-totInd).toFixed(2), "NP =", totNP.toFixed(2));
+console.log("Branch NP sum:", (Q.grn.np+Q.dha.np).toFixed(2));
+
+// consolidated BS
+const consBS = {};
+D.bsLines.forEach(l=>{
+  const k=l[0];
+  consBS[k]=[ D.bs.grn[k][0]+D.bs.dha[k][0]+D.bs.tel[k][0], D.bs.grn[k][1]+D.bs.dha[k][1]+D.bs.tel[k][1] ];
+});
+
+// Greater Noida item-wise stock summary (Apr-Jun 2026): monthly qty & value
+const SS = {
+  months:[
+    {m:"April 2026",  open:[1586374.2,66761534.86], pur:[3120781.22,112735487.65], cons:[3013513.02,108068064.09], close:[1692690.4,71393850.67], prod:5152675, kraftCons:[2699297,101606924.52], kraftRate:37.82,
+     items:[["Kraft Papers (Reel Form)",1529885,61021631.45,2795951,105738015.28,2699297,101606924.52,1625592,65122614.46],
+      ["Adhesive",2558,226093.49,10267,1555707.70,7395,1219464.45,5430,562336.74],
+      ["Starch",28600,800800,60000,1695000,56600,1584800,32000,911000],
+      ["Inks",3406,636304,4143,777604,4143,750654,3406,663254],
+      ["Stitching Wire",412.2,38540.70,2508.2,239533.10,2581.4,245699.30,339,32374.50],
+      ["Packing Material",420,144919,32092.62,440582.37,32055.62,419930.37,457,165571],
+      ["Consumable Items",12811,628276.63,213993,1840369.41,209047,1835451.12,17752,628194.92],
+      ["General Spare Parts",7250,2002234.72,1685.4,235758.31,2216,194957.31,6719.4,2043035.72],
+      ["Machine-wise Spare Parts",1016,1246802.09,128,208913.12,178,210183.02,966,1245532.19],
+      ["Tools & Dies",16,15932.78,13,4004.36,0,0,29,19937.14]]},
+    {m:"May 2026",    open:[1692691.4,71393850.67], pur:[2991354.34,114592285.08], cons:[2963914.34,108740236.56], close:[1720123.4,77236179.18], prod:4871404, kraftCons:[2681648,102056713.75], kraftRate:39.71,
+     items:[["Kraft Papers (Reel Form)",1625592,65122614.46,2635077,104626138.26,2681648,102056713.75,1579021,67692038.97],
+      ["Adhesive",5430,562336.74,9254,1668440.97,7489,1260535.14,7195,970242.57],
+      ["Starch",32000,911000,57000,1624500,66550,1895675,22450,639825],
+      ["Inks",3406,663254,4021,783150,3735,718025,3692,728379],
+      ["Stitching Wire",339,32374.50,5218.3,563576.40,4590.3,491514.90,967,104436],
+      ["Packing Material",457,165571,59637.04,545827.72,18499.04,287114.72,41595,424284],
+      ["Consumable Items",17752,628194.92,169250,1295880.44,179069,1585102.08,7926,331973.28],
+      ["General Spare Parts",6719.4,2043035.72,1683,238599.63,2198,296576.11,6203.4,1982339.23],
+      ["Machine-wise Spare Parts",967,1245532.19,50171,3223808.25,125,146477.57,51013,4322862.87],
+      ["Tools & Dies",29,19937.14,43,22363.41,11,2502.29,61,39798.26]]},
+    {m:"June 2026",   open:[1720123.4,77236179.18], pur:[3182271.7,116884276.91], cons:[3239268.2,114873799.04], close:[1661945.9,79198127.95], prod:4843583, kraftCons:[2816422,104426001.39], kraftRate:37.83,
+     items:[["Kraft Papers (Reel Form)",1579021,67692038.97,2838311,107381305.50,2816422,104426001.39,1599741,70610814.01],
+      ["Adhesive",7195,970242.57,6735,1321233.07,7671,1405951.62,6259,885524.02],
+      ["Starch",22450,639825,60000,1806000,71625,2099425,10825,346400],
+      ["Inks",3692,728379,3690,662610,3795,680040,3587,710949],
+      ["Stitching Wire",967,104436,5998.2,599820,4106.2,418356,2859,285900],
+      ["Packing Material",41595,424284,7472.5,405609,43128,617850,5939.5,212043],
+      ["Consumable Items",7926,331973.28,256039,2020095.75,240572,1874069.00,23381,466000.03],
+      ["General Spare Parts",6203.4,1982339.23,3763,535415.73,1675,146532.73,8291.4,2371222.22],
+      ["Machine-wise Spare Parts",51013,4322862.87,253,2151000.66,50245,3190233.30,1021,3283630.22],
+      ["Tools & Dies",61,39798.26,10,1187.20,29,15340,42,25645.45]]}
+  ],
+  mar:[1586374.2,66761534.86],   // 31-Mar-2026 closing = April opening
+  items:[ // [name, Q1 pur qty, Q1 pur val, Q1 cons qty, Q1 cons val, Mar qty, Mar val, Jun qty, Jun val]
+    ["Kraft Paper (Reel Form)",8269339,317745459.04,8197367,308089639.66,1529885,61021631.45,1599741,70610814.01],
+    ["Adhesive",26256,4545381.74,22555,3885951.21,2558,226093.49,6259,885524.02],
+    ["Starch",177000,5125500,194775,5579900,28600,800800,10825,346400],
+    ["Inks",11854,2223364,11673,2148719,3406,636304,3587,710949],
+    ["Stitching Wire",13724.7,1402929.50,11277.9,1155570.20,412.2,38540.70,2859,285900],
+    ["Packing Material",99202.16,1392019.09,93682.66,1324895.09,420,144919,5939.5,212043],
+    ["Stores, Spares, Consumables & Tools",697031.4,11777396.27,685365,9497424.53,21093,3893246.22,32735.4,6146497.92]
+  ]
+};
+// ================= GLOBAL TOOLTIP (fixed-position; never clipped by scroll containers) =================
+document.addEventListener("mouseover", e=>{
+  const t = e.target.closest(".info");
+  if(!t) return;
+  const tip = document.getElementById("gtip");
+  tip.textContent = t.getAttribute("data-tip");
+  tip.style.display = "block";
+  positionTip(e);
+});
+document.addEventListener("mousemove", e=>{
+  if(document.getElementById("gtip").style.display==="block" && e.target.closest(".info")) positionTip(e);
+});
+document.addEventListener("mouseout", e=>{
+  if(e.target.closest && e.target.closest(".info")) document.getElementById("gtip").style.display="none";
+});
+function positionTip(e){
+  const tip=document.getElementById("gtip");
+  const pad=14;
+  let x=e.clientX+pad, y=e.clientY+pad;
+  const r=tip.getBoundingClientRect();
+  if(x+r.width>window.innerWidth-8) x=e.clientX-r.width-pad;
+  if(y+r.height>window.innerHeight-8) y=e.clientY-r.height-pad;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+
+// ---- expandable rows: click a parent row to toggle its break-up ----
+document.addEventListener("click", e=>{
+  const tr=e.target.closest("tr.exp");
+  if(!tr || e.target.closest(".info")) return;
+  tr.classList.toggle("open");
+  const grp=tr.getAttribute("data-grp");
+  document.querySelectorAll(".grp-"+grp).forEach(r=>r.classList.toggle("show"));
+});
+function cap(l){return `<span class="caret">▸</span>${l}`;}
+function dash(v,dec=2){return (v===0||v===null)?"-":crNum(v,dec);}
+function consRowsHtml(prefix){
+  return D.bsLines.map(l=>{
+    const k=l[0], o=consBS[k], d=o[1]-o[0], pv=o[0]!==0?chg(o[0],o[1]):null, g=prefix+k;
+    const parent=`<tr class="exp" data-grp="${g}"><td>${cap(l[1])} ${info(l[2])}</td><td>${crNum(o[0])}</td><td>${crNum(o[1])}</td><td class="${aCls(d)}">${d>0?"+":""}${crNum(d)}</td><td><span class="badge ${aCls(d)}">${aSym(d)} ${pv===null?"n/a":pct(Math.abs(pv))}</span></td></tr>`;
+    const BSNAMES={grn:"Greater Noida",dha:"Dhaulana",tel:"Telangana (Branch Office)"};
+    const kids=["grn","dha","tel"].filter(b=>!(D.bs[b][k][0]===0&&D.bs[b][k][1]===0)).map(b=>{
+      const ob=D.bs[b][k], db=ob[1]-ob[0], pb=ob[0]!==0?chg(ob[0],ob[1]):null;
+      return `<tr class="child grp-${g}"><td>${BSNAMES[b]}</td><td>${crNum(ob[0])}</td><td>${crNum(ob[1])}</td><td class="${aCls(db)}">${db>0?"+":""}${crNum(db)}</td><td><span class="badge ${aCls(db)}">${aSym(db)} ${pb===null?"n/a":pct(Math.abs(pb))}</span></td></tr>`;
+    }).join("");
+    return parent+kids;
+  }).join("");
+}
+
+// ================= UNIT LINE DATA (per the accountants' working) =================
+  const UW={
+    grn:{ label:"Greater Noida", pyRev:1408548572.49, projRev:1510000000, q1Rev:396837353.53,
+      oi:[["Interest on FDR",4322.67,18920.98,18920.98],["Others — not projected",0,0,465943.72]],
+      com:{q1:312702968.33, proj:1189880000, py:1118482045.85},
+      stk:{open:[82155841,82155841,76884388], pur:[323029389.33,1200206421,1123753498.85], close:[92482262,92482262,82155841]},
+      direct:[["Freight & Cartage Inward",39845,159380,435649.19],["Wages & Jobwork",12348566.57,49394266.28,65031676.99],["Consumable Expenses",1392733.94,5570935.76,4991985.33],["Gas Expenses",58372.86,233491.44,77929.52],["Electricity Expenses",2045591,8182364,8024238.72],["Rent of DG & Machine",55000,550000,200666]],
+      emp:[["Salary Expenses",10577113,42308452,28882433],["Director Remuneration",0,180000,180000],["Staff Welfare",448820,1795280,1301102.87],["Medical Expenses",22108,88432,22641],["ESIC Employer Contribution",149634,598536,644592],["EPF Employer Contribution",185706,742824,339495],["Bonus Expenses",1500000,6000000,6037707],["Others — not projected",0,0,-863638]],
+      fin:[["Interest to Bank (CC / OD)",4698273.75,18793095,16633821.77],["Interest on Loans",166161.30,664645.20,924188.35],["Processing Fees",339160,339160,310900]],
+      dep:[3375000,13500000,12823607.94],
+      oth:[["AMC Charges",42603,170412,210434],["Courier Expenses",72449.59,289798.36,140755.61],["Auditor's Remuneration",0,520000,420000],["Bank Charges",16546.48,66185.92,59889.68],["Freight Outward",7411301,29645204,43846899],["Insurance",472456,1182592,1182592],["Subscription Fees",15000,15000,0],["Commission Charges",92000,368000,8661911],["Bill Discounting Charges",344062.78,1376251.12,2158208.77],["Interest on TDS",5260,5260,1576],["Travelling Expenses",312365.98,1249463.92,1001530.34],["Office Expenses",237089.52,948358.08,857030.77],["Repair & Maintenance — Machinery",5218945.80,20875783.20,16148726.77],["Factory Repair & Maintenance",230883,923532,2753825.40],["Vehicle Running & Maintenance",871931.32,3487725.28,3253290.02],["Licence Fees",24877.67,24877.67,122961.80],["Security Services",459263.99,1837055.96,1610407.86],["Printing & Stationery",95656.50,382626,383663.11],["Telephone & Internet",46146.20,184584.80,166201.50],["Legal & Professional",7000,508000,466050],["ROC Fees",0,1800,1800],["Testing & Analysis Charges",8750,35000,182225],["Rent",930000,3720000,3720000],["House Keeping Expenses",92461.92,369847.68,383775.71],["Conveyance Expenses",322394,1289576,964932.98],["Others — not projected",-1.28,0,5942127.85]],
+      q1Pbt:29407178.98, pbt:101561125.31, pyPbt:49911579.49 },
+    dha:{ label:"Dhaulana Unit-2", pyRev:372700608.63, projRev:510000000, q1Rev:129380320.45,
+      oi:[["Interest on Security Deposit with UPPCL",0,5360,5360],["Others — not projected",0,0,106321.63]],
+      com:{q1:78445075.89, proj:309213000, py:190371732.27},
+      stk:{open:[41155288,41155288,16350847], pur:[63627309.89,294395234,215176173.27], close:[26337522,26337522,41155288]},
+      direct:[["Wages & Jobwork",16298067,65192268,53609283.50],["Electricity Expenses",8566103,31966103,28482888],["Rent of DG & Machine",269838,1709838,424500]],
+      emp:[["Salary Expenses",5130499,20521996,8186148],["Director Remuneration",5550000,22200000,22200000],["Staff Welfare",105825,423300,85300],["ESIC Employer Contribution",174142,696568,409999],["EPF Employer Contribution",92917,371668,47111],["Bonus Expenses",250000,1000000,1052526]],
+      fin:[],
+      dep:[1875000,7500000,6911566],
+      oth:[["AMC Charges",0,96000,96000],["Bank Charges",6333.91,25335.64,29944.44],["Business Promotion",4130,16520,68.44],["Consultancy Fees",3000,12000,512000],["Freight Outward",1246600,4986400,3807900],["Insurance",45940,231763,231763],["Commission Charges",1915905,7663620,14097281],["Bill Discounting Charges",90394,361576,436754.39],["Office Expenses",40530,162120,61480.20],["Repair & Maintenance — Machinery",2126489.41,8505957.64,7131157.03],["Factory Repair & Maintenance",424126.04,1696504.16,3009674.83],["Generator Running & Maintenance",1300000,5200000,980000],["Security Services",178434,713736,710542.02],["Printing & Stationery",142817,571268,375028.64],["Telephone & Internet",25922.04,103688.16,28439],["Testing & Analysis Charges",8000,8000,140583],["House Keeping Expenses",61147.18,264000,82466.86],["Conveyance Expenses",191256,765024,820684],["Short & Excess",9.05,9.05,-18497.56],["Others — not projected",0,0,582179.47]],
+      q1Pbt:4811819.93, pbt:17827097.35, pyPbt:27915787.73 }
+  };
+  // ---- compute heads (sums of lines) and verify against the working ----
+  Object.values(UW).forEach(u=>{
+    const s=(L,i)=>L.reduce((a,l)=>a+l[1+i],0);
+    u.h={};
+    ["oi","direct","emp","fin","oth"].forEach(k=>{ u.h[k]=[s(u[k],0),s(u[k],1),s(u[k],2)]; });
+    u.h.com=[u.com.q1,u.com.proj,u.com.py]; u.h.dep=u.dep;
+    u.gp=[u.q1Rev-u.com.q1-u.h.direct[0], u.projRev-u.com.proj-u.h.direct[1], u.pyRev-u.com.py-u.h.direct[2]];
+    u.exp=[0,1,2].map(i=>u.h.com[i]+u.h.direct[i]+u.h.emp[i]+u.h.fin[i]+u.h.dep[i]+u.h.oth[i]);
+    u.npChk=[u.q1Rev+u.h.oi[0]-u.exp[0], u.projRev+u.h.oi[1]-u.exp[1], u.pyRev+u.h.oi[2]-u.exp[2]];
+  });
+
+// ================= OVERVIEW =================
+// ================= TABS =================
+const tabs = [
+  {id:"overview", label:"Overview", render:renderOverview},
+  {id:"segment", label:"Unit-wise Segment", render:renderSegment},
+  {id:"pnl", label:"Profit & Loss", render:renderPnL},
+  {id:"bs", label:"Balance Sheet", render:renderBS},
+  {id:"inventory", label:"Inventory & Production", render:renderInventory},
+  {id:"projection", label:"Projections F.Y. 2026-27", render:renderProjection}
+];
+const nav=document.getElementById("tabnav"), main=document.getElementById("main");
+tabs.forEach((t,i)=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.className=i===0?"active":""; b.id="btn-"+t.id;
+  b.onclick=()=>switchTab(t.id); nav.appendChild(b);
+  const p=document.createElement("div");
+  p.className="tabpage"+(i===0?" active":""); p.id="page-"+t.id; main.appendChild(p);
+});
+function switchTab(id){
+  tabs.forEach(t=>{
+    document.getElementById("btn-"+t.id).classList.toggle("active",t.id===id);
+    document.getElementById("page-"+t.id).classList.toggle("active",t.id===id);
+  });
+}
+tabs.forEach(t=>t.render(document.getElementById("page-"+t.id)));
+
+
+function renderOverview(el){
+  el.innerHTML = `
+  <h2 class="sec">Board Snapshot — Q1 FY2026-27 vs F.Y. 2025-26</h2>
+  <p class="subtle">Group figures aggregate the Greater Noida and Dhaulana units per the working finalised in consultation with the company's accountants; Greater Noida includes the Branch Office (Telangana). Q1 covers the three months ended 30 June 2026.</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Total Revenue (Q1) ${info("Net sales for Apr–Jun 2026 per branch books: Greater Noida ₹39.68 Cr and Dhaulana ₹12.94 Cr.")}</div>
+      <div class="val">₹${crNum(totRev)} <span class="unit">Cr</span></div></div>
+    <div class="kpi"><div class="lbl">Gross Profit ${info("Revenue less material consumption (net of stock change) and direct expenses (wages & jobwork, power & gas, consumables, freight inward, DG & machine rent), per branch trading.")}</div>
+      <div class="val">₹${crNum(totGP)} <span class="unit">Cr</span></div>
+      <div class="delta up">GP Margin ${pct(gpPct,2)}</div></div>
+    <div class="kpi"><div class="lbl">Other Income ${info("Interest on fixed deposits for the quarter.")}</div>
+      <div class="val">₹${crNum(totOI,4)} <span class="unit">Cr</span></div></div>
+    <div class="kpi"><div class="lbl">Net Profit ${info("Gross Profit plus Other Income, less Indirect Expenses (administrative, employee, finance and depreciation), before tax provisioning.")}</div>
+      <div class="val">₹${crNum(totNP)} <span class="unit">Cr</span></div>
+      <div class="delta up">NP Margin ${pct(npPct,2)}</div></div>
+  </div>
+
+  <h3 class="subsec">Comparative Summary — Q1 FY2026-27 vs F.Y. 2025-26</h3>
+  <p class="unitcap">Items marked ▸ expand on click to show their break-up.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>Q1 FY2026-27<br>(3 months)</th><th>F.Y. 2025-26<br>(12 months)</th></tr>
+    <tr class="exp" data-grp="ovrev"><td>${cap("Revenue from Operations")}</td><td>${crNum(totRev)}</td><td>${crNum(FT.rev)}</td></tr>
+    ${["grn","dha"].map(k=>`<tr class="child grp-ovrev"><td>${Q[k].full}</td><td>${crNum(Q[k].rev)}</td><td>${crNum(F[k].rev)}</td></tr>`).join("")}
+    <tr class="exp" data-grp="ovgp"><td>${cap("Gross Profit")} ${info("Both periods on the trading basis per the working: revenue less material consumption (net of stock change) and direct expenses (wages & jobwork, power & gas, consumables, freight inward, DG & machine rent).")}</td><td>${crNum(totGP)}</td><td>${crNum(FT.gp)}</td></tr>
+    ${["grn","dha"].map(k=>`<tr class="child grp-ovgp"><td>${Q[k].full}</td><td>${crNum(Q[k].gp)}</td><td>${crNum(F[k].gp)}</td></tr>`).join("")}
+    <tr class="sub"><td>Gross Profit %</td><td>${pct(gpPct,2)}</td><td>${pct(FT.gp/FT.rev,2)}</td></tr>
+    <tr class="exp" data-grp="ovnp"><td>${cap("Net Profit (before Tax)")} ${info("Both periods before tax provisioning, per the working. The prior year reconciles to the audited profit before tax of Rs. 7.77 Cr through the Branch Office result of Rs. (0.88) lakh and minor regroupings.")}</td><td>${crNum(totNP)}</td><td>${crNum(FT.pbt)}</td></tr>
+    ${["grn","dha"].map(k=>`<tr class="child grp-ovnp"><td>${Q[k].full}</td><td>${crNum(Q[k].np)}</td><td>${crNum(F[k].pbt)}</td></tr>`).join("")}
+    <tr class="sub"><td>Net Profit %</td><td>${pct(npPct,2)}</td><td>${pct(FT.pbt/FT.rev,2)}</td></tr>
+  </table></div>
+
+  <h2 class="sec">Revenue Mix — Q1 FY2026-27</h2>
+  <p class="unitcap"></p>
+  <div class="card">
+    ${["grn","dha"].map(k=>{
+      const u=Q[k];
+      return `<div class="bar-wrap"><div class="bar-lbl"><span>${u.full}</span>
+        <span><span class="mixval">₹${crNum(u.rev)}</span><span class="mixpct">${pct(u.rev/totRev)}</span></span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(u.rev/totRev*100).toFixed(1)}%"></div></div></div>`;
+    }).join("")}
+    <div class="pill-row"><span class="pill">Group Revenue: ₹${crNum(totRev)} Cr</span><span class="pill">Manufacturing units: 2</span><span class="pill">Telangana Branch Office operates within the Greater Noida books</span></div>
+  </div>
+
+  <h2 class="sec">Key Ratios — F.Y. 2025-26 ${info("Per Note 2.27 of the audited financial statements (Schedule III Additional Regulatory Information).")}</h2>
+  <div class="scroller"><table>
+    <tr><th>Ratio</th><th>F.Y. 2025-26</th><th>F.Y. 2024-25</th><th>Variation</th></tr>
+    ${[["Current Ratio","1.02","0.99","▲ 2.7%","up"],
+       ["Debt-Equity Ratio","1.80","2.31","▼ 22.2%","up"],
+       ["Debt Service Coverage Ratio","4.70","1.94","▲ 142.2%","up"],
+       ["Return on Equity","30.49%","14.68%","▲ 107.7%","up"],
+       ["Inventory Turnover","16.45x","19.08x","▼ 13.8%","down"],
+       ["Trade Receivables Turnover","8.44x","8.61x","▼ 2.0%","flat"],
+       ["Trade Payables Turnover","13.15x","19.25x","▼ 31.7%","flat"],
+       ["Net Capital Turnover","6.80x","6.54x","▲ 4.0%","up"],
+       ["Net Profit Ratio (after tax)","3.26%","1.35%","▲ 142.2%","up"],
+       ["Return on Capital Employed","17.91%","9.74%","▲ 83.8%","up"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><span class="badge ${r[4]}">${r[3]}</span></td></tr>`).join("")}
+  </table></div>
+
+  <h2 class="sec">Key Balance Sheet Movements — Consolidated (31-Mar-2026 → 30-Jun-2026)</h2>
+  <p class="unitcap">Consolidated = aggregation of the branch books; Telangana Branch Office trade lines are net of inter-branch balances.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>31-Mar-2026</th><th>30-Jun-2026</th><th>Change</th><th>%</th></tr>
+    ${consRowsHtml("ov")}
+  </table></div>
+  `;
+}
+
+// ================= UNIT-WISE SEGMENT =================
+function renderSegment(el){
+  el.innerHTML = `
+  <h2 class="sec">Unit-wise Segment Results — Q1 FY2026-27 ${info("Per the working finalised in consultation with the company's accountants. Greater Noida includes the Branch Office (Telangana).")}</h2>
+  <p class="unitcap"></p>
+  <div class="scroller"><table>
+    <tr><th>Unit</th><th>Revenue</th><th>% of Group</th><th>Gross Profit</th><th>GP %</th><th>Other Income</th><th>Indirect Expenses ${info("Administrative, employee, selling & distribution, finance cost and depreciation — expenses below the trading line.")}</th><th>Net Profit</th><th>NP %</th></tr>
+    ${["grn","dha"].map(k=>{
+      const u=Q[k];
+      const parent=`<tr class="exp" data-grp="seg${k}"><td>${cap(u.full)}</td><td>${crNum(u.rev)}</td><td>${pct(u.rev/totRev)}</td><td>${crNum(u.gp)}</td><td>${pct(u.gp/u.rev,2)}</td><td>${crNum(u.oi,4)}</td><td>${crNum(ind(u))}</td><td>${crNum(u.np)}</td><td>${pct(u.np/u.rev,2)}</td></tr>`;
+      const kids=DET.salesLabels.map((lb,i)=>DET.sales[k][i]===0?"":`<tr class="child grp-seg${k}"><td>${lb}</td><td>${crNum(DET.sales[k][i])}</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`).join("");
+      return parent+kids;
+    }).join("")}
+    <tr class="total"><td>Group Total</td><td>${crNum(totRev)}</td><td>100%</td><td>${crNum(totGP)}</td><td>${pct(gpPct,2)}</td><td>${crNum(totOI,4)}</td><td>${crNum(totInd)}</td><td>${crNum(totNP)}</td><td>${pct(npPct,2)}</td></tr>
+  </table></div>
+
+  <h2 class="sec">Segment Results — F.Y. 2025-26 Reference</h2>
+  <p class="unitcap">Per the working; the prior-year profit reconciles to the audited profit before tax of ₹7.77 Cr through the Branch Office result of Rs. (0.88) lakh and minor regroupings.</p>
+  <div class="scroller"><table>
+    <tr><th>Unit</th><th>Revenue</th><th>% of Group</th><th>Gross Profit ${info("Revenue less material consumption (net of stock change) and direct expenses, per branch trading.")}</th><th>GP %</th><th>Net Profit (before Tax)</th><th>NP %</th></tr>
+    ${["grn","dha"].map(k=>{
+      const u=F[k]; const nm=Q[k].full;
+      return `<tr><td>${nm}</td><td>${crNum(u.rev)}</td><td>${pct(u.rev/FT.rev)}</td><td>${crNum(u.gp)}</td><td>${pct(u.gp/u.rev,2)}</td><td>${crNum(u.pbt)}</td><td>${pct(u.pbt/u.rev,2)}</td></tr>`;
+    }).join("")}
+    <tr class="total"><td>Group Total</td><td>${crNum(FT.rev)}</td><td>100%</td><td>${crNum(FT.gp)}</td><td>${pct(FT.gp/FT.rev,2)}</td><td>${crNum(FT.pbt)}</td><td>${pct(FT.pbt/FT.rev,2)}</td></tr>
+  </table></div>
+
+  <h2 class="sec">Segment Revenue Share Movement</h2>
+  <p class="unitcap">Share of group revenue: Q1 FY2026-27 vs F.Y. 2025-26</p>
+  <div class="scroller"><table>
+    <tr><th>Unit</th><th>Share — F.Y. 2025-26</th><th>Share — Q1 FY2026-27</th><th>Movement</th></tr>
+    ${["grn","dha"].map(k=>{
+      const a=F[k].rev/FT.rev, b=Q[k].rev/totRev; const d=b-a;
+      return `<tr><td>${Q[k].full}</td><td>${pct(a)}</td><td>${pct(b)}</td><td><span class="badge ${aCls(d)}">${aSym(d)} ${pct(Math.abs(d))} pts</span></td></tr>`;
+    }).join("")}
+  </table></div>
+  `;
+}
+
+// ================= P&L =================
+function renderPnL(el){
+  const G=UW.grn, Dh=UW.dha;
+  const rowP=(label,q1v,py,rev,revPy,cls="",tip="")=>`<tr class="${cls}"><td>${label}${tip?" "+info(tip):""}</td><td>${crNum(q1v)}</td><td>${pct(q1v/rev,1)}</td><td>${crNum(py)}</td><td>${pct(py/revPy,1)}</td></tr>`;
+  const headP=(grp,label,h,kidsHtml,rev,revPy,tip="")=>`<tr class="exp" data-grp="${grp}"><td>${cap(label)}${tip?" "+info(tip):""}</td><td>${crNum(h[0])}</td><td>${pct(h[0]/rev,1)}</td><td>${crNum(h[2])}</td><td>${pct(h[2]/revPy,1)}</td></tr>`+kidsHtml;
+  const kidsP=(grp,lines,rev,revPy)=>lines.map(l=>`<tr class="child grp-${grp}"><td>${l[0]}</td><td>${crNum(l[1])}</td><td>${pct(l[1]/rev,2)}</td><td>${crNum(l[3])}</td><td>${pct(l[3]/revPy,2)}</td></tr>`).join("");
+  const unitStmt=(u,key)=>{
+    const rev=u.q1Rev, revPy=u.pyRev;
+    return `
+  <h2 class="sec">Statement of Profit — ${u.label}, Q1 FY2026-27 vs F.Y. 2025-26</h2>
+  <p class="unitcap">Per the working finalised in consultation with the company's accountants${key==="grn"?"; includes the Branch Office (Telangana)":""}. Items marked \u25b8 expand to line-wise detail.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>Q1 FY2026-27</th><th>% of Rev</th><th>F.Y. 2025-26</th><th>% of Rev</th></tr>
+    ${rowP("Revenue from Operations",rev,revPy,rev,revPy)}
+    <tr class="exp" data-grp="pl-${key}-com"><td>${cap("Cost of Material Consumed (net of change in inventories)")} ${info("Opening stock plus purchases less closing stock, per branch books.")}</td><td>${crNum(u.h.com[0])}</td><td>${pct(u.h.com[0]/rev,2)}</td><td>${crNum(u.h.com[2])}</td><td>${pct(u.h.com[2]/revPy,2)}</td></tr>
+    <tr class="child grp-pl-${key}-com"><td>Opening Stock</td><td>${crNum(u.stk.open[0])}</td><td>-</td><td>${crNum(u.stk.open[2])}</td><td>-</td></tr>
+    <tr class="child grp-pl-${key}-com"><td>Add: Purchases</td><td>${crNum(u.stk.pur[0])}</td><td>-</td><td>${crNum(u.stk.pur[2])}</td><td>-</td></tr>
+    <tr class="child grp-pl-${key}-com"><td>Less: Closing Stock</td><td>${crNum(-u.stk.close[0])}</td><td>-</td><td>${crNum(-u.stk.close[2])}</td><td>-</td></tr>
+    ${headP("pl-"+key+"-dir","Direct Expenses",u.h.direct,kidsP("pl-"+key+"-dir",u.direct,rev,revPy),rev,revPy)}
+    <tr class="total"><td>Gross Profit</td><td>${crNum(u.gp[0])}</td><td>${pct(u.gp[0]/rev,2)}</td><td>${crNum(u.gp[2])}</td><td>${pct(u.gp[2]/revPy,2)}</td></tr>
+    ${headP("pl-"+key+"-oi","Add: Other Income",u.h.oi,kidsP("pl-"+key+"-oi",u.oi,rev,revPy),rev,revPy)}
+    ${headP("pl-"+key+"-emp","Employee Benefit Expenses",u.h.emp,kidsP("pl-"+key+"-emp",u.emp,rev,revPy),rev,revPy)}
+    ${u.fin.length?headP("pl-"+key+"-fin","Finance Costs",u.h.fin,kidsP("pl-"+key+"-fin",u.fin,rev,revPy),rev,revPy):rowP("Finance Costs",0,0,rev,revPy)}
+    ${rowP("Depreciation & Amortisation",u.dep[0],u.dep[2],rev,revPy)}
+    ${headP("pl-"+key+"-oth","Other Indirect Expenses",u.h.oth,kidsP("pl-"+key+"-oth",u.oth,rev,revPy),rev,revPy)}
+    <tr class="total"><td>Profit Before Tax</td><td>${crNum(u.q1Pbt)}</td><td>${pct(u.q1Pbt/rev,2)}</td><td>${crNum(u.pyPbt)}</td><td>${pct(u.pyPbt/revPy,2)}</td></tr>
+  </table></div>`;
+  };
+
+  el.innerHTML = `
+  ${unitStmt(G,"grn")}
+  ${unitStmt(Dh,"dha")}
+
+  <h2 class="sec">Consolidated Statement of Profit — Q1 FY2026-27 vs F.Y. 2025-26</h2>
+  <p class="unitcap">Aggregation of the two unit statements above; items marked \u25b8 expand to the unit-wise split. Both periods before tax provisioning.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>Q1 FY2026-27</th><th>% of Rev</th><th>F.Y. 2025-26</th><th>% of Rev</th></tr>
+    ${(()=>{
+      const cs=(k,i)=>G.h[k][i]+Dh.h[k][i];
+      const rev=totRev, revPy=FT.rev;
+      const hk=(grp,label,q1v,py,gq,gy,dq,dy)=>`<tr class="exp" data-grp="${grp}"><td>${cap(label)}</td><td>${crNum(q1v)}</td><td>${pct(q1v/rev,1)}</td><td>${crNum(py)}</td><td>${pct(py/revPy,1)}</td></tr>
+        <tr class="child grp-${grp}"><td>Greater Noida (incl. Branch Office)</td><td>${crNum(gq)}</td><td>-</td><td>${crNum(gy)}</td><td>-</td></tr>
+        <tr class="child grp-${grp}"><td>Dhaulana Unit-2</td><td>${crNum(dq)}</td><td>-</td><td>${crNum(dy)}</td><td>-</td></tr>`;
+      return hk("plc-rev","Revenue from Operations",rev,revPy,G.q1Rev,G.pyRev,Dh.q1Rev,Dh.pyRev)
+        + hk("plc-com","Cost of Material Consumed (net)",cs("com",0),cs("com",2),G.h.com[0],G.h.com[2],Dh.h.com[0],Dh.h.com[2])
+        + hk("plc-dir","Direct Expenses",cs("direct",0),cs("direct",2),G.h.direct[0],G.h.direct[2],Dh.h.direct[0],Dh.h.direct[2])
+        + `<tr class="total"><td>Gross Profit</td><td>${crNum(totGP)}</td><td>${pct(gpPct,2)}</td><td>${crNum(FT.gp)}</td><td>${pct(FT.gp/FT.rev,2)}</td></tr>`
+        + hk("plc-oi","Add: Other Income",cs("oi",0),cs("oi",2),G.h.oi[0],G.h.oi[2],Dh.h.oi[0],Dh.h.oi[2])
+        + hk("plc-emp","Employee Benefit Expenses",cs("emp",0),cs("emp",2),G.h.emp[0],G.h.emp[2],Dh.h.emp[0],Dh.h.emp[2])
+        + `<tr><td>Finance Costs</td><td>${crNum(G.h.fin[0])}</td><td>${pct(G.h.fin[0]/rev,1)}</td><td>${crNum(G.h.fin[2])}</td><td>${pct(G.h.fin[2]/revPy,1)}</td></tr>`
+        + `<tr><td>Depreciation & Amortisation</td><td>${crNum(G.dep[0]+Dh.dep[0])}</td><td>${pct((G.dep[0]+Dh.dep[0])/rev,1)}</td><td>${crNum(G.dep[2]+Dh.dep[2])}</td><td>${pct((G.dep[2]+Dh.dep[2])/revPy,1)}</td></tr>`
+        + hk("plc-oth","Other Indirect Expenses",cs("oth",0),cs("oth",2),G.h.oth[0],G.h.oth[2],Dh.h.oth[0],Dh.h.oth[2])
+        + `<tr class="total"><td>Profit Before Tax</td><td>${crNum(totNP)}</td><td>${pct(npPct,2)}</td><td>${crNum(FT.pbt)}</td><td>${pct(FT.pbt/FT.rev,2)}</td></tr>`;
+    })()}
+  </table></div>
+
+  <h2 class="sec">Branch-wise Comparison — Q1 FY2026-27 vs F.Y. 2025-26</h2>
+  <p class="unitcap">F.Y. 2025-26 column covers 12 months; Q1 covers 3 months. Margin movement compares percentages across the two periods.</p>
+  <div class="scroller"><table>
+    <tr><th>Unit</th><th>Metric</th><th>Q1 FY26-27</th><th>F.Y. 2025-26</th><th>Margin Movement</th></tr>
+    ${branchRows("Greater Noida (incl. Branch Office)", Q.grn, F.grn)}
+    ${branchRows("Dhaulana", Q.dha, F.dha)}
+    <tr class="total"><td>Group Total</td><td>Revenue</td><td>${crNum(totRev)}</td><td>${crNum(FT.rev)}</td><td>-</td></tr>
+    <tr class="total"><td>Group Total</td><td>Gross Profit / Margin</td><td>${crNum(totGP)} (${pct(gpPct)})</td><td>${crNum(FT.gp)} (${pct(FT.gp/FT.rev)})</td><td class="${aCls(gpPct-FT.gp/FT.rev)}">${aSym(gpPct-FT.gp/FT.rev)} ${pct(Math.abs(gpPct-FT.gp/FT.rev))} pts</td></tr>
+    <tr class="total"><td>Group Total</td><td>Net Profit (before Tax) / Margin</td><td>${crNum(totNP)} (${pct(npPct)})</td><td>${crNum(FT.pbt)} (${pct(FT.pbt/FT.rev)})</td><td class="${aCls(npPct-FT.pbt/FT.rev)}">${aSym(npPct-FT.pbt/FT.rev)} ${pct(Math.abs(npPct-FT.pbt/FT.rev))} pts</td></tr>
+  </table></div>
+
+  <h2 class="sec">Gross Profit to Net Profit Bridge — Q1 FY2026-27</h2>
+  <p class="unitcap"></p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Group Gross Profit</div><div class="val">₹${crNum(totGP)}</div><div class="delta up">Margin ${pct(gpPct)}</div></div>
+    <div class="kpi"><div class="lbl">Add: Other Income</div><div class="val">₹${crNum(totOI,4)}</div></div>
+    <div class="kpi"><div class="lbl">Less: Indirect Expenses ${info("Administrative, employee, selling & distribution, finance cost and depreciation for the quarter.")}</div><div class="val">₹${crNum(totInd)}</div><div class="delta flat">${pct(totInd/totGP)} of Gross Profit</div></div>
+    <div class="kpi"><div class="lbl">Group Net Profit (before Tax)</div><div class="val">₹${crNum(totNP)}</div><div class="delta up">Margin ${pct(npPct)}</div></div>
+  </div>
+  `;
+}
+
+function branchRows(name,q,f){
+  const qg=q.gp/q.rev, qn=q.np/q.rev, fg=f.gp/f.rev, fn=f.pbt/f.rev;
+  return `
+  <tr><td rowspan="3">${name}</td><td>Revenue</td><td>${crNum(q.rev)}</td><td>${crNum(f.rev)}</td><td>-</td></tr>
+  <tr><td>Gross Profit / Margin</td><td>${crNum(q.gp)} (${pct(qg)})</td><td>${crNum(f.gp)} (${pct(fg)})</td><td class="${aCls(qg-fg)}">${aSym(qg-fg)} ${pct(Math.abs(qg-fg))} pts</td></tr>
+  <tr><td>Net Profit (before Tax) / Margin</td><td>${crNum(q.np)} (${pct(qn)})</td><td>${crNum(f.pbt)} (${pct(fn)})</td><td class="${aCls(qn-fn)}">${aSym(qn-fn)} ${pct(Math.abs(qn-fn))} pts</td></tr>`;
+}
+
+// ================= BALANCE SHEET =================
+function renderBS(el){
+  el.innerHTML = `
+  <h2 class="sec">Balance Sheet Movements — Consolidated (31-Mar-2026 vs 30-Jun-2026)</h2>
+  <p class="unitcap">Consolidated = aggregation of the three branch books. March-2026 figures: Greater Noida & Telangana per trial-balance opening balances; Dhaulana per the F.Y. 2025-26 financial statement notes. Telangana trade lines are net of inter-branch balances, which eliminate on consolidation.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>31-Mar-2026</th><th>30-Jun-2026</th><th>Change</th><th>%</th></tr>
+    ${consRowsHtml("bs")}
+  </table></div>
+
+  ${["grn","dha","tel"].map(k=>{
+    const nm = {grn:"Greater Noida (Corrugated / Kraft Paper)",dha:"Dhaulana Unit-2 (Toughened Glass)",tel:"Telangana (Branch Office — within Greater Noida books)"}[k];
+    return `
+    <h3 class="subsec">Branch: ${nm}</h3>
+    <p class="unitcap"></p>
+    <div class="scroller"><table>
+      <tr><th>Particulars</th><th>31-Mar-2026</th><th>30-Jun-2026</th><th>Change</th><th>%</th></tr>
+      ${D.bsLines.filter(l=> !(D.bs[k][l[0]][0]===0 && D.bs[k][l[0]][1]===0) ).map(l=>{
+        const o=D.bs[k][l[0]]; const d=o[1]-o[0]; const p=o[0]!==0?chg(o[0],o[1]):null;
+        return `<tr><td>${l[1]} ${info(l[2])}</td><td>${crNum(o[0])}</td><td>${crNum(o[1])}</td><td class="${aCls(d)}">${d>0?"+":""}${crNum(d)}</td><td><span class="badge ${aCls(d)}">${aSym(d)} ${p===null?"n/a":pct(Math.abs(p))}</span></td></tr>`;
+      }).join("")}
+    </table></div>`;
+  }).join("")}
+
+  <h2 class="sec">Movement Observations</h2>
+  <div class="card"><p class="factline">
+  Group trade receivables increased by ₹4.39 Cr (18.6%) during the quarter, alongside the revenue recorded for the period. Inventories reduced by ₹0.45 Cr (3.6%) at the group level, with Greater Noida higher by ₹1.03 Cr and Dhaulana lower by ₹1.48 Cr per the closing stock carried in the revised trading accounts. Unsecured borrowings increased by ₹2.47 Cr (26.4%) while secured borrowings reduced by ₹0.30 Cr (1.2%); the Board may wish to take note of the composition of incremental funding for the quarter. Trade payables at the group level reduced by ₹0.44 Cr, with the Dhaulana creditors group moving to a net advance position of ₹0.18 Cr as at 30 June 2026.
+  </p></div>
+  `;
+}
+
+// ================= INVENTORY & PRODUCTION =================
+function renderInventory(el){
+  const UOM={"Kraft Papers (Reel Form)":"Kg","Adhesive":"Kg","Starch":"Kg","Inks":"Kg","Stitching Wire":"Kg","Packing Material":"Nos.","Consumable Items":"Nos.","General Spare Parts":"Nos.","Machine-wise Spare Parts":"Nos.","Tools & Dies":"Nos."};
+  const q1Prod=SS.months.reduce((a,x)=>a+x.prod,0);
+  const q1ConsV=SS.months.reduce((a,x)=>a+x.cons[1],0);
+  const avgSale=Q.grn.rev/q1Prod, avgRM=q1ConsV/q1Prod;
+  const itemNames=SS.months[0].items.map(it=>it[0]);
+  const fmtQ=q=>q.toLocaleString('en-IN');
+  const delta=(cq,cv,pq,pv)=>{ if(pq===0&&pv===0) return "-";
+    const dq=pq!==0?chg(pq,cq):null, dv=pv!==0?chg(pv,cv):null;
+    return `<span class="badge ${aCls(dv!==null?dv:dq)}">${dq!==null?`Q ${aSym(dq)}${pct(Math.abs(dq),0)}`:""}${dq!==null&&dv!==null?" · ":""}${dv!==null?`V ${aSym(dv)}${pct(Math.abs(dv),0)}`:""}</span>`; };
+
+  // Material margin per the working / branch books: MM = revenue less material consumed (net of stock change); MM - direct expenses = GP, exactly.
+  const grnCons=D.matFlow.grn.opening+D.matFlow.grn.purchases-D.matFlow.grn.closing;
+  const dhaCons=D.matFlow.dha.opening+D.matFlow.dha.purchases-D.matFlow.dha.closing;
+  const REC={ mm:[Q.grn.rev-grnCons, Q.dha.rev-dhaCons] };
+  console.log("MM->GP tie:", (REC.mm[0]-15940109.37).toFixed(2), "vs GrN GP", Q.grn.gp.toFixed(2), "| Dha:", (REC.mm[1]-25134008).toFixed(2), "vs", Q.dha.gp.toFixed(2), "| grnCons", grnCons.toFixed(2), "dhaCons", dhaCons.toFixed(2));
+
+  // inventory position rows (monthly where available)
+  const POS=[
+    ["Greater Noida — Raw Material & Stores",[66761534.86,71393850.67,77236179.18,79198127.95],"Per the item-wise stock summary: raw materials, packing, stores, spares and consumables."],
+    ["Greater Noida — Finished, Semi-Finished & Scrap",[15394306.14,null,null,13284134.05],"Derived: total stock per the trading account less raw material & stores per the stock summary. The stock summary's Production During Month column carries production quantity in units (shown in the memo row below); monthly finished-goods values arise on receipt of the finished-goods register."],
+    ["Greater Noida — Total",[82155841,null,null,92482262],"Closing stock per the branch trading account."],
+    ["Dhaulana — Total",[41155287,null,null,26337521],"Closing stock per the branch trading account; quarter-end positions."],
+    ["Telangana",[0,0,0,0],"Trading branch; no inventory carried."],
+    ["Group Total",[123311128,null,null,118819783],"Aggregation of the three branches."]
+  ];
+
+  el.innerHTML = `
+  <h2 class="sec">Inventory Position — Month-wise (March to June 2026)</h2>
+  <p class="unitcap">Monthly balances for Greater Noida raw material & stores per the item-wise stock summary; other components per the trading accounts at quarter ends. Change compares 30-Jun-2026 with 31-Mar-2026.</p>
+  <div class="scroller"><table>
+    <tr><th>Branch / Component</th><th>31-Mar-2026</th><th>30-Apr-2026</th><th>31-May-2026</th><th>30-Jun-2026</th><th>Change</th><th>%</th></tr>
+    ${POS.map((r,i)=>{
+      const v=r[1]; const d=v[3]-v[0]; const pv=v[0]!==0?chg(v[0],v[3]):null;
+      const cls=(i===2||i===5)?"total":"";
+      const memo=(i===1)?`<tr class="sub"><td>— memo: Production During the Month (units) ${info("Per the Production During Month column of the item-wise stock summary; quantity of units produced, not an inventory value.")}</td><td>-</td><td>${(Math.floor(SS.months[0].prod/1000)/100).toFixed(2)+' Lakhs'}</td><td>${(Math.floor(SS.months[1].prod/1000)/100).toFixed(2)+' Lakhs'}</td><td>${(Math.floor(SS.months[2].prod/1000)/100).toFixed(2)+' Lakhs'}</td><td>-</td><td>-</td></tr>`:"";
+      return `<tr class="${cls}"><td>${r[0]} ${info(r[2])}</td><td>${crNum(v[0])}</td><td>${v[1]===null?"–":crNum(v[1])}</td><td>${v[2]===null?"–":crNum(v[2])}</td><td>${crNum(v[3])}</td><td class="${aCls(d)}">${d>0?"+":""}${crNum(d)}</td><td><span class="badge ${aCls(d)}">${aSym(d)} ${pv===null?"n/a":pct(Math.abs(pv))}</span></td></tr>`+memo;
+    }).join("")}
+  </table></div>
+
+  <h2 class="sec">Production, Consumption & Realisation — Greater Noida ${info("Production quantity per the production register; consumption per the item-wise stock summary; average sale realisation is net revenue for the quarter divided by units produced.")}</h2>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Q1 Production</div><div class="val">${(q1Prod/1e7).toFixed(2)} <span class="unit">Cr units</span></div><div class="delta flat">Apr 51.5L · May 48.7L · Jun 48.4L</div></div>
+    <div class="kpi"><div class="lbl">Avg. Sale Price per Unit ${info("Net revenue Rs. 39.68 Cr for the quarter divided by 1.49 Cr units produced.")}</div><div class="val">₹${avgSale.toFixed(2)}</div></div>
+    <div class="kpi"><div class="lbl">Avg. RM & Stores Cost per Unit ${info("Consumption value Rs. 33.17 Cr for the quarter divided by units produced. Monthly: April Rs. 20.97, May Rs. 22.32, June Rs. 23.72.")}</div><div class="val">₹${avgRM.toFixed(2)}</div><div class="delta flat">₹20.97 → ₹23.72 April to June</div></div>
+    <div class="kpi"><div class="lbl">Material Margin per Unit ${info("Average sale price per unit less average raw-material and stores cost per unit. Financially equivalent to gross profit before wages, power and other direct conversion costs — the reconciliation table below bridges the two exactly.")}</div><div class="val">₹${(avgSale-avgRM).toFixed(2)}</div></div>
+  </div>
+
+  <h2 class="sec">Inventory Consumed, Produced, Purchased & Sold — Greater Noida (March to June 2026) ${info("Per the item-wise stock summary and production register. Immaterial items (Stitching Wire, Packing Material — Rs. 0.25 Cr for the quarter) are included within the R.M. & Consumables totals but not shown as separate columns; Tools & Dies (Rs. 0.002 Cr) is included within Other Items. March 2026 closing stock forms the base position; March consumption and production complete on receipt from the F.Y. 2025-26 register.")}</h2>
+  <p class="unitcap">(Weight quantities in MT; count quantities in Nos. Column headings repeated at the top of each monthly section.)</p>>
+  <div class="freezer"><table>
+    <thead><tr><th>Month / Particulars</th><th>Kraft Papers<br>(Reel Form)</th><th>Adhesive</th><th>Starch</th><th>Inks</th><th>Consumable<br>Items</th><th>Total — R.M. &<br>Consumables ${info("Includes Stitching Wire and Packing Material (immaterial; Rs. 0.25 Cr consumption for the quarter). Quantity totals shown separately by unit (MT / Nos. — non-additive); value rows aggregate all items.")}</th><th>Other Items<br>(Value) ${info("General and machine-wise spare parts; includes Tools & Dies (immaterial). Consumed in maintaining plant and machinery — value only, per the Audit team's recommendation.")}</th></tr></thead>
+    <tbody>
+    ${(()=>{
+      const M=[0,1,2,3,6];           // displayed item indices: Kraft, Adhesive, Starch, Inks, Consumables
+      const MAIN=[0,1,2,3,4,5,6];    // totals basis: incl wire & packing
+      const OTH=[7,8,9];             // spares & tools (value only)
+      const SALES=[ // per month: [itemIndex -> [qty,value]] sparse
+        {0:[947,30304],6:[5,5000]},
+        {6:[7,7000],7:[1,2720]},
+        {0:[1169,36239],6:[12,12000]}
+      ];
+      const it=(mi,i,f)=>SS.months[mi].items[i][f];  // f: 3 purQ,4 purV,5 consQ,6 consV
+      const sumM=(mi,f,set)=>set.reduce((a,i)=>a+it(mi,i,f),0);
+      const salQ=(mi,i)=>(SALES[mi][i]||[0,0])[0], salV=(mi,i)=>(SALES[mi][i]||[0,0])[1];
+      const fq=q=>q===0?"-":q.toLocaleString('en-IN');
+      const KG=[0,1,2,3,4];  // weight-based items (source data in Kg): kraft, adhesive, starch, inks, stitching wire
+      const NOSI=[5,6];      // count-based items within R.M. & Consumables: packing material, consumable items
+      const mt=q=>(q/1000).toLocaleString('en-IN',{minimumFractionDigits:3,maximumFractionDigits:3})+' MT';
+      const fqi=(i,q)=>q===0?"-":(i<=4?mt(q):q.toLocaleString('en-IN')+' Nos.');
+      const totQ=(kg,nos)=>{const p=[];if(kg>0)p.push(mt(kg));if(nos>0)p.push(nos.toLocaleString('en-IN')+" Nos.");return p.length?p.join(" + "):"-";};
+      const sumKg=(mi,f)=>KG.reduce((a,i)=>a+it(mi,i,f),0);
+      const sumNos=(mi,f)=>NOSI.reduce((a,i)=>a+it(mi,i,f),0);
+      const fv=v=>v===0?"-":crNum(v);
+      const monthNames=["April 2026","May 2026","June 2026"];
+      const prodOf=mi=>SS.months[mi].prod;
+      const ratio=(mi,i)=>it(mi,i,5)/prodOf(mi);
+      const ratioTot=mi=>sumM(mi,5,MAIN)/prodOf(mi);
+      const ppBadge=(cur,prev)=>prev===null?"":` <span class="badge ${aCls(cur-prev)}">${cur-prev>0?"+":""}${((cur-prev)*100).toFixed(2)}%</span>`;
+      const REHDR=`<tr class="rehdr"><td>Particulars</td><td>Kraft Papers</td><td>Adhesive</td><td>Starch</td><td>Inks</td><td>Consumables</td><td>Total — R.M. & Cons.</td><td>Other Items</td></tr>`;
+
+      let html=`<tr class="mband"><td>March 2026 — Base Position</td><td colspan="7">Closing stock as at 31-Mar-2026 (opening for the quarter)</td></tr>
+      <tr><td>Closing Stock Qty</td>${M.map(i=>`<td>${fqi(i,SS.months[0].items[i][1])}</td>`).join("")}<td>${totQ(KG.reduce((a,i)=>a+SS.months[0].items[i][1],0),NOSI.reduce((a,i)=>a+SS.months[0].items[i][1],0))}</td><td>-</td></tr>
+      <tr><td>Closing Stock Value</td>${M.map(i=>`<td>${fv(SS.months[0].items[i][2])}</td>`).join("")}<td>${fv(MAIN.reduce((a,i)=>a+SS.months[0].items[i][2],0))}</td><td>${fv(OTH.reduce((a,i)=>a+SS.months[0].items[i][2],0))}</td></tr>`;
+
+      let prevRatioTot=null, prevRatios={};
+      monthNames.forEach((mn,mi)=>{
+        html+=`<tr class="mband"><td>${mn}</td><td colspan="7">Production during the month: ${(Math.floor(prodOf(mi)/1000)/100).toFixed(2)} Lakhs (Nos.)${mi>0?` (${aSym(prodOf(mi)-prodOf(mi-1))} ${pct(Math.abs(chg(prodOf(mi-1),prodOf(mi))),1)} vs ${monthNames[mi-1].split(" ")[0]})`:""}</td></tr>`+REHDR+`
+        <tr><td>Purchase Qty</td>${M.map(i=>`<td>${i<=4?fqi(i,it(mi,i,3)):"-"}</td>`).join("")}<td>${mt(sumKg(mi,3))}</td><td>-</td></tr>
+        <tr><td>Purchase Value</td>${M.map(i=>`<td>${fv(it(mi,i,4))}</td>`).join("")}<td>${fv(sumM(mi,4,MAIN))}</td><td>${fv(sumM(mi,4,OTH))}</td></tr>
+        <tr><td>Consumption Qty</td>${M.map(i=>`<td>${i<=4?fqi(i,it(mi,i,5)):"-"}</td>`).join("")}<td>${mt(sumKg(mi,5))}</td><td>-</td></tr>
+        <tr><td>Consumption Value</td>${M.map(i=>`<td>${fv(it(mi,i,6))}</td>`).join("")}<td>${fv(sumM(mi,6,MAIN))}</td><td>${fv(sumM(mi,6,OTH))}</td></tr>
+        <tr><td>Sales Qty ${mi===0?info("Sales within the stock summary are disposals of raw material / scrap, not finished-goods sales. Spare-part disposals are carried in the Other Items column at value. Raw material/scrap disposals are captured in value only."):""}</td>${M.map(i=>`<td>${i>4?(salQ(mi,i)===0?"-":fq(salQ(mi,i))):"-"}</td>`).join("")}<td>${fq(NOSI.reduce((a,i)=>a+salQ(mi,i),0))}</td><td>-</td></tr>
+        <tr><td>Sales Value</td>${M.map(i=>`<td>${fv(salV(mi,i))}</td>`).join("")}<td>${fv(M.reduce((a,i)=>a+salV(mi,i),0))}</td><td>${fv(SALES[mi][7]?SALES[mi][7][1]:0)}</td></tr>
+        <tr class="total"><td>Consumption Qty per Unit of Production ${mi===0?info("Computed on the source quantities \u2014 Kg for weight items, Nos. for count items \u2014 per unit of finished-goods production, expressed as a percentage; e.g., 52.39% for kraft denotes 0.5239 Kg consumed per unit produced. Basis retained under the MT presentation for comparability."):""}</td>${M.map(i=>{
+          const r=ratio(mi,i); const b=ppBadge(r, prevRatios[i]===undefined?null:prevRatios[i]); prevRatios[i]=r;
+          return `<td>${pct(r,2)}${b}</td>`;}).join("")}
+        <td>${pct(ratioTot(mi),2)}${ppBadge(ratioTot(mi),prevRatioTot)}</td><td>-</td></tr>`;
+        prevRatioTot=ratioTot(mi);
+      });
+
+      // Q1 totals band
+      const q1prod=SS.months.reduce((a,x)=>a+x.prod,0);
+      html+=`<tr class="mband"><td>Q1 FY2026-27 — Total</td><td colspan="7">Production for the quarter: ${(Math.floor(q1prod/1000)/100).toFixed(2)} Lakhs (Nos.)</td></tr>`+REHDR+`
+      <tr><td>Purchase Qty</td>${M.map(i=>`<td>${i<=4?fqi(i,[0,1,2].reduce((a,mi)=>a+it(mi,i,3),0)):"-"}</td>`).join("")}<td>${mt([0,1,2].reduce((a,mi)=>a+sumKg(mi,3),0))}</td><td>-</td></tr>
+      <tr><td>Purchase Value</td>${M.map(i=>`<td>${fv([0,1,2].reduce((a,mi)=>a+it(mi,i,4),0))}</td>`).join("")}<td>${fv([0,1,2].reduce((a,mi)=>a+sumM(mi,4,MAIN),0))}</td><td>${fv([0,1,2].reduce((a,mi)=>a+sumM(mi,4,OTH),0))}</td></tr>
+      <tr><td>Consumption Qty</td>${M.map(i=>`<td>${i<=4?fqi(i,[0,1,2].reduce((a,mi)=>a+it(mi,i,5),0)):"-"}</td>`).join("")}<td>${mt([0,1,2].reduce((a,mi)=>a+sumKg(mi,5),0))}</td><td>-</td></tr>
+      <tr><td>Consumption Value</td>${M.map(i=>`<td>${fv([0,1,2].reduce((a,mi)=>a+it(mi,i,6),0))}</td>`).join("")}<td>${fv([0,1,2].reduce((a,mi)=>a+sumM(mi,6,MAIN),0))}</td><td>${fv([0,1,2].reduce((a,mi)=>a+sumM(mi,6,OTH),0))}</td></tr>
+      <tr><td>Sales Qty / Value</td>${M.map(i=>{
+        const q=[0,1,2].reduce((a,mi)=>a+salQ(mi,i),0), v=[0,1,2].reduce((a,mi)=>a+salV(mi,i),0);
+        return `<td>${i>4&&q!==0?fq(q)+" / "+crNum(v):"-"}</td>`;}).join("")}<td>24 Nos. / ${crNum(90543)}</td><td>${crNum(2720)}</td></tr>
+      <tr class="total"><td>Consumption Qty per Unit of Production ${info("For the quarter, on the source Kg / Nos. quantity basis described against the monthly rows. The comparison with March 2026 completes on receipt of the March consumption and production figures from the F.Y. 2025-26 register — input cells are provided in the accompanying working Excel.")}</td>${M.map(i=>{
+        const q=[0,1,2].reduce((a,mi)=>a+it(mi,i,5),0);
+        return `<td>${pct(q/q1prod,2)}</td>`;}).join("")}
+      <td>${pct([0,1,2].reduce((a,mi)=>a+sumM(mi,5,MAIN),0)/q1prod,2)} <span class="badge flat">vs Mar-26: –</span></td><td>-</td></tr>`;
+      return html;
+    })()}
+    </tbody>
+  </table></div>
+
+  <h2 class="sec">Key Observations — Consumption & Production</h2>
+  <div class="obs">For the production of <b>1 unit of finished goods</b>, raw material and consumables were consumed at <b>58.44% in April 2026</b>, <b>60.80% in May 2026</b> and <b>65.81% in June 2026</b> — an increase of <b>7.37 percentage points</b> over the quarter, against a quarterly average of 61.61% (combined quantity of weight items, in Kg, and count items, in Nos., per the stock summary).</div>
+  <div class="obs">Kraft paper, the principal raw material, was consumed at <b>52.39%</b> per unit of production in April, rising to <b>55.05%</b> in May and <b>58.15%</b> in June (+5.76% over the quarter) \u2014 equivalent to 0.524 Kg of kraft per unit produced in April rising to 0.581 Kg in June \u2014 at an average consumption rate of \u20b937,584 per MT (\u20b937.58 per Kg).</div>
+  <div class="obs">Production of finished goods declined from <b>51.53 lakh units in April</b> to <b>48.44 lakh units in June (▼6.0%)</b>, while the material consumed per unit rose over the same period.</div>
+  <div class="obs">Purchases for the quarter (<b>₹34.42 Cr</b>) exceeded consumption (<b>₹33.17 Cr</b>), building raw material & stores stock to <b>₹7.92 Cr as at 30-Jun-2026 — 18.6% above the March 2026 level</b> of ₹6.68 Cr.</div>
+  <div class="obs">Consumption per these item-wise stock records (<b>₹33.17 Cr</b>) is stated gross of stores & spares and finished-goods stock movement; per the branch books it is <b>₹31.27 Cr</b>, the basis used in the trading results and the consolidated table below.</div>
+  <div class="obs">Consumption of Other Items (spares) was <b>₹0.34 Cr in June against ₹0.04 Cr in April</b>, attributable to machine-wise spare parts issued during the month — a maintenance-driven movement, separate from the raw-material efficiency trend above.</div>
+
+  <h2 class="sec">Consolidated Consumption & Material Margin — Q1 FY2026-27</h2>
+  <p class="unitcap">Consumption per branch books (opening stock plus purchases less closing stock), per the working finalised in consultation with the company's accountants. Material margin = revenue less material consumed; consumption per the item-wise stock records is analysed separately in the section above.</p>
+  <div class="scroller"><table>
+    <tr><th>Unit</th><th>Material Consumed</th><th>Consumption % ${info("Material consumed as a percentage of net revenue, as computed in the working.")}</th><th>Net Revenue</th><th>Material Margin</th><th>MM %</th><th>Gross Profit</th><th>GP %</th></tr>
+    <tr><td>Greater Noida</td><td>${crNum(grnCons)}</td><td>${pct(grnCons/Q.grn.rev,2)}</td><td>${crNum(Q.grn.rev)}</td><td>${crNum(REC.mm[0])}</td><td>${pct(REC.mm[0]/Q.grn.rev,2)}</td><td>${crNum(Q.grn.gp)}</td><td>${pct(Q.grn.gp/Q.grn.rev,2)}</td></tr>
+    <tr><td>Dhaulana</td><td>${crNum(dhaCons)}</td><td>${pct(dhaCons/Q.dha.rev,2)}</td><td>${crNum(Q.dha.rev)}</td><td>${crNum(REC.mm[1])}</td><td>${pct(REC.mm[1]/Q.dha.rev,2)}</td><td>${crNum(Q.dha.gp)}</td><td>${pct(Q.dha.gp/Q.dha.rev,2)}</td></tr>
+    <tr class="total"><td>Group Total</td><td>${crNum(grnCons+dhaCons)}</td><td>${pct((grnCons+dhaCons)/totRev,2)}</td><td>${crNum(totRev)}</td><td>${crNum(REC.mm[0]+REC.mm[1])}</td><td>${pct((REC.mm[0]+REC.mm[1])/totRev,2)}</td><td>${crNum(totGP)}</td><td>${pct(totGP/totRev,2)}</td></tr>
+  </table></div>
+
+  <h2 class="sec">Material Margin to Gross Profit — Reconciliation, Q1 FY2026-27 ${info("Material margin less direct expenses equals gross profit, per unit, exactly as computed in the working.")}</h2>
+  <p class="unitcap"></p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>Gr. Noida</th><th>Dhaulana</th><th>Group Total</th></tr>
+    ${[["Material Margin (Revenue less Material Consumed per branch books)",[REC.mm[0],REC.mm[1]]],
+       ["Less: Direct Expenses per branch trading (freight inward, wages & jobwork, consumables, gas, electricity, DG & machine rent)",[-15940109.37,-25134008]]].map(r=>`<tr><td>${r[0]}</td><td>${dash(r[1][0])}</td><td>${dash(r[1][1])}</td><td>${crNum(r[1][0]+r[1][1])}</td></tr>`).join("")}
+    <tr class="total"><td>Gross Profit (per the working)</td><td>${crNum(Q.grn.gp)}</td><td>${crNum(Q.dha.gp)}</td><td>${crNum(totGP)}</td></tr>
+  </table></div>
+
+  <h2 class="sec">Dhaulana — Material Movement per Branch Books, Q1 FY2026-27</h2>
+  <p class="unitcap">Value per the branch trading account; the item-wise quantitative presentation above will be extended to Dhaulana on receipt of its stock summary.</p>
+  <div class="scroller"><table>
+    <tr><th>Particulars</th><th>Value</th></tr>
+    <tr><td>Opening Stock (01-Apr-2026)</td><td>${crNum(D.matFlow.dha.opening)}</td></tr>
+    <tr class="exp" data-grp="dhapur"><td>${cap("Raw Material & Packing Purchased")} ${info("Raw glass, inks, adhesive, consumables, packing and allied purchases per the branch trading account. Expand for the item-wise break-up.")}</td><td>${crNum(D.matFlow.dha.purchases)}</td></tr>
+    ${DET.dhaPurch.map(x=>`<tr class="child grp-dhapur"><td>${x[0]}</td><td>${crNum(x[1])}</td></tr>`).join("")}
+    <tr><td>Closing Stock (30-Jun-2026)</td><td>${crNum(D.matFlow.dha.closing)}</td></tr>
+    <tr class="total"><td>Material Consumed (derived)</td><td>${crNum(dhaCons)}</td></tr>
+  </table></div>
+  `;
+}
+
+// ================= PROJECTIONS =================
+function renderProjection(el){
+  const etr = (15937628+3661233.87)/77738201.06;   // F.Y. 2025-26 effective tax rate per final statements
+  // v5 — per the projection working finalised with the company's accountants:
+  // revenue Rs 202 Cr (GrN 151 / Dha 51); consumption at the Q1-achieved ratio; expenses annualised from Q1 (x4),
+  // with audit fee, professional fee, insurance and independent directors' remuneration per the working's stated basis.
+  // Each line: [label, Q1 FY2026-27, Projected FY2026-27, F.Y. 2025-26] — all three columns per the working.
+  const G=UW.grn, Dh=UW.dha;
+  console.log("PROJ v5 ties — GrN NP:",G.npChk.map(x=>x.toFixed(2)).join("/"),"tgt",G.q1Pbt+"/"+G.pbt+"/"+G.pyPbt,
+    "| Dha NP:",Dh.npChk.map(x=>x.toFixed(2)).join("/"),"tgt",Dh.q1Pbt+"/"+Dh.pbt+"/"+Dh.pyPbt,
+    "| GP GrN:",G.gp.map(x=>x.toFixed(2)).join("/"),"| GP Dha:",Dh.gp.map(x=>x.toFixed(2)).join("/"));
+  const cRev=[G.q1Rev+Dh.q1Rev, G.projRev+Dh.projRev, G.pyRev+Dh.pyRev];
+  const cPbt=[G.q1Pbt+Dh.q1Pbt, G.pbt+Dh.pbt, G.pyPbt+Dh.pyPbt];
+  const cGp=[0,1,2].map(i=>G.gp[i]+Dh.gp[i]);
+  const cTax=cPbt[1]*etr, cPat=cPbt[1]-cTax;
+
+  const mv=(pr,py)=>{ if(py===0&&pr===0) return "-"; if(py===0) return "-"; const d=pr/py-1; return `<span class="badge ${Math.abs(d)<0.0005?"flat":aCls(d)}">${Math.abs(d)<0.0005?"— held":aSym(d)+" "+pct(Math.abs(d))}</span>`; };
+  const cell=v=>v===null?"-":crNum(v);
+  const row=(label,q1v,pr,py,cls="",tip="")=>`<tr class="${cls}"><td>${label}${tip?" "+info(tip):""}</td><td>${cell(q1v)}</td><td>${cell(pr)}</td><td>${pr===null?"-":crNum(pr/12)}</td><td>${cell(py)}</td><td>${pr===null?"-":mv(pr,py)}</td></tr>`;
+  const headRow=(grp,label,h,kidsHtml,tip="")=>`<tr class="exp" data-grp="${grp}"><td>${cap(label)}${tip?" "+info(tip):""}</td><td>${crNum(h[0])}</td><td>${crNum(h[1])}</td><td>${crNum(h[1]/12)}</td><td>${crNum(h[2])}</td><td>${mv(h[1],h[2])}</td></tr>`+kidsHtml;
+  const kids=(grp,lines)=>lines.map(l=>`<tr class="child grp-${grp}"><td>${l[0]}</td><td>${crNum(l[1])}</td><td>${l[2]===0&&l[0].indexOf("Others")===0?"-":crNum(l[2])}</td><td>${l[2]===0&&l[0].indexOf("Others")===0?"-":crNum(l[2]/12)}</td><td>${crNum(l[3])}</td><td>${l[2]===0&&l[0].indexOf("Others")===0?"-":mv(l[2],l[3])}</td></tr>`).join("");
+  const gpRows=(gp,rev)=>`<tr class="total"><td>Gross Profit</td><td>${crNum(gp[0])}</td><td>${crNum(gp[1])}</td><td>${crNum(gp[1]/12)}</td><td>${crNum(gp[2])}</td><td>${mv(gp[1],gp[2])}</td></tr>
+    <tr class="sub total"><td>GP Margin</td><td>${pct(gp[0]/rev[0],2)}</td><td>${pct(gp[1]/rev[1],2)}</td><td>-</td><td>${pct(gp[2]/rev[2],2)}</td><td><span class="badge ${aCls(gp[1]/rev[1]-gp[2]/rev[2])}">${aSym(gp[1]/rev[1]-gp[2]/rev[2])} ${pct(Math.abs(gp[1]/rev[1]-gp[2]/rev[2]),1)} pts</span></td></tr>`;
+  const THEAD=`<tr><th>Particulars</th><th>Q1 FY2026-27</th><th>Projected<br>F.Y. 2026-27</th><th>Avg. Monthly<br>(Projected)</th><th>F.Y. 2025-26</th><th>Movement</th></tr>`;
+
+  const unitTable=(u,key)=>`
+  <h2 class="sec">Projected Statement of Profit — ${u.label}, F.Y. 2026-27</h2>
+  <p class="unitcap">Q1 FY2026-27 and projected figures per the projection working finalised in consultation with the company's accountants${key==="grn"?"; Greater Noida per the working (excluding the Branch Office)":""}. Items marked \u25b8 expand to line-wise detail. Avg. Monthly = one-twelfth of the annual projection.</p>
+  <div class="scroller"><table>
+    ${THEAD}
+    ${row("Revenue from Operations",u.q1Rev,u.projRev,u.pyRev)}
+    <tr class="exp" data-grp="pj-${key}-com"><td>${cap("Cost of Material Consumed (net of change in inventories)")} ${info("Consumption at the ratio to sales achieved in Q1 FY2026-27: "+(key==="grn"?"78.80%":"60.63%")+" (F.Y. 2025-26: "+(key==="grn"?"79.41%":"51.08%")+").")}</td><td>${crNum(u.h.com[0])}</td><td>${crNum(u.h.com[1])}</td><td>${crNum(u.h.com[1]/12)}</td><td>${crNum(u.h.com[2])}</td><td>${mv(u.h.com[1],u.h.com[2])}</td></tr>
+    <tr class="child grp-pj-${key}-com"><td>Opening Stock</td><td>${crNum(u.stk.open[0])}</td><td>${crNum(u.stk.open[1])}</td><td>-</td><td>${crNum(u.stk.open[2])}</td><td>-</td></tr>
+    <tr class="child grp-pj-${key}-com"><td>Add: Purchases</td><td>${crNum(u.stk.pur[0])}</td><td>${crNum(u.stk.pur[1])}</td><td>-</td><td>${crNum(u.stk.pur[2])}</td><td>-</td></tr>
+    <tr class="child grp-pj-${key}-com"><td>Less: Closing Stock</td><td>${crNum(-u.stk.close[0])}</td><td>${crNum(-u.stk.close[1])}</td><td>-</td><td>${crNum(-u.stk.close[2])}</td><td>-</td></tr>
+    ${headRow("pj-"+key+"-dir","Direct Expenses",u.h.direct,kids("pj-"+key+"-dir",u.direct))}
+    ${gpRows(u.gp,[u.q1Rev,u.projRev,u.pyRev])}
+    ${headRow("pj-"+key+"-oi","Add: Other Income",u.h.oi,kids("pj-"+key+"-oi",u.oi))}
+    ${headRow("pj-"+key+"-emp","Employee Benefit Expenses",u.h.emp,kids("pj-"+key+"-emp",u.emp))}
+    ${u.fin.length?headRow("pj-"+key+"-fin","Finance Costs",u.h.fin,kids("pj-"+key+"-fin",u.fin)):row("Finance Costs",0,0,0)}
+    ${row("Depreciation & Amortisation",u.dep[0],u.dep[1],u.dep[2])}
+    ${headRow("pj-"+key+"-oth","Other Indirect Expenses",u.h.oth,kids("pj-"+key+"-oth",u.oth))}
+    ${row("Total Expenses",u.exp[0],u.exp[1],u.exp[2],"total")}
+    ${row("Profit Before Tax",u.q1Pbt,u.pbt,u.pyPbt,"total")}
+    <tr class="sub total"><td>PBT Margin</td><td>${pct(u.q1Pbt/u.q1Rev,2)}</td><td>${pct(u.pbt/u.projRev,2)}</td><td>-</td><td>${pct(u.pyPbt/u.pyRev,2)}</td><td><span class="badge ${aCls(u.pbt/u.projRev-u.pyPbt/u.pyRev)}">${aSym(u.pbt/u.projRev-u.pyPbt/u.pyRev)} ${pct(Math.abs(u.pbt/u.projRev-u.pyPbt/u.pyRev),1)} pts</span></td></tr>
+  </table></div>`;
+
+  const consKids=(grp,gv,dv)=>`<tr class="child grp-${grp}"><td>Greater Noida</td><td>${crNum(gv[0])}</td><td>${crNum(gv[1])}</td><td>${crNum(gv[1]/12)}</td><td>${crNum(gv[2])}</td><td>${mv(gv[1],gv[2])}</td></tr><tr class="child grp-${grp}"><td>Dhaulana Unit-2</td><td>${crNum(dv[0])}</td><td>${crNum(dv[1])}</td><td>${crNum(dv[1]/12)}</td><td>${crNum(dv[2])}</td><td>${mv(dv[1],dv[2])}</td></tr>`;
+  const hsum=k=>[0,1,2].map(i=>G.h[k][i]+Dh.h[k][i]);
+
+  el.innerHTML = `
+  <h2 class="sec">Projected Results — F.Y. 2026-27</h2>
+  <p class="subtle">Unit-wise projections per the projection working finalised in consultation with the company's accountants, followed by the consolidated projection. Revenue of ₹151 Cr (Greater Noida) and ₹51 Cr (Dhaulana); consumption at the Q1-achieved ratio to sales; expenses annualised from the Q1 FY2026-27 actuals, with audit fee, professional fee, insurance and independent directors' remuneration per the working's stated basis. Detailed assumptions are set out at the end of this page.</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Projected Group Revenue ${info("Per the projection working: Greater Noida ₹151 Cr (F.Y. 2025-26: ₹140.85 Cr) and Dhaulana ₹51 Cr (F.Y. 2025-26: ₹37.27 Cr).")}</div><div class="val">₹${crNum(cRev[1])} <span class="unit">Cr</span></div><div class="delta up">▲ ${pct(chg(cRev[2],cRev[1]))} vs F.Y. 2025-26</div></div>
+    <div class="kpi"><div class="lbl">Gross Profit — Projected ${info("Revenue less materials and direct expenses per the projection working.")}</div><div class="val">₹${crNum(cGp[1])} <span class="unit">Cr</span></div><div class="delta up">Margin ${pct(cGp[1]/cRev[1])} (F.Y. 2025-26: ${pct(cGp[2]/cRev[2])})</div></div>
+    <div class="kpi"><div class="lbl">Projected Group PBT</div><div class="val">₹${crNum(cPbt[1])} <span class="unit">Cr</span></div><div class="delta up">Margin ${pct(cPbt[1]/cRev[1])} · Greater Noida ₹${crNum(G.pbt)} Cr · Dhaulana ₹${crNum(Dh.pbt)} Cr</div></div>
+    <div class="kpi"><div class="lbl">Projected Group PAT ${info("Consolidated profit before tax less tax at the F.Y. 2025-26 effective rate of "+pct(etr,2)+".")}</div><div class="val">₹${crNum(cPat)} <span class="unit">Cr</span></div><div class="delta up">▲ ${pct(chg(58139339.19,cPat))} vs F.Y. 2025-26 PAT ₹${crNum(58139339.19)} Cr</div></div>
+  </div>
+
+  ${unitTable(G,"grn")}
+  ${unitTable(Dh,"dha")}
+
+  <h2 class="sec">Consolidated Projected Statement of Profit — F.Y. 2026-27</h2>
+  <p class="unitcap">Aggregation of the two unit statements above; items marked \u25b8 expand to the unit-wise split. Tax at the F.Y. 2025-26 effective rate; the Q1 columns for tax and profit after tax are presented on the quarterly accounts, which are before tax provisioning. Prior-year tax and profit after tax per the audited financial statements.</p>
+  <div class="scroller"><table>
+    ${THEAD}
+    ${headRow("pj-c-rev","Revenue from Operations",cRev,consKids("pj-c-rev",[G.q1Rev,G.projRev,G.pyRev],[Dh.q1Rev,Dh.projRev,Dh.pyRev]))}
+    ${headRow("pj-c-com","Cost of Material Consumed (net)",hsum("com"),consKids("pj-c-com",G.h.com,Dh.h.com))}
+    ${headRow("pj-c-dir","Direct Expenses",hsum("direct"),consKids("pj-c-dir",G.h.direct,Dh.h.direct))}
+    ${gpRows(cGp,cRev)}
+    ${headRow("pj-c-oi","Add: Other Income",hsum("oi"),consKids("pj-c-oi",G.h.oi,Dh.h.oi))}
+    ${headRow("pj-c-emp","Employee Benefit Expenses",hsum("emp"),consKids("pj-c-emp",G.h.emp,Dh.h.emp))}
+    ${row("Finance Costs",G.h.fin[0],G.h.fin[1],G.h.fin[2])}
+    ${row("Depreciation & Amortisation",G.dep[0]+Dh.dep[0],G.dep[1]+Dh.dep[1],G.dep[2]+Dh.dep[2])}
+    ${headRow("pj-c-oth","Other Indirect Expenses",hsum("oth"),consKids("pj-c-oth",G.h.oth,Dh.h.oth))}
+    ${row("Total Expenses",G.exp[0]+Dh.exp[0],G.exp[1]+Dh.exp[1],G.exp[2]+Dh.exp[2],"total")}
+    ${row("Profit Before Tax",cPbt[0],cPbt[1],cPbt[2],"total")}
+    <tr class="sub total"><td>PBT Margin</td><td>${pct(cPbt[0]/cRev[0],2)}</td><td>${pct(cPbt[1]/cRev[1],2)}</td><td>-</td><td>${pct(cPbt[2]/cRev[2],2)}</td><td><span class="badge ${aCls(cPbt[1]/cRev[1]-cPbt[2]/cRev[2])}">${aSym(cPbt[1]/cRev[1]-cPbt[2]/cRev[2])} ${pct(Math.abs(cPbt[1]/cRev[1]-cPbt[2]/cRev[2]),1)} pts</span></td></tr>
+    ${row("Less: Tax (at F.Y. 2025-26 effective rate, "+pct(etr,2)+")",null,cTax,19598861.87)}
+    ${row("Profit After Tax",null,cPat,58139339.19,"total")}
+    <tr class="sub total"><td>PAT Margin</td><td>-</td><td>${pct(cPat/cRev[1])}</td><td>-</td><td>${pct(58139339.19/cRev[2])}</td><td><span class="badge ${aCls(cPat/cRev[1]-58139339.19/cRev[2])}">${aSym(cPat/cRev[1]-58139339.19/cRev[2])} ${pct(Math.abs(cPat/cRev[1]-58139339.19/cRev[2]),2)} pts</span></td></tr>
+  </table></div>
+
+  <h2 class="sec">Projection Assumptions</h2>
+  <div class="scroller"><table>
+    <tr><th>Parameter</th><th>Basis</th><th>Value</th></tr>
+    <tr><td>Revenue</td><td>Per the projection working finalised in consultation with the company's accountants — Greater Noida ₹151 Cr (F.Y. 2025-26: ₹140.85 Cr, +7.2%) and Dhaulana ₹51 Cr (F.Y. 2025-26: ₹37.27 Cr, +36.8%)</td><td>Group ₹${crNum(cRev[1])} Cr (+${pct(chg(cRev[2],cRev[1]),1)})</td></tr>
+    <tr><td>Material consumption</td><td>At the ratio to sales achieved in Q1 FY2026-27 — Greater Noida 78.80% (F.Y. 2025-26: 79.41%), Dhaulana 60.63% (F.Y. 2025-26: 51.08%, reflecting the current product mix)</td><td>Q1-achieved ratio</td></tr>
+    <tr><td>Operating expenses</td><td>Annualised line-wise from the Q1 FY2026-27 actuals (Q1 × 4), including wages & jobwork, salaries, power, repair & maintenance, freight, commission and allied costs</td><td>Q1 × 4</td></tr>
+    <tr><td>Prior-year-basis items</td><td>Audit fee, professional fee, insurance and independent directors' remuneration per the working's stated basis; prior-year one-time and non-recurring items are not carried into the projection</td><td>Per the working</td></tr>
+    <tr><td>Finance costs</td><td>Q1 run-rate annualised — interest to bank ₹1.88 Cr, interest on loans ₹0.07 Cr, processing fees ₹0.03 Cr (borrowings carried in Greater Noida books)</td><td>₹${crNum(G.h.fin[1])} Cr</td></tr>
+    <tr><td>Depreciation</td><td>Q1 charge annualised — Greater Noida ₹1.35 Cr, Dhaulana ₹0.75 Cr — pending the updated fixed-asset register</td><td>₹${crNum(G.dep[1]+Dh.dep[1])} Cr</td></tr>
+    <tr><td>Other income</td><td>Recurring items only</td><td>₹${crNum(G.h.oi[1]+Dh.h.oi[1])} Cr</td></tr>
+    <tr><td>Tax</td><td>Effective rate of F.Y. 2025-26 per the final statements (current plus deferred on profit before tax), applied to consolidated PBT. Quarterly figures are before tax provisioning</td><td>${pct(etr,2)}</td></tr>
+    <tr><td>Monthly figures</td><td>One-twelfth of the annual projection, as a level run-rate for monthly review against actuals</td><td>Annual ÷ 12</td></tr>
+    <tr><td>Structure</td><td>Q1 and prior-year figures in this section per the projection working; Greater Noida per the working (excluding the Branch Office), reconciling to the audited profit before tax of ₹7.77 Cr through the Branch Office result of Rs. (0.88) lakh and minor regroupings</td><td>-</td></tr>
+  </table></div>
+  <div class="foot">CFOxpert Advisory (Paramount Legal Bistro LLP) · Prepared for internal Board review · Generated ${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})}</div>
+  `;
+}
+</script>
+</body>
+</html>

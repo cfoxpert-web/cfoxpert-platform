@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
         source: "/r/sheetal-mercantile",
         destination: "/r/sheetal-mercantile.html",
       },
+      {
+        source: "/r/rpil",
+        destination: "/r/rpil.html",
+      },
     ];
   },
   async headers() {
