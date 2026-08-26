@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
         source: "/r/sample-trading-industries",
         destination: "/r/sample-trading-industries.html",
       },
+      {
+        source: "/r/sheetal-mercantile",
+        destination: "/r/sheetal-mercantile.html",
+      },
     ];
   },
   async headers() {
