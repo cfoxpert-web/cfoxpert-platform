@@ -20,6 +20,14 @@ export type CandidateLine = {
   /** Proposed kpi_definitions.key — null when unmapped (analyst decides). */
   proposedKpiKey: string | null;
   /**
+   * Projection head the classifier assigned, or null when no rule matched.
+   * NOT a kpi_definitions key — the head → KPI roll-up lands in A7-a
+   * (ADR-018). Until then this is what lets the review screen say "head
+   * assigned, mapping pending" instead of the flatly misleading "not
+   * mapped" for a line the classifier read correctly.
+   */
+  proposedHead: string | null;
+  /**
    * 0..1 confidence in the AMOUNT — that the figure was read correctly
    * from the source. 1.0 for a parsed cell: no model was involved.
    */

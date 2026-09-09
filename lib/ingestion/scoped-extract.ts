@@ -8,6 +8,7 @@ import {
   extractScopedRows,
   withUnitBasis,
   type ScopeChoice,
+  type UnitBasisName,
 } from "./workbook";
 
 /**
@@ -24,6 +25,8 @@ export function extractUnderScope(
   sheets: ParsedSheet[],
   scope: ScopeChoice,
   kind: DocumentKind,
+  /** Job-level unit basis; falls back to what the sheet declared. */
+  unitBasis?: UnitBasisName,
 ): ExtractionOutput | { error: string } {
   const sheet = sheets.find((s) => s.name === scope.sheetName);
   if (!sheet) {
@@ -38,7 +41,7 @@ export function extractUnderScope(
     };
   }
 
-  const unit = withUnitBasis(described.unit, scope.unitBasis);
+  const unit = unitBasis ? withUnitBasis(described.unit, unitBasis) : described.unit;
   const extraction = extractScopedRows(sheet, described, scope.periods, unit);
 
   const lines: CandidateLine[] = [];
@@ -75,6 +78,8 @@ export function extractUnderScope(
         // key. Mapping memory and the analyst still decide the KPI, so the
         // proposal stays null here and the head rides in the note.
         proposedKpiKey: null,
+        // The classifier's answer, carried through instead of discarded.
+        proposedHead: head.head,
         confidence: 1,
         mappingConfidence: null,
       });

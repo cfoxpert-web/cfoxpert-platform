@@ -268,7 +268,6 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
         { segment: "Total", canonicalDate: "2026-03-31" },
         { segment: "Total", canonicalDate: "2027-03-31" },
       ],
-      unitBasis: "rupees",
       source: "operator",
     };
     const result = extractUnderScope(sheets, scope, "pnl");
@@ -321,6 +320,38 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       expect(at("CLOSING STOCK", "Total · 31.03.2026")).toBeLessThan(0);
     });
 
+    it("carries the classifier's head onto every staged line", () => {
+      // A4-d-2 computed the head, used it for the contra sign, then threw
+      // it away — so a correctly classified line reached the review screen
+      // showing nothing but "not mapped". Same row, opposite impression.
+      const withHead = result.lines.filter((l) => l.proposedHead !== null);
+      const without = result.lines.filter((l) => l.proposedHead === null);
+      expect(withHead.length).toBeGreaterThan(0);
+      expect(
+        result.lines.find(
+          (l) => l.sourceLabel === "Director remuneration",
+        )?.proposedHead,
+      ).toBe("employee");
+      expect(result.lines.find((l) => l.sourceLabel === "Sales")?.proposedHead).toBe(
+        "revenue",
+      );
+      expect(
+        result.lines.find((l) => l.sourceLabel === "Interest on FDR")?.proposedHead,
+      ).toBe("otherIncome");
+      // Only the genuine exceptions carry no head.
+      const exceptionLabels = new Set(without.map((l) => l.sourceLabel));
+      expect([...exceptionLabels].sort()).toEqual([
+        "Annual Fee",
+        "Bad debt",
+        "Diwali Exps.",
+        "Donation",
+        "Pestseal Service Fee",
+        "Service Fee for MSME Certification",
+        "Short and Excess",
+        "Waste Disposal",
+      ]);
+    });
+
     it("records the scope and the unit conversion in its notes", () => {
       expect(result.notes.join(" ")).toMatch(/Scoped to "26-27 Projection" · Total/);
       expect(result.notes.join(" ")).toMatch(/operator-selected/);
@@ -333,11 +364,7 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
     });
 
     it("applies an operator's unit override at the single boundary", () => {
-      const asLakhs = extractUnderScope(
-        sheets,
-        { ...scope, unitBasis: "lakhs" },
-        "pnl",
-      );
+      const asLakhs = extractUnderScope(sheets, scope, "pnl", "lakhs");
       if ("error" in asLakhs) throw new Error(asLakhs.error);
       const sales = asLakhs.lines.find(
         (l) => l.sourceLabel === "Sales" && l.periodLabel === "Total · 31.03.2027",

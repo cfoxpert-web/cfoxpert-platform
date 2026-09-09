@@ -114,6 +114,7 @@ export function sheetToLines(
         segment: null,
         provenance: `${name}!${columnRef(dc.debitCol)}${r + 1}`,
         proposedKpiKey: null,
+        proposedHead: null,
         confidence: 1,
         mappingConfidence: null,
       });
@@ -160,6 +161,7 @@ export function sheetToLines(
       segment: null,
       provenance: `${name}!${columnRef(amt.col)}${r + 1}`,
       proposedKpiKey: null,
+      proposedHead: null,
       confidence: 1,
       mappingConfidence: null,
     });

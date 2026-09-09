@@ -689,7 +689,6 @@ export function fingerprintWorkbook(
 export type ScopeChoice = {
   sheetName: string;
   periods: PeriodRequest[];
-  unitBasis: UnitBasisName;
   /**
    * How this scope came to be. These are DIFFERENT FACTS and provenance
    * must tell them apart: asked about a figure six months on, "nobody chose
@@ -745,12 +744,7 @@ export function autoSelectScope(scopes: SheetScope[]): AutoSelectResult {
   }));
   return {
     autoSelected: true,
-    choice: {
-      sheetName: sheet.sheetName,
-      periods,
-      unitBasis: sheet.unit.basis,
-      source: "auto",
-    },
+    choice: { sheetName: sheet.sheetName, periods, source: "auto" },
     because: `"${sheet.sheetName}" is the only sheet with dated columns, and it reports a single unit.`,
   };
 }
@@ -761,6 +755,11 @@ export function autoSelectScope(scopes: SheetScope[]): AutoSelectResult {
  * coerced to the nearest match — the same instinct that makes the
  * classifier trustworthy.
  */
+/** Is this a unit basis we can convert from? Guards untrusted input. */
+export function isUnitBasisName(value: unknown): value is UnitBasisName {
+  return typeof value === "string" && (UNIT_BASES as readonly string[]).includes(value);
+}
+
 export function validateScopeChoice(
   scopes: SheetScope[],
   choice: ScopeChoice,
@@ -771,9 +770,6 @@ export function validateScopeChoice(
   }
   if (choice.periods.length === 0) {
     return { ok: false, error: "Choose at least one period column." };
-  }
-  if (!UNIT_BASES.includes(choice.unitBasis)) {
-    return { ok: false, error: `"${choice.unitBasis}" is not a unit basis.` };
   }
   const offered = sheet.blocks.flatMap((b) => b.periodColumns);
   for (const period of choice.periods) {

@@ -31,6 +31,8 @@ export type ReviewLine = {
   periodEnd: string | null;
   segment: string | null;
   proposedKpiKey: string | null;
+  /** Projection head the classifier assigned; null = a real exception. */
+  proposedHead: string | null;
   /** Confidence in the AMOUNT as read from the source. */
   confidence: number | null;
   /** Confidence in the KPI MAPPING; null when nothing is mapped. */
@@ -58,6 +60,10 @@ export type ReviewJobDetail = {
   scopeOptions: SheetScope[];
   scope: ScopeChoice | null;
   scopeWarnings: string[];
+  /** A4-d-3: unit basis applies to any spreadsheet, CSVs included. */
+  unitBasis: string | null;
+  unitEvidence: { detectedFrom?: string; largestPrintedValue?: number | null } | null;
+  mimeType: string;
 };
 
 const one = <T>(v: T | T[] | null | undefined): T | null =>
@@ -105,7 +111,7 @@ export async function getReviewJobDetail(
   const { data: job, error } = await supabase
     .from("ingestion_jobs")
     .select(
-      "id, stage, stage_note, validation, scope, scope_options, scope_warnings, organization_id, organizations ( name ), client_documents ( file_name, kind, period_hint, created_at )",
+      "id, stage, stage_note, validation, scope, scope_options, scope_warnings, unit_basis, unit_evidence, organization_id, organizations ( name ), client_documents ( file_name, kind, period_hint, created_at, mime_type )",
     )
     .eq("id", jobId)
     .is("deleted_at", null)
@@ -120,7 +126,7 @@ export async function getReviewJobDetail(
     supabase
       .from("extracted_lines")
       .select(
-        "id, statement, source_label, amount, period_label, period_start, period_end, segment, proposed_kpi_key, confidence, mapping_confidence, provenance",
+        "id, statement, source_label, amount, period_label, period_start, period_end, segment, proposed_kpi_key, proposed_head, confidence, mapping_confidence, provenance",
       )
       .eq("job_id", jobId)
       .is("deleted_at", null)
@@ -163,6 +169,7 @@ export async function getReviewJobDetail(
       periodEnd: (l.period_end as string | null) ?? null,
       segment: (l.segment as string | null) ?? null,
       proposedKpiKey: (l.proposed_kpi_key as string | null) ?? null,
+      proposedHead: (l.proposed_head as string | null) ?? null,
       confidence: l.confidence === null ? null : Number(l.confidence),
       mappingConfidence:
         l.mapping_confidence === null || l.mapping_confidence === undefined
@@ -181,6 +188,12 @@ export async function getReviewJobDetail(
     scopeWarnings: Array.isArray(job.scope_warnings)
       ? (job.scope_warnings as string[])
       : [],
+    unitBasis: (job.unit_basis as string | null) ?? null,
+    unitEvidence:
+      job.unit_evidence && typeof job.unit_evidence === "object"
+        ? (job.unit_evidence as { detectedFrom?: string; largestPrintedValue?: number | null })
+        : null,
+    mimeType: (doc.mime_type as string | undefined) ?? "",
     periods: (periodsRes.data ?? []).map((p) => ({
       id: p.id as string,
       label: p.period_label as string,

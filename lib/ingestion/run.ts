@@ -6,7 +6,7 @@ import { applyMappingMemory, type MappingEntry } from "./mapping";
 import { normalizeLabel } from "./normalize";
 import { sheetsToCsv, sheetsToLines } from "./parse-spreadsheet";
 import { extractUnderScope } from "./scoped-extract";
-import type { ScopeChoice } from "./workbook";
+import { isUnitBasisName, type ScopeChoice } from "./workbook";
 import type { ExtractionOutput, KpiCatalogueEntry } from "./types";
 import { gateFailures, runValidationGates } from "./validate";
 
@@ -34,6 +34,8 @@ type JobRow = {
   stage: string;
   /** Resolved scope (A4-d-2), or null for PDFs and pre-A4-d-2 jobs. */
   scope: ScopeChoice | null;
+  /** Unit the source figures are printed in (A4-d-3). Null = detect. */
+  unit_basis: string | null;
   document: {
     id: string;
     storage_path: string;
@@ -53,7 +55,7 @@ export async function runExtraction(
   const { data: jobRaw, error: jobError } = await admin
     .from("ingestion_jobs")
     .select(
-      "id, organization_id, stage, scope, document:client_documents ( id, storage_path, mime_type, kind, period_hint, file_name )",
+      "id, organization_id, stage, scope, unit_basis, document:client_documents ( id, storage_path, mime_type, kind, period_hint, file_name )",
     )
     .eq("id", jobId)
     .is("deleted_at", null)
@@ -144,7 +146,14 @@ export async function runExtraction(
 
       // ---- Scoped path: one sheet, one segment, the chosen columns.
       const scope = job.scope;
-      const scoped = scope ? extractUnderScope(sheets, scope, kind) : null;
+      const scoped = scope
+        ? extractUnderScope(
+            sheets,
+            scope,
+            kind,
+            isUnitBasisName(job.unit_basis) ? job.unit_basis : undefined,
+          )
+        : null;
       if (scoped && "error" in scoped) throw new Error(scoped.error);
 
       const parsed = scoped ? null : sheetsToLines(sheets, kind);
@@ -205,6 +214,7 @@ export async function runExtraction(
         period_end: output.periodEnd,
         segment: l.segment,
         proposed_kpi_key: l.proposedKpiKey,
+        proposed_head: l.proposedHead,
         confidence: l.confidence,
         mapping_confidence: l.proposedKpiKey === null ? null : l.mappingConfidence,
         provenance: l.provenance,

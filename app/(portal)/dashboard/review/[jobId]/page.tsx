@@ -4,10 +4,13 @@ import { Card } from "@/components/cards/card";
 import { GateResults } from "@/components/dashboard/review/gate-results";
 import { ReviewForm } from "@/components/dashboard/review/review-form";
 import { ScopePicker } from "@/components/dashboard/review/scope-picker";
+import { ScopeUnreadable } from "@/components/dashboard/review/scope-unreadable";
+import { UnitBasisControl } from "@/components/dashboard/review/unit-basis-control";
 import { DOCUMENT_KINDS, stageLabel } from "@/lib/documents/model";
 import { isInternalStaff } from "@/lib/documents/queries";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getReviewJobDetail } from "@/lib/review/queries";
+import { isUnitBasisName } from "@/lib/ingestion/workbook";
 
 /**
  * Amendment A4-c — the review screen for one job: gate results up top
@@ -58,6 +61,19 @@ export default async function ReviewJobPage({
       detail.lines.length === 0 &&
       detail.scopeOptions.some((o) => o.plausible));
 
+  // Introspection ran and could not read the workbook. Without this the
+  // operator meets an empty picker on a job that looks stalled, with
+  // nothing to click — the failure mode this milestone exists to remove.
+  const unreadable =
+    detail.stage === "awaiting_scope" &&
+    detail.scopeOptions.length === 0 &&
+    detail.scopeWarnings.some((w) => w.startsWith("Could not read this workbook"));
+
+  // Unit basis is not part of sheet scope: it applies to CSVs too.
+  const isSpreadsheet =
+    detail.mimeType !== "application/pdf" && detail.mimeType !== "";
+  const unitBasis = isUnitBasisName(detail.unitBasis) ? detail.unitBasis : "rupees";
+
   return (
     <DashboardLayout title="Review" companyName={detail.organizationName}>
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -92,7 +108,19 @@ export default async function ReviewJobPage({
           staged-lines form — there are no staged lines yet, and there will
           not be until someone says which sheet and which columns to read.
         */}
-        {needsScope ? (
+        {isSpreadsheet && !unreadable && (
+          <UnitBasisControl
+            jobId={detail.jobId}
+            basis={unitBasis}
+            detectedFrom={detail.unitEvidence?.detectedFrom ?? null}
+            largestPrintedValue={detail.unitEvidence?.largestPrintedValue ?? null}
+            readOnly={detail.stage === "published" || detail.stage === "rejected"}
+          />
+        )}
+
+        {unreadable ? (
+          <ScopeUnreadable jobId={detail.jobId} warnings={detail.scopeWarnings} />
+        ) : needsScope ? (
           <ScopePicker
             jobId={detail.jobId}
             options={detail.scopeOptions}

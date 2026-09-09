@@ -149,6 +149,7 @@ const line = (over: Partial<CandidateLine>): CandidateLine => ({
   segment: null,
   provenance: "t",
   proposedKpiKey: null,
+  proposedHead: null,
   confidence: 1,
   mappingConfidence: null,
   ...over,

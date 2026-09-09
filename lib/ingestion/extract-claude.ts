@@ -257,6 +257,9 @@ File name: ${input.fileName}`;
         ? l.proposed_kpi_key
         : null,
     confidence: Math.min(1, Math.max(0, l.confidence)),
+    // The Claude rung proposes a KPI key directly; projection heads are the
+    // deterministic classifier's vocabulary, so nothing to carry here.
+    proposedHead: null,
     // The model's confidence covers the amount AND its reading. It has
     // no separate mapping confidence, so an unmapped line carries NULL
     // rather than inheriting the amount's number — a review screen must

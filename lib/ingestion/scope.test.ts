@@ -5,6 +5,7 @@ import {
   describeSheet,
   describeWorkbook,
   fingerprintWorkbook,
+  isUnitBasisName,
   validateScopeChoice,
   withUnitBasis,
   type ScopeChoice,
@@ -102,7 +103,6 @@ describe("scope validation refuses rather than coerces", () => {
   const valid: ScopeChoice = {
     sheetName: "Projection",
     periods: [{ segment: "Total", canonicalDate: "2027-03-31" }],
-    unitBasis: "rupees",
     source: "operator",
   };
 
@@ -168,6 +168,26 @@ describe("unit basis", () => {
   it("is a no-op when the override matches what was detected", () => {
     const described = describeSheet(simple)!;
     expect(withUnitBasis(described.unit, "rupees")).toBe(described.unit);
+  });
+
+  it("guards untrusted input before it can scale every figure", () => {
+    expect(isUnitBasisName("lakhs")).toBe(true);
+    expect(isUnitBasisName("crores")).toBe(true);
+    expect(isUnitBasisName("millions")).toBe(false);
+    expect(isUnitBasisName("")).toBe(false);
+    expect(isUnitBasisName(null)).toBe(false);
+    expect(isUnitBasisName(100000)).toBe(false);
+  });
+
+  it("is no longer part of sheet scope — it applies to CSVs too", () => {
+    // A CSV has no sheet to choose, but rupees-versus-lakhs matters to it
+    // exactly as much, so the basis lives on the job, not in the scope.
+    const choice: ScopeChoice = {
+      sheetName: "P&L",
+      periods: [{ segment: null, canonicalDate: "2027-03-31" }],
+      source: "operator",
+    };
+    expect("unitBasis" in choice).toBe(false);
   });
 });
 

@@ -220,6 +220,23 @@ export function ReviewForm({
                       {l.statement}
                       {l.provenance ? ` · ${l.provenance}` : ""}
                     </div>
+                    {/*
+                      A4-d-3: the classifier's head, shown plainly. Without
+                      it a correctly-classified line rendered as nothing but
+                      "— not mapped —", which reads as a classifier that
+                      failed rather than one waiting on the head→KPI
+                      roll-up (A7-a). Same row, opposite impression.
+                    */}
+                    {l.proposedHead && s.kpiKey === "" && (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-pill bg-teal/10 px-2 py-0.5 text-[10.5px] font-semibold text-teal">
+                        {l.proposedHead} · mapping pending
+                      </div>
+                    )}
+                    {!l.proposedHead && s.kpiKey === "" && (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-pill bg-amber-100 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700">
+                        needs a decision
+                      </div>
+                    )}
                   </td>
                   <td className="py-2 pr-4 text-right align-top text-[13px] tabular-nums text-ink">
                     {formatAmount(l.amount)}
