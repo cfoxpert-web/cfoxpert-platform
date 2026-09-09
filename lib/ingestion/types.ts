@@ -19,8 +19,17 @@ export type CandidateLine = {
   provenance: string;
   /** Proposed kpi_definitions.key — null when unmapped (analyst decides). */
   proposedKpiKey: string | null;
-  /** 0..1; 1.0 = deterministic (parser cell or confirmed mapping). */
+  /**
+   * 0..1 confidence in the AMOUNT — that the figure was read correctly
+   * from the source. 1.0 for a parsed cell: no model was involved.
+   */
   confidence: number | null;
+  /**
+   * 0..1 confidence in the KPI MAPPING. NULL when nothing is mapped —
+   * which is why a review screen can never again show "100%" beside
+   * "— not mapped —". A confirmed account_mappings hit is 1.0.
+   */
+  mappingConfidence: number | null;
 };
 
 export type ExtractionOutput = {

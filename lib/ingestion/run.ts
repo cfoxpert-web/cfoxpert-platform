@@ -9,7 +9,7 @@ import {
   sheetsToLines,
   type ParsedSheet,
 } from "./parse-spreadsheet";
-import { readXlsx } from "./spreadsheet-file";
+import { readWorkbook } from "./spreadsheet-file";
 import type { ExtractionOutput, KpiCatalogueEntry } from "./types";
 import { gateFailures, runValidationGates } from "./validate";
 
@@ -49,16 +49,19 @@ async function loadSheets(
   buffer: Buffer,
   mimeType: string,
   fileName: string,
-): Promise<ParsedSheet[]> {
+): Promise<{ sheets: ParsedSheet[]; warnings: string[] }> {
   const isCsv =
     mimeType === "text/csv" || /\.csv$/i.test(fileName);
   if (isCsv) {
     const text = buffer.toString("utf8").replace(/^\uFEFF/, "");
-    return [{ name: "CSV", rows: parseCsv(text) }];
+    return { sheets: [{ name: "CSV", rows: parseCsv(text) }], warnings: [] };
   }
   try {
-    return await readXlsx(buffer);
-  } catch {
+    return await readWorkbook(buffer);
+  } catch (err) {
+    // A too-large workbook now REFUSES with a specific reason (A4-d); pass
+    // that through rather than burying it under the generic .xls advice.
+    if (err instanceof Error && /sheets, beyond the/.test(err.message)) throw err;
     throw new Error(
       "Could not read this spreadsheet. If it is a legacy .xls file, re-export it from Tally/Excel as .xlsx, .csv, or PDF and upload again.",
     );
@@ -140,6 +143,9 @@ export async function runExtraction(
     // ---- The ladder
     const { mime_type, file_name, kind, period_hint } = job.document;
     let output: ExtractionOutput;
+    // Anything the bounded read clipped. Surfaced in the job note — a
+    // truncated read is a warning the analyst sees, never silence.
+    const readWarnings: string[] = [];
 
     if (mime_type === "application/pdf") {
       output = await extractWithClaude({
@@ -150,7 +156,8 @@ export async function runExtraction(
         catalogue,
       });
     } else {
-      const sheets = await loadSheets(buffer, mime_type, file_name);
+      const { sheets, warnings } = await loadSheets(buffer, mime_type, file_name);
+      readWarnings.push(...warnings);
       const parsed = sheetsToLines(sheets, kind);
       if (parsed) {
         output = {
@@ -208,6 +215,7 @@ export async function runExtraction(
         segment: l.segment,
         proposed_kpi_key: l.proposedKpiKey,
         confidence: l.confidence,
+        mapping_confidence: l.proposedKpiKey === null ? null : l.mappingConfidence,
         provenance: l.provenance,
       })),
     );
@@ -224,13 +232,25 @@ export async function runExtraction(
     });
     const failures = gateFailures(gates);
 
+    // HONEST SUMMARY. Zero failures is NOT the same as zero checks: on a
+    // real client file all five gates returned `skipped` (not a trial
+    // balance, not a balance sheet, not a P&L, no period dates, multiple
+    // total lines) and the header still read "validation checks passed".
+    // Nothing had been checked. Say what actually happened.
+    const checked = gates.filter((g) => g.status !== "skipped").length;
+    const validationSummary =
+      failures.length > 0
+        ? `${failures.length} of ${checked} validation check(s) FAILED`
+        : checked === 0
+          ? `no validation checks applied (${gates.length} not applicable to this document)`
+          : `${checked} validation check(s) passed`;
+
     const noteParts = [
       `${lines.length} lines`,
       output.method === "parser" ? "deterministic parse" : "AI extraction",
       fromMemory > 0 ? `${fromMemory} mapped from memory` : null,
-      failures.length > 0
-        ? `${failures.length} validation check(s) FAILED`
-        : "validation checks passed",
+      validationSummary,
+      ...readWarnings,
       ...output.notes,
     ].filter(Boolean);
 

@@ -144,6 +144,165 @@ This is the single log of every consequential architectural decision made on the
 
 ---
 
+## ADR-011: The extraction pipeline has six separate stages
+
+**Date:** 2026-09-09
+
+**Decision:** Scope → Classification → Projection Basis → Driver → Projection → Consolidation. Each stays a separate concern with its own module and its own persisted result. Scope (which sheet, which columns, which period, which unit) is resolved before anything is staged.
+
+**Why:** The A4-b pipeline collapses scope and classification into one parsing pass, which is why a 33-sheet workbook produces one undifferentiated list — there is no stage at which "which sheet, which period" is a question that gets answered, so it never is. Separating the stages makes each independently testable and independently correctable by an operator, and it means a wrong scope is fixed by re-scoping rather than by re-classifying 69 lines.
+
+**Alternatives considered:**
+- A single configurable extraction pass — rejected: it is what exists, and it cannot express scope at all.
+- Merging Driver into Projection Basis — rejected: one driver feeds many bases; folding them means re-specifying the driver on every line, which is the per-line-work failure ADR-016 forbids.
+
+---
+
+## ADR-012: One universal set of eight bases, available on any head
+
+**Date:** 2026-09-09
+
+**Decision:** `annualise_part_year · grow_on_rate · driver_linked · percent_of_head · fixed_amount · schedule_driven · hold_flat · zero_discontinued`. Every basis is available on every head. No category-specific option lists. Basis is set at group level by default with line-level override.
+
+**Why:** A category-specific list encodes a guess about what a head is, and Indian SME ledgers do not respect the guess — a head sitting under "Indirect Expenses" may legitimately be driver-linked, a percentage of another head, or contracted. A universal set has one code path, one test suite and no special cases. `percent_of_head` alone absorbs bonus on salary, EPF and ESIC on wages, and commission and freight outward on sales without a single bespoke rule.
+
+**Alternatives considered:**
+- Per-category basis menus — rejected: combinatorial special-casing, and demonstrably wrong on the RPIL file.
+- Free-form formula entry — rejected: unauditable, and it makes the provenance chain of ADR-015 impossible to render.
+
+---
+
+## ADR-013: Seasonality-adjusted annualisation is the default
+
+**Date:** 2026-09-09
+
+**Decision:** `annualised = partYearActual × (priorYearFull ÷ priorYearSamePartPeriod)`. Straight `× (12 ÷ monthsElapsed)` is the fallback, used only when the prior-year same period is unavailable or the derived ratio fails a plausibility guard (outside ±50% of the naive multiplier). Straight multiplication also remains available as an explicit operator override. Provenance records which path was used and why. A zero or near-zero prior-year part period yields the straight annualisation and says so; it never divides by zero and never emits `NaN`.
+
+**Why:** The client's own sheet uses `/6 × 12`, which assumes flat quarters in a seasonal business. That is the single largest silent error in the working papers this feature replaces. The guard exists because the ratio is only as good as the prior year — a one-off or a plant commissioned mid-year distorts it, and a silently-applied bad ratio is worse than a visibly-crude one.
+
+**Alternatives considered:**
+- Flat multiplication as the default — rejected: demonstrably wrong on this client, and wrong in the same direction for most seasonal manufacturers.
+- Seasonality always, no fallback — rejected: a first-year client has no prior year and the model must still produce a number.
+- Auto-detecting distorted prior years (one-offs, mid-year commissioning) — rejected: that is judgment, it is the paid value in "Virtual CFO as a Service", and a detector that is wrong one time in five is worse than an anomaly flag that is right every time. Surface the anomaly; let the CFO decide.
+
+---
+
+## ADR-014: Multi-unit clients project per segment, then consolidate by summation
+
+**Date:** 2026-09-09
+
+**Decision:** Where a client reports by unit, projection runs per segment and consolidates by summation — not by elimination, because segments of one legal entity have no inter-company transactions to eliminate (see ADR-019). The split is not uniform across the P&L:
+
+- **Revenue, direct costs and indirect costs project per segment.** They have genuinely different structures; Dhaulana's electricity alone is a different order of magnitude from Greater Noida's whole direct base.
+- **Tax is computed once, at entity level.** One company, one tax computation. Never per segment.
+- **Depreciation and finance cost follow their schedules.** Where an asset block or a loan facility is attributable to a location they compute per segment and sum; where they are company-wide they compute at entity level. The client's sheet does split both, so per-segment schedules are supported — but tax stays entity-level regardless.
+- **The balance sheet is entity-level only.** Segment balance sheets are not maintained by these clients and must not be invented.
+
+**Why:** Flattening to a group total destroys the ability to answer which unit is dragging, which is the question the report exists to answer. But projecting *everything* per segment invents figures the client does not maintain — a per-segment tax charge or a per-segment balance sheet would be a fabrication wearing the same typeface as the real numbers.
+
+**Alternatives considered:**
+- Project everything at group level — rejected: loses unit-level diagnosis entirely.
+- Project everything per segment including tax and the balance sheet — rejected: fabricates statements the client does not keep and cannot verify.
+- Model units as child organizations — rejected; see ADR-019.
+
+**Addendum — the decision was confirmed by a defect, not by reasoning (2026-09-09):** while building A4-d-1 against the real client workbook, requesting a period by DATE alone silently returned Dhaulana's column instead of the group Total, because `31.03.2026` appears three times in each block (Dhaulana, Greater Noida, Total). Nothing downstream would have caught it: the report would simply have shown one plant's figures labelled as the company's — a confident wrong number rather than an error. Segment is therefore part of a period's ADDRESS, not a reporting nicety, and scope requests are `(segment, date)` pairs. This was found by running against the real file rather than by reasoning about it, which is the standing argument for keeping a real-workbook test in the loop (ADR-020).
+
+---
+
+## ADR-015: Provenance is mandatory on every projected number
+
+**Date:** 2026-09-09
+
+**Decision:** Every projected figure retains, as structured data: source period, source head, the basis selected, the driver and its value, the base value, the factor applied, and the resulting calculation. A figure that cannot explain itself is a defect and fails tests.
+
+**Why:** The product is a CFO's professional opinion rendered as numbers. A number a CFO cannot defend line by line in a board meeting — or in front of a lender, once A10 exists — is worse than no number. It is also the only mechanism by which an operator can audit a bad basis choice after the fact, rather than re-deriving the whole model to find one wrong assumption.
+
+**Alternatives considered:**
+- Provenance on aggregates only — rejected: the error is always in a line, never in the total.
+- Provenance as a rendered string — rejected: it must be structured to be queryable and re-computable; a sentence cannot be re-run.
+
+---
+
+## ADR-016: The operator works by exception
+
+**Date:** 2026-09-09
+
+**Decision:** The system classifies; the human resolves what the system could not. Any design that asks an operator to touch every line has failed and is a defect, not a UX preference. The RPIL benchmark is the standard: 65 lines, 57 auto-classified, 8 decisions.
+
+**Why:** The review screen exists to catch what extraction got wrong, not to be the mechanism by which extraction succeeds. An operator asked to classify 69 lines will classify the first ten carefully and the rest by pattern — which is worse than an unreviewed deterministic mapping, because it carries a human's signature and therefore a human's implied assurance.
+
+**Alternatives considered:**
+- Review-everything as a correctness guarantee — rejected: it is correctness theatre; attention does not scale linearly with rows.
+
+---
+
+## ADR-017: Classification memory keys on the normalized label alone; sheet context is an attribute, not part of the key
+
+**Date:** 2026-09-09
+
+**Decision:** `account_mappings` stays keyed `(organization_id, source_label_normalized)` and gains `head`, `basis`, `driver` and `group`, plus a non-key `source_context` (sheet name, section heading). A **global seed layer** — a standard Indian SME chart-of-accounts matcher — sits beneath org mappings, which override it. When a remembered mapping arrives from a different context than the one it was learned in, or lands on a line whose amount has moved sharply, it does not block and does not silently apply: it surfaces for confirmation.
+
+**Why:** Label-only is what makes memory *transfer* — the same client's monthly file, quarterly file and audited pack name the head identically but sit on differently-named sheets. Adding sheet context to the key fragments memory across those files, so the second upload learns nothing, which defeats the purpose. Storing context without keying on it gives the safety signal without the fragmentation. The global seed layer is what makes the *first* upload mostly classified, rather than memory only helping from upload two onwards.
+
+**Alternatives considered:**
+- `(label + sheet)` as the composite key — rejected: fragments memory across a client's own files.
+- Label-only with no context stored at all — rejected: loses the conflict signal that makes silent misapplication detectable.
+
+---
+
+## ADR-018: Published financial data is stored at line level; KPI values are a derived roll-up
+
+**Date:** 2026-09-09
+
+**Decision:** A new insert-only, period- and segment-addressable line-level table becomes the published store, carrying full provenance columns from the outset. `kpi_values` is derived from it through a declared line → head → KPI mapping. Report tabs and the dashboard continue to read KPIs through the KPI Engine — the single computation path is preserved — with drill-down reading the same rolled-up tree one level deeper, never a second path. The two must never become independent sources of truth that can disagree. The rule in `lib/review/actions.ts` rejecting two lines that map to one KPI is correct under the old model and is **replaced, not relaxed**: many-to-one is the normal case at line level.
+
+**Why:** Line-level projection is required for the audit trail (the client's own accountant projects line by line), and the existing KPI-level store physically cannot hold it — the catalogue is roughly twenty keys and a real ledger scope is sixty-five lines. Provenance columns are added at creation because retrofitting them means backfilling nulls across published financial rows, which under ADR-006's insert-only rule cannot be corrected in place.
+
+**Alternatives considered:**
+- Projecting at KPI level — rejected: destroys the audit trail the feature is sold on.
+- Using `extracted_lines` as the store — rejected: it is staging — mutable, staff-only, soft-deleted on re-extraction, and addressed by `job_id` rather than by period.
+- Letting report tabs read lines directly — rejected: a second computation path; the dashboard and the P&L tab will eventually disagree, breaking the standing rule that they never do.
+
+---
+
+## ADR-019: A client's units are segments of one legal entity unless a real group structure exists; RPIL's plants are segments
+
+**Date:** 2026-09-09
+
+**Decision:** Reliable Packaging Industries Limited is one company with two plants, Dhaulana and Greater Noida — confirmed by its own workbook, which carries a single company-headed P&L with Dhaulana, Greater Noida and Total columns side by side. They are modelled as `kpi_values.segment` (and its line-level successor per ADR-018), **not** as child organizations. This confirms migration 0009's original reasoning and supersedes the loose description of them as "two legal units" in the A7 brief.
+
+The general rule this sets: `segment` is for units of one legal entity — one PAN, one set of audited financials, company-wide tax. `organizations.parent_organization_id` (ADR-008) stays reserved for genuine group and subsidiary structures, where inter-company elimination and separate tax computations are real requirements.
+
+**Why:** The distinction is not cosmetic — it determines whether consolidation is summation or elimination, whether tax is computed once or per unit, and whether a segment balance sheet is a legitimate output or a fabrication. Getting it wrong in either direction produces confidently-presented nonsense: eliminating transactions that do not exist, or summing tax charges that were never separately computed.
+
+**Alternatives considered:**
+- Modelling the plants as child organizations under ADR-008's hierarchy — rejected: there is no second legal entity, so every downstream consequence (elimination, per-unit tax, per-unit balance sheet) would be invented.
+- Deciding per client at ingestion time without a recorded rule — rejected: this exact ambiguity has already cost one round-trip; the rule needs to be written down once.
+
+---
+
+## ADR-020: Derived client figures may be committed; source client documents never are
+
+**Date:** 2026-09-09
+
+**Decision:** A clear line, drawn deliberately rather than by drift:
+
+- **Source client documents never enter version control.** The RPIL workbook is a 33-sheet working ledger holding two units' trial balances, month-by-month detail and the client's own internal observations. It stays out permanently. Tests that need it read it from a path supplied by the `RPIL_WORKBOOK` environment variable and SKIP when it is absent. This is the pattern for every future client-document fixture.
+- **Derived figures may be committed** — line-level amounts, reconciliation targets, classification expectations. These sit at the level already present in migration 0010 and `public/r/rpil.html`, and they are what makes a golden test meaningful. `lib/ingestion/__fixtures__/rpil-projection-fixture.v2.json` is committed on this basis.
+
+**Why:** "We already committed RPIL figures once" is not a principle, and without one this decision would be made differently by each session. Git history is permanent, repository access is broader than client-data access should be, and there is no RLS on a repository — so the source document, which contains far more than the figures the client has agreed to see reported, cannot be there. The derived figures are a different thing: they are the output the client already receives.
+
+**Accepted consequence, stated plainly:** because CI runs only the synthetic-grid suites (`workbook.test.ts`, `row-class.test.ts`), **a regression in real-workbook handling will not be caught by CI.** That is a trade accepted for the boundary above, not an oversight. The mitigation is procedural and binding: the golden test (`rpil-golden.test.ts`) must be run locally, with `RPIL_WORKBOOK` set, before any parser change ships.
+
+**Relationship to ADR-010:** this is the same family of question as the ADR-010 addendum on client documents passing through the Claude API, and the two are to be decided consistently — a client document may leave our infrastructure for a bounded, disclosed purpose, but it is never persisted anywhere it cannot later be revoked. A git repository is the clearest example of somewhere it cannot.
+
+**Alternatives considered:**
+- Commit the workbook so CI runs the golden test — rejected: permanent, broadly-readable storage of a client's internal working papers, to buy CI coverage that a local pre-ship run already provides.
+- Keep the derived fixture out too, behind the same env var — rejected: it would leave CI with no expectation to check the classifier against at all, and the derived figures carry no exposure beyond what the client's own report already contains.
+- Commit a redacted workbook with scrambled amounts — rejected: the labels and layout are the sensitive structure as much as the figures, and a fixture whose numbers do not reconcile cannot test the thing the golden test exists to test.
+
+---
+
 ## Template for future entries
 
 ```

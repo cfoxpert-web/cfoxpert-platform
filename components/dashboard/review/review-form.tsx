@@ -188,7 +188,7 @@ export function ReviewForm({
               <th className="py-2 pr-4 text-right">Amount (₹)</th>
               <th className="py-2 pr-4">KPI</th>
               <th className="py-2 pr-4">Segment</th>
-              <th className="py-2">Conf.</th>
+              <th className="py-2">Mapping conf.</th>
             </tr>
           </thead>
           <tbody>
@@ -259,8 +259,17 @@ export function ReviewForm({
                       />
                     )}
                   </td>
+                  {/*
+                    Mapping confidence ONLY. The old column rendered the
+                    AMOUNT's confidence here, so every deterministically
+                    parsed row showed "100%" next to "— not mapped —" — a
+                    contradiction on its face. A line with no KPI assigned
+                    has no mapping to be confident about, so it shows a dash.
+                  */}
                   <td className="py-2 align-top text-[12.5px] text-slate">
-                    {l.confidence === null ? "—" : `${Math.round(l.confidence * 100)}%`}
+                    {s.kpiKey === "" || l.mappingConfidence === null
+                      ? "—"
+                      : `${Math.round(l.mappingConfidence * 100)}%`}
                   </td>
                 </tr>
               );

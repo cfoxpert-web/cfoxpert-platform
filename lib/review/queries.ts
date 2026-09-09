@@ -30,7 +30,10 @@ export type ReviewLine = {
   periodEnd: string | null;
   segment: string | null;
   proposedKpiKey: string | null;
+  /** Confidence in the AMOUNT as read from the source. */
   confidence: number | null;
+  /** Confidence in the KPI MAPPING; null when nothing is mapped. */
+  mappingConfidence: number | null;
   provenance: string | null;
 };
 
@@ -112,7 +115,7 @@ export async function getReviewJobDetail(
     supabase
       .from("extracted_lines")
       .select(
-        "id, statement, source_label, amount, period_label, period_start, period_end, segment, proposed_kpi_key, confidence, provenance",
+        "id, statement, source_label, amount, period_label, period_start, period_end, segment, proposed_kpi_key, confidence, mapping_confidence, provenance",
       )
       .eq("job_id", jobId)
       .is("deleted_at", null)
@@ -156,6 +159,10 @@ export async function getReviewJobDetail(
       segment: (l.segment as string | null) ?? null,
       proposedKpiKey: (l.proposed_kpi_key as string | null) ?? null,
       confidence: l.confidence === null ? null : Number(l.confidence),
+      mappingConfidence:
+        l.mapping_confidence === null || l.mapping_confidence === undefined
+          ? null
+          : Number(l.mapping_confidence),
       provenance: (l.provenance as string | null) ?? null,
     })),
     catalogue: (catRes.data ?? []).map((d) => ({

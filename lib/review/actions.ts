@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { isFeatureEnabled } from "../feature-flags";
 import { normalizeLabel } from "../ingestion/normalize";
+import type { GateResult } from "../ingestion/types";
 import { createAdminClient } from "../supabase/admin";
 import { createClient } from "../supabase/server";
 
@@ -84,7 +85,7 @@ export async function publishIngestionJob(
   // ---- Load the job + its live staged lines (staff RLS).
   const { data: job } = await supabase
     .from("ingestion_jobs")
-    .select("id, stage, organization_id, client_documents ( file_name )")
+    .select("id, stage, organization_id, validation, client_documents ( file_name )")
     .eq("id", input.jobId)
     .is("deleted_at", null)
     .single();
@@ -93,6 +94,26 @@ export async function publishIngestionJob(
     return {
       ok: false,
       error: `Job is at stage '${job.stage}' — only jobs awaiting review can be published.`,
+    };
+  }
+
+  // ---- A4-d: a FAILED validation gate blocks publication.
+  // The gates were computed and stored at extraction, and the review screen
+  // showed them — but nothing ever read them here, so a balance sheet whose
+  // assets did not equal its liabilities published on one click. Gates prove
+  // internal consistency only (ADR-010), so passing them is not permission
+  // to publish; failing one is a refusal.
+  const gateResults: GateResult[] = Array.isArray(job.validation)
+    ? (job.validation as GateResult[])
+    : [];
+  const failedGates = gateResults.filter((g) => g.status === "fail");
+  if (failedGates.length > 0) {
+    const detail = failedGates
+      .map((g) => `${g.gate}: ${g.detail}`)
+      .join(" · ");
+    return {
+      ok: false,
+      error: `${failedGates.length} validation check(s) failed and must be resolved before publishing — ${detail}. Reject the job and re-extract, or fix the source document and upload again.`,
     };
   }
   const orgId = job.organization_id as string;

@@ -1,5 +1,6 @@
 import type { DocumentKind } from "../documents/model";
 import { parseAmount } from "./normalize";
+import { classifyRow, cleanSourceLabel, isStageable } from "./row-class";
 import type { CandidateLine } from "./types";
 
 /**
@@ -12,9 +13,19 @@ import type { CandidateLine } from "./types";
  *   [Particulars | Debit | Credit]   → trial-balance mode (debit − credit)
  *   [Particulars | Amount]           → simple label/amount statements
  *
- * Parsed cells get CELL-level provenance and confidence 1.0 — this rung
- * involves no model. If the grid doesn't fit either layout, the caller
- * falls to the Claude rung (which sees the same grid serialized as CSV).
+ * A4-d: every candidate row is now passed through `classifyRow` before it
+ * is emitted, so totals, subtotals, ratio/percentage rows, derived lines
+ * and footnotes never reach staging. Previously nothing filtered a row —
+ * `isTotalLabel()` existed but was used only by the validation gates — and
+ * a real client file staged three footnotes, two rows both labelled
+ * `Total`, `GP RATIO (%)` and `ROUND OFF` as financial lines.
+ *
+ * CONFIDENCE IS TWO FIELDS, NOT ONE. `confidence` is confidence in the
+ * AMOUNT (1.0 here: a parsed cell involves no model). `mappingConfidence`
+ * is confidence in the KPI mapping, and it is null until something
+ * actually maps. Conflating them is what put "100%" beside "— not mapped —"
+ * on the review screen, which is a contradiction on its face and destroys
+ * an operator's trust in every other number on the page.
  */
 
 export type Cell = string | number | null;
@@ -93,16 +104,18 @@ export function sheetToLines(
       const debit = cellAmount(row[dc.debitCol] ?? null, true);
       const credit = cellAmount(row[dc.creditCol] ?? null, true);
       if (debit === null && credit === null) continue;
+      if (!isStageable(classifyRow(label, true).kind)) continue;
       const amount = (debit ?? 0) - Math.abs(credit ?? 0);
       lines.push({
         statement: kind === "other" ? "trial_balance" : kind,
-        sourceLabel: label,
+        sourceLabel: cleanSourceLabel(label),
         amount,
         periodLabel: null,
         segment: null,
         provenance: `${name}!${columnRef(dc.debitCol)}${r + 1}`,
         proposedKpiKey: null,
         confidence: 1,
+        mappingConfidence: null,
       });
     }
     return lines;
@@ -138,15 +151,17 @@ export function sheetToLines(
 
     const amt = amounts[0];
     if (!amt) continue;
+    if (!isStageable(classifyRow(label, true).kind)) continue;
     lines.push({
       statement: kind,
-      sourceLabel: label,
+      sourceLabel: cleanSourceLabel(label),
       amount: amt.value,
       periodLabel: null,
       segment: null,
       provenance: `${name}!${columnRef(amt.col)}${r + 1}`,
       proposedKpiKey: null,
       confidence: 1,
+      mappingConfidence: null,
     });
   }
   return lines;

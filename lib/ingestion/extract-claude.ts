@@ -257,6 +257,14 @@ File name: ${input.fileName}`;
         ? l.proposed_kpi_key
         : null,
     confidence: Math.min(1, Math.max(0, l.confidence)),
+    // The model's confidence covers the amount AND its reading. It has
+    // no separate mapping confidence, so an unmapped line carries NULL
+    // rather than inheriting the amount's number — a review screen must
+    // never show a percentage beside "— not mapped —".
+    mappingConfidence:
+      l.proposed_kpi_key && validKeys.has(l.proposed_kpi_key)
+        ? Math.min(1, Math.max(0, l.confidence))
+        : null,
   }));
 
   return {

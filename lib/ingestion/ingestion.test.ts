@@ -79,10 +79,20 @@ describe("sheetToLines — trial balance layout", () => {
     const lines = sheetToLines(tb, "trial_balance");
     const byLabel = new Map(lines.map((l) => [l.sourceLabel, l]));
     expect(byLabel.get("Cash-in-hand")?.amount).toBe(5000);
-    expect(byLabel.get("Sales A/c")?.amount).toBe(-20000);
+    // A4-d: the ' A/c' bookkeeping suffix is stripped from the stored
+    // label, so the same head written 'Sales A/c' in one export and
+    // 'Sales' in the next maps to one entry in the client's memory.
+    expect(byLabel.get("Sales")?.amount).toBe(-20000);
     expect(byLabel.get("Purchases")?.amount).toBe(15000);
     expect(byLabel.get("Cash-in-hand")?.provenance).toBe("TB!B3");
     expect(byLabel.get("Cash-in-hand")?.confidence).toBe(1);
+    // Amount confidence is not a claim about the mapping (migration 0020).
+    expect(byLabel.get("Cash-in-hand")?.mappingConfidence).toBeNull();
+  });
+
+  it("A4-d: excludes the stated total from staging", () => {
+    const lines = sheetToLines(tb, "trial_balance");
+    expect(lines.map((l) => l.sourceLabel)).not.toContain("Total");
   });
 });
 
@@ -99,9 +109,13 @@ describe("sheetToLines — simple label/amount layout", () => {
 
   it("pairs each label with its single amount", () => {
     const lines = sheetToLines(pnl, "pnl");
-    expect(lines).toHaveLength(2);
+    // A4-d: 'Gross Profit' is DERIVED — revenue less direct costs — and no
+    // longer stages. Publishing it alongside the components it is computed
+    // from double-counts the statement. Only the revenue line remains.
+    expect(lines).toHaveLength(1);
+    expect(lines[0]?.sourceLabel).toBe("Revenue from operations");
     expect(lines[0]?.amount).toBeCloseTo(1781249181.12);
-    expect(lines[1]?.sourceLabel).toBe("Gross Profit");
+    expect(lines.map((l) => l.sourceLabel)).not.toContain("Gross Profit");
   });
 
   it("skips comparative rows with two numeric columns (ambiguous)", () => {
@@ -136,6 +150,7 @@ const line = (over: Partial<CandidateLine>): CandidateLine => ({
   provenance: "t",
   proposedKpiKey: null,
   confidence: 1,
+  mappingConfidence: null,
   ...over,
 });
 
@@ -263,8 +278,14 @@ describe("validation gates", () => {
     );
     expect(fromMemory).toBe(1);
     expect(lines[0]?.proposedKpiKey).toBe("trade_receivables");
-    expect(lines[0]?.confidence).toBe(1);
+    // A4-d / migration 0020: a confirmed mapping makes the MAPPING certain.
+    // It says nothing about how well the amount was read, so the amount's
+    // own confidence is left exactly as extraction earned it.
+    expect(lines[0]?.mappingConfidence).toBe(1);
+    expect(lines[0]?.confidence).toBe(0.6);
     expect(lines[1]?.proposedKpiKey).toBeNull();
+    // An unmapped line has no mapping to be confident about.
+    expect(lines[1]?.mappingConfidence).toBeNull();
   });
 
   it("gateFailures filters to fails only", () => {

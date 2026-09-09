@@ -26,7 +26,10 @@ export function applyMappingMemory(
       ...line,
       proposedKpiKey: hit.kpiKey,
       segment: hit.segment ?? line.segment,
-      confidence: 1,
+      // An analyst confirmed this label→KPI pair, so the MAPPING is
+      // certain. The amount's own confidence is whatever extraction
+      // earned and is deliberately left alone.
+      mappingConfidence: 1,
     };
   });
   return { lines: mapped, fromMemory };

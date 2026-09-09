@@ -1,0 +1,1387 @@
+{
+ "fixture_version": 2,
+ "supersedes": "rpil-projection-fixture.json (v1)",
+ "generated_by": "lib/ingestion/{workbook,row-class,head-classify}.ts — A4-d-1",
+ "corrections_vs_v1": [
+  "Director remuneration (₹223.80 L in both years) is RESTORED. v1's generator carried a NOISE regex with `director\\b` matched as a PREFIX, intended to strip a signatory line reading 'Director'; it silently deleted a real expense head. The noise class is now gated on 'no numeric value in any scoped column' and signatory terms match as whole labels only. Line count 65 -> 66, auto-classified 57 -> 58.",
+  "`parent` is now the SEMANTIC section, detected from vocabulary plus a structural signal (TO/BY prefix or full capitalisation). v1 inferred headings from absence of data, so four real but zero-valued expense heads (GST Expense, ESIC Employee's Cont., Renewal Fee, Plot Allotment Expense) were read as sections — giving `Bad debt` a parent of `Renewal Fee`. All indirect lines now correctly parent to INDIRECT EXPS.",
+  "`must_not_stage` is replaced by `excluded`, the COMPLETE exclusion set with a reason per row. v1's list was illustrative and omitted four value-carrying rows that must never stage: `% Total Direct Exp` (₹1,612.79 L, the direct subtotal), `TO INDIRECT EXPS` (₹2,338.86 L roll-up), `NET PROFIT` and `NET PROFIT (%)`.",
+  "Amounts are stored in RUPEES, the platform's base unit (kpi_values stores rupees). v1 stored lakhs. Multiply v1 by 100,000 to compare.",
+  "Full-P&L reconciliation added: PBT less the unclassified exceptions equals the workbook's own stated NET PROFIT, in both years."
+ ],
+ "source_file": "Projected Profit & loss FY 2026-27 (1) (1).xlsx",
+ "entity": "Reliable Packaging Industries Limited",
+ "scope": {
+  "sheet": "26-27 Projection",
+  "segment": "Total",
+  "columns": [
+   "Total · 31.03.2026",
+   "Total · 31.03.2027"
+  ],
+  "canonical_dates": [
+   "2026-03-31",
+   "2027-03-31"
+  ],
+  "order": "oldest first",
+  "unit_detected": "rupees",
+  "multiplier_to_rupees": 1,
+  "stored_in": "INR rupees"
+ },
+ "layout": {
+  "t_format": true,
+  "label_columns": 2,
+  "header_tiers": 2,
+  "sheets_in_workbook": 10,
+  "header_date_disagreement": "debit header 31.03.2026 vs credit header 31.03.026 — matched on canonical date"
+ },
+ "expected": {
+  "line_count": 66,
+  "auto_classified": 58,
+  "unmatched": 8,
+  "periods": [
+   "FY 2025-26",
+   "FY 2026-27"
+  ],
+  "reconciliation": [
+   {
+    "period": "FY 2025-26",
+    "revenue": 17812.49,
+    "direct_total": 14701.33,
+    "gross_profit": 3111.17,
+    "gp_pct": 17.47,
+    "indirect_total": 1910.94,
+    "other_income": 5.97,
+    "ebitda": 1206.19,
+    "depreciation": 197.35,
+    "finance_cost": 205.55,
+    "pbt": 803.29,
+    "unclassified_total": 25.01,
+    "pbt_less_unclassified": 778.27
+   },
+   {
+    "period": "FY 2026-27",
+    "revenue": 20200,
+    "direct_total": 16620.52,
+    "gross_profit": 3579.48,
+    "gp_pct": 17.72,
+    "indirect_total": 1959.53,
+    "other_income": 0.24,
+    "ebitda": 1620.2,
+    "depreciation": 210,
+    "finance_cost": 216.32,
+    "pbt": 1193.88,
+    "unclassified_total": 0,
+    "pbt_less_unclassified": 1193.88
+   }
+  ],
+  "client_stated": {
+   "FY 2026-27": {
+    "gross_profit": 3579.5,
+    "gp_pct": 17.7
+   },
+   "FY 2025-26": {
+    "gross_profit": 3111.2,
+    "gp_pct": 17.5
+   }
+  },
+  "workbook_stated_net_profit": {
+   "FY 2025-26": 778.27,
+   "FY 2026-27": 1193.88
+  },
+  "note_on_units": "reconciliation figures are in INR lakhs for readability; `lines[].vals` are in RUPEES."
+ },
+ "excluded": [
+  {
+   "source_label": "Consumption of raw material",
+   "kind": "derived",
+   "reason": "Derived from other lines (CONSUMPTION OF RAW MATERIAL) — computed, not staged.",
+   "carried_value": true
+  },
+  {
+   "source_label": "Consumption % as per sale",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "Purchase % As per Sale",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "% Total Direct Exp",
+   "kind": "subtotal",
+   "reason": "Section subtotal — staging it would double-count its lines.",
+   "carried_value": true
+  },
+  {
+   "source_label": "TO GROSS PROFIT C/F",
+   "kind": "derived",
+   "reason": "Derived from other lines (GROSS PROFIT C/F) — computed, not staged.",
+   "carried_value": true
+  },
+  {
+   "source_label": "GP RATIO (%)",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "TOTAL",
+   "kind": "total",
+   "reason": "Stated total — staging it would double-count the lines above.",
+   "carried_value": true
+  },
+  {
+   "source_label": "GST Expense",
+   "kind": "line",
+   "reason": "Financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "ESIC Employee's Cont.",
+   "kind": "line",
+   "reason": "Financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "Renewal Fee",
+   "kind": "line",
+   "reason": "Financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "Plot Allotment Expense",
+   "kind": "line",
+   "reason": "Financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "NET PROFIT",
+   "kind": "derived",
+   "reason": "Derived from other lines (NET PROFIT) — computed, not staged.",
+   "carried_value": true
+  },
+  {
+   "source_label": "NET PROFIT (%)",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "TOTAL",
+   "kind": "total",
+   "reason": "Stated total — staging it would double-count the lines above.",
+   "carried_value": true
+  },
+  {
+   "source_label": "Notes:-",
+   "kind": "note",
+   "reason": "Signature or attestation block.",
+   "carried_value": false
+  },
+  {
+   "source_label": "1.The unbold figures represent the actual figures up to June, converted into annual figures.",
+   "kind": "note",
+   "reason": "Footnote or narrative note.",
+   "carried_value": false
+  },
+  {
+   "source_label": "2. Bold Figure are Projected figure on the Basis of Last Year and Actual Figure upto June",
+   "kind": "note",
+   "reason": "Footnote or narrative note.",
+   "carried_value": false
+  },
+  {
+   "source_label": "3.Projected turnover are Rs.202 Crore (Dhaulana Rs.51 Crore and Rs.151 crore Greater Noida)",
+   "kind": "note",
+   "reason": "Footnote or narrative note.",
+   "carried_value": false
+  },
+  {
+   "source_label": "4.For the projection, only the Audit Fee, Professional Fee paid to PKN, Insurance Expense, and Independent Directors’ Remuneration have been considered based on the previous year’s figures",
+   "kind": "note",
+   "reason": "Footnote or narrative note.",
+   "carried_value": false
+  },
+  {
+   "source_label": "5.The reduction in NP margin from 6.50% in the annualised June figures to 5.95% in the March 2027 projection is mainly due to the difference between annualised turnover and projected turnover, along with the fact that projected expenses for the full year do not vary in the same proportion as turnover. As a result, the projected Net Profit margin is lower by 0.55%.",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "6.Yellow Highlighted are related to Observation.",
+   "kind": "note",
+   "reason": "Footnote or narrative note.",
+   "carried_value": false
+  },
+  {
+   "source_label": "Closing Stock (Raw Material)",
+   "kind": "line",
+   "reason": "Financial line.",
+   "carried_value": false
+  },
+  {
+   "source_label": "Closing Stock (% of Purchase)",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "Closing Stock (% of Sale)",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "Closing Stock (% of Material Consumed)",
+   "kind": "ratio",
+   "reason": "Ratio or percentage row, not a financial line.",
+   "carried_value": true
+  },
+  {
+   "source_label": "TOTAL",
+   "kind": "total",
+   "reason": "Stated total — staging it would double-count the lines above.",
+   "carried_value": true
+  },
+  {
+   "source_label": "BY GROSS PROFIT B/F",
+   "kind": "derived",
+   "reason": "Derived from other lines (GROSS PROFIT B/F) — computed, not staged.",
+   "carried_value": true
+  },
+  {
+   "source_label": "TOTAL",
+   "kind": "total",
+   "reason": "Stated total — staging it would double-count the lines above.",
+   "carried_value": true
+  }
+ ],
+ "lines": [
+  {
+   "source_label": "OPENING STOCK",
+   "raw_label": "TO OPENING STOCK",
+   "side": "debit",
+   "parent": null,
+   "key": "stockChange",
+   "key_reason": "Matched on stock movement.",
+   "credit": false,
+   "vals": [
+    93235235,
+    123311129
+   ],
+   "provenance": [
+    "26-27 Projection!J7",
+    "26-27 Projection!I7"
+   ]
+  },
+  {
+   "source_label": "PURCHASE",
+   "raw_label": "TO PURCHASE A/C",
+   "side": "debit",
+   "parent": null,
+   "key": "cogs",
+   "key_reason": "Matched on purchases.",
+   "credit": false,
+   "vals": [
+    1338929672.12,
+    1494601655
+   ],
+   "provenance": [
+    "26-27 Projection!J9",
+    "26-27 Projection!I9"
+   ]
+  },
+  {
+   "source_label": "Freight Inward",
+   "raw_label": "Freight Inward",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "directExp",
+   "key_reason": "Line under DIRECT EXPENSES.",
+   "credit": false,
+   "vals": [
+    435649.19,
+    159380
+   ],
+   "provenance": [
+    "26-27 Projection!J15",
+    "26-27 Projection!I15"
+   ]
+  },
+  {
+   "source_label": "Wages & Jobworks",
+   "raw_label": "Wages & Jobworks",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "directExp",
+   "key_reason": "Line under DIRECT EXPENSES.",
+   "credit": false,
+   "vals": [
+    118640960.49,
+    114586534.28
+   ],
+   "provenance": [
+    "26-27 Projection!J16",
+    "26-27 Projection!I16"
+   ]
+  },
+  {
+   "source_label": "Consumable Expenses",
+   "raw_label": "Consumable Expenses",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "cogs",
+   "key_reason": "Under DIRECT EXPENSES, but materials places it in cogs.",
+   "credit": false,
+   "vals": [
+    4991985.33,
+    5570935.76
+   ],
+   "provenance": [
+    "26-27 Projection!J17",
+    "26-27 Projection!I17"
+   ]
+  },
+  {
+   "source_label": "Gas Expenses",
+   "raw_label": "Gas Expenses",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "directExp",
+   "key_reason": "Line under DIRECT EXPENSES.",
+   "credit": false,
+   "vals": [
+    77929.52,
+    233491.44
+   ],
+   "provenance": [
+    "26-27 Projection!J18",
+    "26-27 Projection!I18"
+   ]
+  },
+  {
+   "source_label": "Electricity Exp.",
+   "raw_label": "Electricity  Exp.",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "directExp",
+   "key_reason": "Line under DIRECT EXPENSES.",
+   "credit": false,
+   "vals": [
+    36507126.72,
+    40148467
+   ],
+   "provenance": [
+    "26-27 Projection!J19",
+    "26-27 Projection!I19"
+   ]
+  },
+  {
+   "source_label": "Rent of DG & Machine",
+   "raw_label": "Rent of DG & Machine",
+   "side": "debit",
+   "parent": "DIRECT EXPENSES",
+   "key": "directExp",
+   "key_reason": "Line under DIRECT EXPENSES.",
+   "credit": false,
+   "vals": [
+    625166,
+    2259838
+   ],
+   "provenance": [
+    "26-27 Projection!J20",
+    "26-27 Projection!I20"
+   ]
+  },
+  {
+   "source_label": "AMC Charges",
+   "raw_label": "AMC Charges",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on annual maintenance contract.",
+   "credit": false,
+   "vals": [
+    306434,
+    266412
+   ],
+   "provenance": [
+    "26-27 Projection!J31",
+    "26-27 Projection!I31"
+   ]
+  },
+  {
+   "source_label": "Courier Expenses",
+   "raw_label": "Courier Expenses",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on communication.",
+   "credit": false,
+   "vals": [
+    140755.61,
+    289798.36
+   ],
+   "provenance": [
+    "26-27 Projection!J32",
+    "26-27 Projection!I32"
+   ]
+  },
+  {
+   "source_label": "Audit Fees",
+   "raw_label": "Audit Fees",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on professional services.",
+   "credit": false,
+   "vals": [
+    420000,
+    520000
+   ],
+   "provenance": [
+    "26-27 Projection!J33",
+    "26-27 Projection!I33"
+   ]
+  },
+  {
+   "source_label": "Bank Charges",
+   "raw_label": "Bank Charges",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on bank charges.",
+   "credit": false,
+   "vals": [
+    89834.12,
+    91521.56
+   ],
+   "provenance": [
+    "26-27 Projection!J34",
+    "26-27 Projection!I34"
+   ]
+  },
+  {
+   "source_label": "Bonus Exp.",
+   "raw_label": "Bonus Exp.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on employee cost.",
+   "credit": false,
+   "vals": [
+    7090233,
+    7000000
+   ],
+   "provenance": [
+    "26-27 Projection!J35",
+    "26-27 Projection!I35"
+   ]
+  },
+  {
+   "source_label": "Business Promotions",
+   "raw_label": "Business Promotions",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "sellingExp",
+   "key_reason": "Matched on promotion.",
+   "credit": false,
+   "vals": [
+    1441653.74,
+    16520
+   ],
+   "provenance": [
+    "26-27 Projection!J36",
+    "26-27 Projection!I36"
+   ]
+  },
+  {
+   "source_label": "Consultancy Fee",
+   "raw_label": "Consultancy Fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on professional services.",
+   "credit": false,
+   "vals": [
+    2366500,
+    12000
+   ],
+   "provenance": [
+    "26-27 Projection!J37",
+    "26-27 Projection!I37"
+   ]
+  },
+  {
+   "source_label": "Medical Expenses",
+   "raw_label": "Medical Expenses",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on insurance and medical.",
+   "credit": false,
+   "vals": [
+    22641,
+    88432
+   ],
+   "provenance": [
+    "26-27 Projection!J38",
+    "26-27 Projection!I38"
+   ]
+  },
+  {
+   "source_label": "Depreciaton",
+   "raw_label": "Depreciaton",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "depreciation",
+   "key_reason": "Matched on depreciation.",
+   "credit": false,
+   "vals": [
+    19735173.94,
+    21000000
+   ],
+   "provenance": [
+    "26-27 Projection!J39",
+    "26-27 Projection!I39"
+   ]
+  },
+  {
+   "source_label": "Diwali Exps.",
+   "raw_label": "Diwali  Exps.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    9941,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J41",
+    "26-27 Projection!I41"
+   ]
+  },
+  {
+   "source_label": "EPF Employer Cont.",
+   "raw_label": "EPF Employer Cont.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on statutory employee cost.",
+   "credit": false,
+   "vals": [
+    386606,
+    1114492
+   ],
+   "provenance": [
+    "26-27 Projection!J42",
+    "26-27 Projection!I42"
+   ]
+  },
+  {
+   "source_label": "ESIC Employer Cont.",
+   "raw_label": "ESIC Employer Cont.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on statutory employee cost.",
+   "credit": false,
+   "vals": [
+    1054591,
+    1295104
+   ],
+   "provenance": [
+    "26-27 Projection!J43",
+    "26-27 Projection!I43"
+   ]
+  },
+  {
+   "source_label": "Freight outward",
+   "raw_label": "Freight outward",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "sellingExp",
+   "key_reason": "Matched on outward freight.",
+   "credit": false,
+   "vals": [
+    47654799,
+    34631604
+   ],
+   "provenance": [
+    "26-27 Projection!J45",
+    "26-27 Projection!I45"
+   ]
+  },
+  {
+   "source_label": "Insurance Exp",
+   "raw_label": "Insurance Exp",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on insurance and medical.",
+   "credit": false,
+   "vals": [
+    1414355,
+    1414355
+   ],
+   "provenance": [
+    "26-27 Projection!J46",
+    "26-27 Projection!I46"
+   ]
+  },
+  {
+   "source_label": "Subscription fee",
+   "raw_label": "Subscription fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on subscription.",
+   "credit": false,
+   "vals": [
+    null,
+    15000
+   ],
+   "provenance": [
+    "26-27 Projection!J47",
+    "26-27 Projection!I47"
+   ]
+  },
+  {
+   "source_label": "Bad debt",
+   "raw_label": "Bad debt",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    1916406.23,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J49",
+    "26-27 Projection!I49"
+   ]
+  },
+  {
+   "source_label": "Commission Charges",
+   "raw_label": "Commission Charges",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "sellingExp",
+   "key_reason": "Matched on selling commission.",
+   "credit": false,
+   "vals": [
+    22759192,
+    8031620
+   ],
+   "provenance": [
+    "26-27 Projection!J50",
+    "26-27 Projection!I50"
+   ]
+  },
+  {
+   "source_label": "Bill Discounting Charges",
+   "raw_label": "Bill Discounting Charges",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on discounting charges.",
+   "credit": false,
+   "vals": [
+    2594963.16,
+    1737827.12
+   ],
+   "provenance": [
+    "26-27 Projection!J51",
+    "26-27 Projection!I51"
+   ]
+  },
+  {
+   "source_label": "Interest on TDS",
+   "raw_label": "Interest on TDS",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on interest.",
+   "credit": false,
+   "vals": [
+    1576,
+    5260
+   ],
+   "provenance": [
+    "26-27 Projection!J52",
+    "26-27 Projection!I52"
+   ]
+  },
+  {
+   "source_label": "Interest On Loan",
+   "raw_label": "Interest On Loan",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on interest.",
+   "credit": false,
+   "vals": [
+    924188.35,
+    664645.2
+   ],
+   "provenance": [
+    "26-27 Projection!J53",
+    "26-27 Projection!I53"
+   ]
+  },
+  {
+   "source_label": "Interest to Bank",
+   "raw_label": "Interest to Bank",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on interest.",
+   "credit": false,
+   "vals": [
+    16633821.77,
+    18793095
+   ],
+   "provenance": [
+    "26-27 Projection!J54",
+    "26-27 Projection!I54"
+   ]
+  },
+  {
+   "source_label": "Traveling exp",
+   "raw_label": "Traveling exp",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on travel and conveyance.",
+   "credit": false,
+   "vals": [
+    1001530.34,
+    1249463.92
+   ],
+   "provenance": [
+    "26-27 Projection!J55",
+    "26-27 Projection!I55"
+   ]
+  },
+  {
+   "source_label": "Miscellaneous Expenses",
+   "raw_label": "Miscellaneous Expenses",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "otherExp",
+   "key_reason": "Matched on miscellaneous.",
+   "credit": false,
+   "vals": [
+    46214.84,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J56",
+    "26-27 Projection!I56"
+   ]
+  },
+  {
+   "source_label": "Donation",
+   "raw_label": "Donation",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    400000,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J57",
+    "26-27 Projection!I57"
+   ]
+  },
+  {
+   "source_label": "Office Expenses",
+   "raw_label": "Office Expenses",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on office expenses.",
+   "credit": false,
+   "vals": [
+    918510.97,
+    1110478.08
+   ],
+   "provenance": [
+    "26-27 Projection!J58",
+    "26-27 Projection!I58"
+   ]
+  },
+  {
+   "source_label": "Processing Fee",
+   "raw_label": "Processing Fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "interest",
+   "key_reason": "Matched on loan processing fee.",
+   "credit": false,
+   "vals": [
+    310900,
+    339160
+   ],
+   "provenance": [
+    "26-27 Projection!J59",
+    "26-27 Projection!I59"
+   ]
+  },
+  {
+   "source_label": "Repair & Maint Machinery",
+   "raw_label": "Repair & Maint Machinery",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on repairs and maintenance.",
+   "credit": false,
+   "vals": [
+    23279883.8,
+    29381740.84
+   ],
+   "provenance": [
+    "26-27 Projection!J60",
+    "26-27 Projection!I60"
+   ]
+  },
+  {
+   "source_label": "Factory Repair & Maint",
+   "raw_label": "Factory Repair & Maint",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on repairs and maintenance.",
+   "credit": false,
+   "vals": [
+    5763500.23,
+    2620036.16
+   ],
+   "provenance": [
+    "26-27 Projection!J61",
+    "26-27 Projection!I61"
+   ]
+  },
+  {
+   "source_label": "Generator Running and maintenance",
+   "raw_label": "Generator Running and maintenance",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on repairs and maintenance.",
+   "credit": false,
+   "vals": [
+    980000,
+    5200000
+   ],
+   "provenance": [
+    "26-27 Projection!J62",
+    "26-27 Projection!I62"
+   ]
+  },
+  {
+   "source_label": "Vehicle Running & Mant.",
+   "raw_label": "Vehicle Running & Mant.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on repairs and maintenance.",
+   "credit": false,
+   "vals": [
+    3253290.02,
+    3487725.28
+   ],
+   "provenance": [
+    "26-27 Projection!J63",
+    "26-27 Projection!I63"
+   ]
+  },
+  {
+   "source_label": "Licence fee",
+   "raw_label": "Licence fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on licence fee.",
+   "credit": false,
+   "vals": [
+    176971.8,
+    24877.67
+   ],
+   "provenance": [
+    "26-27 Projection!J64",
+    "26-27 Projection!I64"
+   ]
+  },
+  {
+   "source_label": "Salary Exp.",
+   "raw_label": "Salary Exp.",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on employee cost.",
+   "credit": false,
+   "vals": [
+    37068581,
+    62830448
+   ],
+   "provenance": [
+    "26-27 Projection!J65",
+    "26-27 Projection!I65"
+   ]
+  },
+  {
+   "source_label": "Director remuneration",
+   "raw_label": "Director remuneration",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on employee cost.",
+   "credit": false,
+   "vals": [
+    22380000,
+    22380000
+   ],
+   "provenance": [
+    "26-27 Projection!J66",
+    "26-27 Projection!I66"
+   ]
+  },
+  {
+   "source_label": "Security Services",
+   "raw_label": "Security Services",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on security services.",
+   "credit": false,
+   "vals": [
+    2320949.88,
+    2550791.96
+   ],
+   "provenance": [
+    "26-27 Projection!J67",
+    "26-27 Projection!I67"
+   ]
+  },
+  {
+   "source_label": "Staff Welfare",
+   "raw_label": "Staff Welfare",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on employee cost.",
+   "credit": false,
+   "vals": [
+    1386402.87,
+    2218580
+   ],
+   "provenance": [
+    "26-27 Projection!J68",
+    "26-27 Projection!I68"
+   ]
+  },
+  {
+   "source_label": "Printing & Stationary",
+   "raw_label": "Printing & Stationary",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on printing and stationery.",
+   "credit": false,
+   "vals": [
+    758691.75,
+    953894
+   ],
+   "provenance": [
+    "26-27 Projection!J69",
+    "26-27 Projection!I69"
+   ]
+  },
+  {
+   "source_label": "Telephone and Internet Exp",
+   "raw_label": "Telephone and Internet Exp",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on communication.",
+   "credit": false,
+   "vals": [
+    194640.5,
+    288272.96
+   ],
+   "provenance": [
+    "26-27 Projection!J70",
+    "26-27 Projection!I70"
+   ]
+  },
+  {
+   "source_label": "Legal & Professional Exp",
+   "raw_label": "Legal & Professional Exp",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on professional services.",
+   "credit": false,
+   "vals": [
+    466050,
+    508000
+   ],
+   "provenance": [
+    "26-27 Projection!J71",
+    "26-27 Projection!I71"
+   ]
+  },
+  {
+   "source_label": "ROC Fee",
+   "raw_label": "ROC Fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on statutory filing fee.",
+   "credit": false,
+   "vals": [
+    1800,
+    1800
+   ],
+   "provenance": [
+    "26-27 Projection!J72",
+    "26-27 Projection!I72"
+   ]
+  },
+  {
+   "source_label": "Testing & Analysis Charges",
+   "raw_label": "Testing & Analysis Charges",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on testing charges.",
+   "credit": false,
+   "vals": [
+    322808,
+    43000
+   ],
+   "provenance": [
+    "26-27 Projection!J73",
+    "26-27 Projection!I73"
+   ]
+  },
+  {
+   "source_label": "Rent",
+   "raw_label": "Rent A/c",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on rent.",
+   "credit": false,
+   "vals": [
+    3720000,
+    3720000
+   ],
+   "provenance": [
+    "26-27 Projection!J74",
+    "26-27 Projection!I74"
+   ]
+  },
+  {
+   "source_label": "Gratuity",
+   "raw_label": "Gratuity",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "employee",
+   "key_reason": "Matched on employee cost.",
+   "credit": false,
+   "vals": [
+    -863638,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J75",
+    "26-27 Projection!I75"
+   ]
+  },
+  {
+   "source_label": "House keeping Expense",
+   "raw_label": "House keeping Expense",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on housekeeping.",
+   "credit": false,
+   "vals": [
+    466242.57,
+    633847.68
+   ],
+   "provenance": [
+    "26-27 Projection!J76",
+    "26-27 Projection!I76"
+   ]
+  },
+  {
+   "source_label": "Conveyance Expenses",
+   "raw_label": "Conveyance Expenses",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "adminExp",
+   "key_reason": "Matched on travel and conveyance.",
+   "credit": false,
+   "vals": [
+    1785616.98,
+    2054600
+   ],
+   "provenance": [
+    "26-27 Projection!J77",
+    "26-27 Projection!I77"
+   ]
+  },
+  {
+   "source_label": "Waste Disposal",
+   "raw_label": "Waste Disposal",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    16000,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J78",
+    "26-27 Projection!I78"
+   ]
+  },
+  {
+   "source_label": "Short and Excess",
+   "raw_label": "Short and Excess",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    -34681.83,
+    9.05
+   ],
+   "provenance": [
+    "26-27 Projection!J79",
+    "26-27 Projection!I79"
+   ]
+  },
+  {
+   "source_label": "Advertisement Expense",
+   "raw_label": "Advertisement Expense",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": "sellingExp",
+   "key_reason": "Matched on advertising.",
+   "credit": false,
+   "vals": [
+    608013.03,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J80",
+    "26-27 Projection!I80"
+   ]
+  },
+  {
+   "source_label": "Pestseal Service Fee",
+   "raw_label": "Pestseal Service Fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    112550,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J82",
+    "26-27 Projection!I82"
+   ]
+  },
+  {
+   "source_label": "Annual Fee",
+   "raw_label": "Annual Fee",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    55000,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J83",
+    "26-27 Projection!I83"
+   ]
+  },
+  {
+   "source_label": "Service Fee for MSME Certification",
+   "raw_label": "Service Fee for MSME Certification",
+   "side": "debit",
+   "parent": "INDIRECT EXPS",
+   "key": null,
+   "key_reason": "No rule matched under INDIRECT EXPS — needs an operator decision.",
+   "credit": false,
+   "vals": [
+    26271.19,
+    null
+   ],
+   "provenance": [
+    "26-27 Projection!J84",
+    "26-27 Projection!I84"
+   ]
+  },
+  {
+   "source_label": "Sales",
+   "raw_label": "Sales",
+   "side": "credit",
+   "parent": "SALES",
+   "key": "revenue",
+   "key_reason": "Matched on sales.",
+   "credit": true,
+   "vals": [
+    1781249181.12,
+    2020000000
+   ],
+   "provenance": [
+    "26-27 Projection!U8",
+    "26-27 Projection!T8"
+   ]
+  },
+  {
+   "source_label": "CLOSING STOCK",
+   "raw_label": "By CLOSING STOCK",
+   "side": "credit",
+   "parent": "SALES",
+   "key": "stockChange",
+   "key_reason": "Matched on stock movement.",
+   "credit": true,
+   "vals": [
+    -123311129,
+    -118819784
+   ],
+   "provenance": [
+    "26-27 Projection!U11",
+    "26-27 Projection!T11"
+   ]
+  },
+  {
+   "source_label": "Interest on FDR",
+   "raw_label": "Interest on FDR",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME; reads as interest but reclassifies to other income.",
+   "credit": true,
+   "vals": [
+    18920.98,
+    18920.98
+   ],
+   "provenance": [
+    "26-27 Projection!U31",
+    "26-27 Projection!T31"
+   ]
+  },
+  {
+   "source_label": "Difference in Exch Rate",
+   "raw_label": "Difference in Exch Rate",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME.",
+   "credit": true,
+   "vals": [
+    -72608.72,
+    0
+   ],
+   "provenance": [
+    "26-27 Projection!U32",
+    "26-27 Projection!T32"
+   ]
+  },
+  {
+   "source_label": "Profit on sale of FA",
+   "raw_label": "Profit on sale of FA",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME.",
+   "credit": true,
+   "vals": [
+    162809.07,
+    0
+   ],
+   "provenance": [
+    "26-27 Projection!U33",
+    "26-27 Projection!T33"
+   ]
+  },
+  {
+   "source_label": "Account Write off",
+   "raw_label": "Account Write off",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME.",
+   "credit": true,
+   "vals": [
+    365861,
+    0
+   ],
+   "provenance": [
+    "26-27 Projection!U34",
+    "26-27 Projection!T34"
+   ]
+  },
+  {
+   "source_label": "Interest on IT Refund",
+   "raw_label": "Interest on IT Refund",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME; reads as interest but reclassifies to other income.",
+   "credit": true,
+   "vals": [
+    116204,
+    0
+   ],
+   "provenance": [
+    "26-27 Projection!U35",
+    "26-27 Projection!T35"
+   ]
+  },
+  {
+   "source_label": "Interest on Security Deposit with UPPCL",
+   "raw_label": "Interest on Security Deposit with UPPCL",
+   "side": "credit",
+   "parent": "INDIRECT INCOME",
+   "key": "otherIncome",
+   "key_reason": "Credit-side line under INDIRECT INCOME; reads as interest but reclassifies to other income.",
+   "credit": true,
+   "vals": [
+    5360,
+    5360
+   ],
+   "provenance": [
+    "26-27 Projection!U36",
+    "26-27 Projection!T36"
+   ]
+  }
+ ]
+}

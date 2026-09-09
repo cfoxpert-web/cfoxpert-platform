@@ -6,14 +6,22 @@ import type { Cell, ParsedSheet } from "./parse-spreadsheet";
  * workbook into the plain cell grid the pure parsing core consumes.
  * Bounded reads (rows/cols/sheets) because uploads are untrusted content.
  *
+ * A4-d: the bounds no longer TRUNCATE SILENTLY. The old `MAX_SHEETS = 10`
+ * discarded 23 of a real client's 33 sheets without a word — and a
+ * 33-sheet working ledger is normal for this client base, not an attack.
+ * The sheet bound is now a refusal, not a trim: too many sheets fails the
+ * job with a reason the operator can act on. Row and column bounds report
+ * what they clipped through `warnings`, which the caller surfaces.
+ *
  * Legacy binary .xls is NOT supported (exceljs reads xlsx only; the
  * libraries that read .xls carry security baggage we refused) — callers
  * surface an honest "re-export as XLSX/CSV/PDF" failure instead.
  */
 
-const MAX_SHEETS = 10;
+/** A refusal threshold, not a trim. Real ledgers run to ~35 sheets. */
+const MAX_SHEETS = 100;
 const MAX_ROWS = 5000;
-const MAX_COLS = 40;
+const MAX_COLS = 60;
 
 function coerceCell(value: ExcelJS.CellValue): Cell {
   if (value === null || value === undefined) return null;
@@ -36,13 +44,36 @@ function coerceCell(value: ExcelJS.CellValue): Cell {
   return null;
 }
 
-export async function readXlsx(buffer: Buffer): Promise<ParsedSheet[]> {
+export type WorkbookRead = {
+  sheets: ParsedSheet[];
+  /** Non-fatal notes about what the bounds clipped. Never silent. */
+  warnings: string[];
+};
+
+export async function readWorkbook(buffer: Buffer): Promise<WorkbookRead> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
 
+  if (workbook.worksheets.length > MAX_SHEETS) {
+    throw new Error(
+      `This workbook has ${workbook.worksheets.length} sheets, beyond the ${MAX_SHEETS}-sheet limit. Split it or remove unused sheets and upload again.`,
+    );
+  }
+
+  const warnings: string[] = [];
   const sheets: ParsedSheet[] = [];
-  for (const worksheet of workbook.worksheets.slice(0, MAX_SHEETS)) {
+  for (const worksheet of workbook.worksheets) {
     const rows: Cell[][] = [];
+    if (worksheet.rowCount > MAX_ROWS) {
+      warnings.push(
+        `Sheet "${worksheet.name}" has ${worksheet.rowCount} rows; only the first ${MAX_ROWS} were read.`,
+      );
+    }
+    if (worksheet.columnCount > MAX_COLS) {
+      warnings.push(
+        `Sheet "${worksheet.name}" has ${worksheet.columnCount} columns; only the first ${MAX_COLS} were read.`,
+      );
+    }
     // includeEmpty keeps row indexes aligned with the sheet's real row
     // numbers — provenance ("Sheet1!B14") must point at the actual cell.
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
@@ -59,5 +90,10 @@ export async function readXlsx(buffer: Buffer): Promise<ParsedSheet[]> {
     }
     sheets.push({ name: worksheet.name || "Sheet", rows });
   }
-  return sheets;
+  return { sheets, warnings };
+}
+
+/** Back-compat shim for callers that only need the grids. */
+export async function readXlsx(buffer: Buffer): Promise<ParsedSheet[]> {
+  return (await readWorkbook(buffer)).sheets;
 }

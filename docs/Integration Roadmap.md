@@ -202,3 +202,180 @@ This makes A4 (not M13) the platform's **first AI feature**; AI Design.md's "ass
 One package for now: all features visible, non-applicable ones greyed out; segregate into real tiers later. Entitlement taxonomy from `CFOXPERT_ver_2.docx`'s 4 tiers (Essential ₹5-25Cr / Growth ₹25-50Cr / Strategic ₹50-100Cr / Enterprise ₹100Cr+) — each "Dashboard Deliverable" bullet becomes an entitlement key. Starting tab→tier map: Overview/P&L/BS/Ratios/Cost Structure → Essential+; Health Score → Essential+; Segment → Growth+; Projections → Growth+ (Forecasting) → Strategic (Modelling); Governance → Strategic+; Recommendations & Roadmap/Ambition → Strategic+; Inventory & Production → industry add-on (manufacturing), not tier-locked.
 
 **Do not conflate mechanisms:** this is a per-organization DB entitlement (the `organizations.entitlements` jsonb + `plan_tier` columns already exist per ADR-008) — a different thing from `NEXT_PUBLIC_FEATURE_FLAGS` (a dev rollout switch).
+
+---
+
+## Amendments A4-d / A4-e / A7 (approved 2026-09-09)
+
+Triggered by Parth using the shipped A4-c review screen on a real client file
+(Reliable Packaging Industries, a 33-sheet working ledger). The screen surfaced
+footnotes as financial lines, two rows both labelled `Total`, 100% confidence
+beside "— not mapped —", and lines from four sheets and three periods flattened
+into one list. Root cause is the extractor, not the screen: A4-b's parser was
+built for clean single-sheet Tally exports and has no concept of scope.
+Stage 0 audit: `docs/Stage 0 — Extraction Rebuild and Projection Engine.md`.
+
+**Approved build order:** A4-d → A7-a → A4-e → A7-b → A7-c → A7-d → A7-e → A8 → A9.
+A7-a (the line-level store) moves ahead of A4-e because A4-e's publish path
+writes lines; building it against the KPI-level model first would mean writing
+it twice.
+
+### Amendment A4-d — Scope-first extraction
+**Requested:** 2026-09-09 (Parth). **Extends:** A4-b. **Risk:** Medium. **Complexity:** L.
+
+**Requirement:** nothing reaches the review screen until scope is resolved —
+one sheet, one period pair, one unit basis, chosen by the operator in two
+clicks at upload from a picker the parser populates by introspecting the
+workbook.
+
+**Why it needs an amendment:** A4-b's parser is correct for what it was built
+for. Real Indian SME working ledgers are 33-sheet workbooks with T-format
+statements, two label columns, multi-tier headers, hand-typed date headings
+that disagree across sides, footnotes, roll-up section headings, and several
+periods and units side by side. `sheetsToLines()` `flatMap`s every sheet into
+one list and nothing filters a row. This is not a tuning problem.
+
+**Scope:**
+1. `lib/ingestion/workbook.ts` (pure) — introspect sheets into a scope model:
+   per sheet, candidate line count, detected period columns with canonical
+   dates, whether the layout is two-sided, composed multi-tier header labels
+   (`Total · 31.03.2027`), detected unit basis, detected segment names.
+2. `lib/ingestion/row-class.ts` (pure) — classify every row before staging:
+   `line · total · subtotal · section_heading · note · ratio · percentage ·
+   blank`. Only `line` is staged. Section headings classify the lines beneath
+   them and contribute their name, never their value.
+3. T-format: find every label column, treat the span after each as its own
+   block; closing stock signed as a contra; credit-side lines the matcher
+   reads as costs reclassify to other income.
+4. Canonical date matching (the file really does carry `31.03.2026` on one
+   side and `31.03.026` on the other); Excel serials rendered as dates.
+5. Unit detection and conversion at a single boundary; one stored base unit.
+6. `MAX_SHEETS = 10` removed. A truncated read is a warning, never silent.
+7. Scope picker UI at upload; the chosen scope persisted on the job.
+8. Honesty fixes: no "validation checks passed" when nothing was checked;
+   `confidence` split into amount-confidence and mapping-confidence, with no
+   confidence rendered beside an unmapped line; `publishIngestionJob` reads
+   the job's `validation` and blocks on a failed gate; publication blocked
+   until a human confirms the document type when it could not be identified.
+
+**A4-d-1 — SHIPPED 2026-09-09.** Scope model (`workbook.ts`), row classifier
+(`row-class.ts`), seed head matcher (`head-classify.ts`, moved in from A4-e),
+migration 0020, and the four honesty fixes. Golden result: 66 lines, 58
+auto-classified, 8 exceptions; GP and full-P&L both reconcile.
+
+**A4-d-2 — NEXT.** The scope picker UI and persisting the chosen scope, which
+is what actually closes the four-sheet flattening the operator still feels.
+Three requirements carried forward from A4-d-1: the picker addresses periods by
+`(segment, date)` and surfaces the segment in the column label; a truncated or
+partially-read workbook warns VISIBLY in the picker, not only in the job note;
+and the picker shows per sheet the candidate line count and detected columns,
+so an operator can tell `26-27 Projection` from `Dhaulana Dep` without opening
+the file.
+
+**Golden test:** `rpil-projection-fixture.v2.json` — scoped to `26-27 Projection`,
+`Total · 31.03.2026` and `Total · 31.03.2027`, stored in rupees, the parse
+yields **66 lines, 58 auto-classified, 8 unmatched** (v1's 65/57/8 was short
+one line — see ADR-020 and the 2026-09-09 Changelog), reconciling to gross
+profit ₹3,579.48 L at 17.72% (FY 2026-27) and ₹3,111.17 L at 17.47%
+(FY 2025-26), AND on the full P&L: PBT less the unclassified exceptions equals
+the workbook's own stated net profit in both years. The workbook itself is
+never committed (ADR-020); the test reads it from `RPIL_WORKBOOK` and skips
+when absent.
+
+**Depends on:** nothing new. **Blocks:** A4-e, A7.
+
+### Amendment A4-e — Review by exception
+**Requested:** 2026-09-09 (Parth). **Extends:** A4-c. **Risk:** Low-Med. **Complexity:** M.
+
+**Requirement:** the review screen opens with a true sentence and the operator
+touches only what the system could not resolve (ADR-016).
+
+**Scope:** accurate classified / needs-decision / excluded counts; grouping by
+section, collapsed by default, unresolved first; whole-group set with per-line
+deselect; running counter of classified and unclassified value in rupees;
+materiality fold into an expandable "Other"; excluded lines listed and
+reversible; memory extended to `(head, basis, driver, group)`, insert-only with
+history, editable in Settings (ADR-017); sharp-move confirmation; one
+Indian-numbering formatter module replacing the three hand-rolled call sites.
+
+**SCOPE REDUCED (2026-09-09).** The **standard Indian SME chart-of-accounts
+matcher** has MOVED OUT of A4-e and shipped in A4-d-1 as
+`lib/ingestion/head-classify.ts`. It had to: A4-d-1's stated acceptance
+criterion is "66 lines, 58 auto-classified, 8 unmatched", and the
+auto-classified count is unassertable without a matcher. A4-e inherits it as
+the global seed layer beneath a client's own `account_mappings` (ADR-017) and
+extends rather than builds it. Recorded here so the roadmap does not quietly
+disagree with the code — process note: where an acceptance criterion implies
+work outside a slice, that belongs in the pre-explanation, not the
+self-review.
+
+**Refinement carried in from A4-d-1 — derived-line exclusion is conditional.**
+A4-d-1 excludes `Gross Profit` (and every `DERIVED_VOCABULARY` entry) on any
+statement, which is right when the components it derives from are present and
+staging, and WRONG when they are not: a summary P&L that states gross profit
+with no cost breakdown has that line as its only source for the figure, and
+excluding it loses the number rather than avoiding a double-count. The general
+rule for A4-e is: **exclude a derived line when the lines it derives from are
+present and staging; stage it as the head itself when they are absent.**
+Requires `RowClassification.reason` to gain a machine-readable reason CODE
+alongside its operator-facing text, so the review screen can say "excluded
+because its components staged" rather than dropping it silently.
+
+**Depends on:** A4-d, A7-a.
+
+### Amendment A7 — Basis and projection engine
+**Requested:** 2026-09-09 (Parth). **New epic.** **Risk:** High. **Complexity:** XL.
+
+- **A7-a — Line-level published store (M).** Insert-only, period- and
+  segment-addressable, full provenance columns from the outset; publish verb
+  rewritten to write lines; KPI values become a derived roll-up (ADR-018).
+  The `actions.ts` one-line-per-KPI rule is replaced, not relaxed.
+  **Blocks A7-b…A7-e and A4-e.**
+- **A7-b — Basis model and P&L projection engine (L).** The eight bases at
+  group level with line-level override (ADR-012); seasonality-adjusted
+  annualisation with the plausibility guard (ADR-013); provenance chain on
+  every figure (ADR-015). Pure, unit-tested, no React, no DB. Negative amounts
+  in expense heads need an explicit rule, not silent absorption.
+- **A7-c — Schedule engines (M).** Loan schedule: always derived, never
+  entered; straight-line principal over tenure after the moratorium; interest
+  accrues through the moratorium and hits the P&L; never negative; a facility
+  repaid in Q1 charges interest only on the pending balance thereafter.
+  Revolver interest is charged on the **opening** balance to avoid a circular
+  reference with the drawdown it funds — a simplification stated in the output,
+  not hidden. Asset block: opening WDV + capex − disposals, at rate.
+- **A7-d — Articulated statements (L).**
+  *P&L:* Sales → less direct costs → Gross Profit → less indirect → EBITDA →
+  less depreciation and finance cost → PBT → less tax → PAT. Other income is
+  collected and used.
+  *Balance sheet:* rolls forward from prior-year closing. Reserves grow with
+  PAT less dividend. Working capital moves with debtor / inventory / creditor
+  days. Fixed assets move with capex less depreciation.
+  *Cash flow:* proper operating / investing / financing sections. Closing cash
+  is derived here and carried into the balance sheet — never a plug.
+  *Balancing rule:* surplus sits in cash; deficits draw on short-term
+  borrowing capped at the sanctioned working capital limit, with interest on
+  the drawn balance. Where the requirement exceeds the limit the model does
+  not silently balance — it raises a **funding gap naming the year and the
+  shortfall**. That warning is one of the most valuable outputs in the
+  feature; it is surfaced, not buried.
+  Assets equal liabilities in every projected year and every scenario,
+  asserted in tests. No divide-by-zero anywhere: return 0, never blank, never
+  `NaN`. All-zero inputs must not throw.
+- **A7-e — Per-segment projection and consolidation (M).** Per ADR-014 and
+  ADR-019: revenue, direct and indirect per segment; tax once at entity level;
+  depreciation and finance cost per segment where attributable, else entity;
+  balance sheet entity-level only.
+
+**Downstream dependencies:**
+- **A8 — Projections tab.** Depends on A7-b at minimum, A7-d for the full
+  three-statement view. Entitlement keys `report.projections_forecasting` and
+  `report.projections_modelling` already exist in `lib/entitlements.ts`; the
+  tab must be added to `components/dashboard/report/tab-defs.ts`.
+- **A9 — Export.** Depends on A8.
+- **A10 — Bank Finance Pack (CMA).** Cost of Project and Means of Finance,
+  term loan repayment schedule for submission, MPBF under Tandon Committee
+  Method II, DSCR working, assumptions summary, and an editable market section
+  that is never auto-generated. A separate deliverable, **not a dashboard
+  tab**, carrying a mandatory non-bypassable analyst sign-off because it goes
+  to a lender. Depends on A7-c (repayment schedule, DSCR) and A7-d (projected
+  statements). **Out of scope until A7 completes.**
