@@ -321,6 +321,22 @@ Requires `RowClassification.reason` to gain a machine-readable reason CODE
 alongside its operator-facing text, so the review screen can say "excluded
 because its components staged" rather than dropping it silently.
 
+**Owns the report-side disclosure of unclassified value (added 2026-09-09).**
+A7-a makes the rollup produce the figure and emit it as the
+`unclassified_value` KPI, which is necessary and not sufficient: the
+requirement is that a published period carrying null-head lines shows that
+value **on the report**, because an operator acts on "₹25.01 L unclassified"
+and nobody acts on a margin that is quietly 0.14 points too high. Neither A8
+nor A4-d naturally claims a report change, so A4-e owns it — it is the
+milestone whose whole subject is what is classified and what is not. Concretely:
+a disclosure row on the P&L tab (`components/dashboard/report/pnl-tab.tsx`),
+reading from the existing KPI path, stating the rupee value and that it sits
+in no margin or ratio.
+
+**Also inherits (small):** `ReviewForm` still receives a `catalogue` prop that
+nothing renders since A7-a moved line selection from KPIs to heads. Harmless,
+but it will mislead the redesign — remove it there rather than in a drive-by.
+
 **Depends on:** A4-d, A7-a.
 
 ### Amendment A7 — Basis and projection engine
@@ -331,7 +347,15 @@ because its components staged" rather than dropping it silently.
   rewritten to write lines; KPI values become a derived roll-up (ADR-018).
   The `actions.ts` one-line-per-KPI rule is replaced, not relaxed.
   **Blocks A7-b…A7-e and A4-e.**
-- **A7-b — Basis model and P&L projection engine (L).** The eight bases at
+- **A7-b — Basis model and P&L projection engine (L).** **Carries the
+  reconciliation assertion (added 2026-09-09).** A7-a proved the rollup
+  arithmetic against in-memory lines; that establishes "the maths is right",
+  not "the data is right". Two controls, in this order: a **publish-time
+  assertion** is PRIMARY — it recomputes the rollup from the rows just
+  written and refuses the publish on a mismatch, because a scheduled check
+  only tells you a client has already seen a wrong number. A **scheduled
+  check** is secondary and still worth having, since it catches drift a
+  publish cannot see: a later map version, or a manual database edit. The eight bases at
   group level with line-level override (ADR-012); seasonality-adjusted
   annualisation with the plausibility guard (ADR-013); provenance chain on
   every figure (ADR-015). Pure, unit-tested, no React, no DB. Negative amounts

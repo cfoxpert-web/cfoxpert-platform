@@ -16,6 +16,7 @@ import {
   type HeadKpiMap,
   type StatementLineInput,
 } from "../kpi/rollup";
+import { HEAD_MAP_V1, HEAD_MAP_VERSION } from "../kpi/head-map";
 
 /**
  * A4-d golden test — the real client workbook end to end.
@@ -385,23 +386,11 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
   // A7-a: the 66 lines as the FACT TABLE, rolled up to KPI values.
   // -------------------------------------------------------------------------
   describe("published as statement lines and rolled up", () => {
-    // Head map version 1, as seeded in migration 0023.
+    // The canonical declaration — not a copy. A hand-written literal here
+    // could drift from the real map and the golden test would keep passing.
     const MAP_V1: HeadKpiMap = {
-      version: 1,
-      entries: {
-        revenue: "revenue",
-        cogs: "cost_of_goods_sold",
-        // The accounting identity: opening + purchases − closing IS COGS.
-        stockChange: "cost_of_goods_sold",
-        directExp: "direct_expenses",
-        adminExp: "indirect_expenses",
-        sellingExp: "selling_expenses",
-        employee: "employee_cost",
-        interest: "finance_cost",
-        depreciation: "depreciation",
-        otherIncome: "other_income",
-        otherExp: "other_expenses",
-      },
+      version: HEAD_MAP_VERSION,
+      entries: HEAD_MAP_V1,
     };
 
     /** Every staged line for one period, as it would be published. */

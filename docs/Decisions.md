@@ -263,6 +263,14 @@ This is the single log of every consequential architectural decision made on the
 - Using `extracted_lines` as the store — rejected: it is staging — mutable, staff-only, soft-deleted on re-extraction, and addressed by `job_id` rather than by period.
 - Letting report tabs read lines directly — rejected: a second computation path; the dashboard and the P&L tab will eventually disagree, breaking the standing rule that they never do.
 
+**Addendum — why a skipped line must be LOUD, with the worked example that proves it (2026-09-09):** the rollup skips any line it cannot place — one with no head, or with a head that has no entry in the map version in force. That omission is deliberately noisy: it returns the total, count, labels and per-segment breakdown, and it emits an `unclassified_value` KPI so the figure reaches the report through the same path as every other number.
+
+This reads like a UI preference until it catches an accounting error. During A7-a, `stockChange` was deliberately left out of migration 0023's `head_kpi_map` seed on the defensible reasoning that stock movement has no published metric of its own. Because unmapped heads fall through to unclassified, opening and closing stock were **simultaneously counted as unclassified AND removed from cost of goods sold**. Gross profit broke and the unclassified figure was wrong, in the same test run, and the two failures together identified the cause immediately.
+
+Had the rollup dropped unmapped heads silently, gross profit would have been wrong and **nothing would have said so**. The client would have seen a better margin than they earn, and it would have looked entirely plausible — because every unclassified line is a cost, so the error is always in the flattering direction. That asymmetry is what makes silent omission the worst failure mode this system has.
+
+The fix closes the class, not the instance: `HEAD_MAP_V1` in `lib/kpi/head-map.ts` is typed `Record<ProjectionHead, string>`, which is total by construction, so adding a head to the classifier without mapping it is a COMPILE error rather than a runtime surprise (verified by removing one and watching the build fail). `head-map.test.ts` additionally asserts that the TypeScript declaration, the classifier's head list and the SQL seed all agree, since two of the three agreeing is exactly what produced the bug.
+
 ---
 
 ## ADR-019: A client's units are segments of one legal entity unless a real group structure exists; RPIL's plants are segments
