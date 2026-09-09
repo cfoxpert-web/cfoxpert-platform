@@ -1,15 +1,12 @@
 import { STORAGE_BUCKET, type DocumentKind } from "../documents/model";
 import { createAdminClient } from "../supabase/admin";
 import { extractWithClaude } from "./extract-claude";
+import { loadSheetsForScope } from "./load-sheets";
 import { applyMappingMemory, type MappingEntry } from "./mapping";
 import { normalizeLabel } from "./normalize";
-import {
-  parseCsv,
-  sheetsToCsv,
-  sheetsToLines,
-  type ParsedSheet,
-} from "./parse-spreadsheet";
-import { readWorkbook } from "./spreadsheet-file";
+import { sheetsToCsv, sheetsToLines } from "./parse-spreadsheet";
+import { extractUnderScope } from "./scoped-extract";
+import type { ScopeChoice } from "./workbook";
 import type { ExtractionOutput, KpiCatalogueEntry } from "./types";
 import { gateFailures, runValidationGates } from "./validate";
 
@@ -35,6 +32,8 @@ type JobRow = {
   id: string;
   organization_id: string;
   stage: string;
+  /** Resolved scope (A4-d-2), or null for PDFs and pre-A4-d-2 jobs. */
+  scope: ScopeChoice | null;
   document: {
     id: string;
     storage_path: string;
@@ -45,29 +44,6 @@ type JobRow = {
   };
 };
 
-async function loadSheets(
-  buffer: Buffer,
-  mimeType: string,
-  fileName: string,
-): Promise<{ sheets: ParsedSheet[]; warnings: string[] }> {
-  const isCsv =
-    mimeType === "text/csv" || /\.csv$/i.test(fileName);
-  if (isCsv) {
-    const text = buffer.toString("utf8").replace(/^\uFEFF/, "");
-    return { sheets: [{ name: "CSV", rows: parseCsv(text) }], warnings: [] };
-  }
-  try {
-    return await readWorkbook(buffer);
-  } catch (err) {
-    // A too-large workbook now REFUSES with a specific reason (A4-d); pass
-    // that through rather than burying it under the generic .xls advice.
-    if (err instanceof Error && /sheets, beyond the/.test(err.message)) throw err;
-    throw new Error(
-      "Could not read this spreadsheet. If it is a legacy .xls file, re-export it from Tally/Excel as .xlsx, .csv, or PDF and upload again.",
-    );
-  }
-}
-
 export async function runExtraction(
   jobId: string,
   actorId: string | null,
@@ -77,7 +53,7 @@ export async function runExtraction(
   const { data: jobRaw, error: jobError } = await admin
     .from("ingestion_jobs")
     .select(
-      "id, organization_id, stage, document:client_documents ( id, storage_path, mime_type, kind, period_hint, file_name )",
+      "id, organization_id, stage, scope, document:client_documents ( id, storage_path, mime_type, kind, period_hint, file_name )",
     )
     .eq("id", jobId)
     .is("deleted_at", null)
@@ -156,10 +132,25 @@ export async function runExtraction(
         catalogue,
       });
     } else {
-      const { sheets, warnings } = await loadSheets(buffer, mime_type, file_name);
+      const { sheets, warnings } = await loadSheetsForScope(
+        buffer,
+        mime_type,
+        file_name,
+      );
       readWarnings.push(...warnings);
-      const parsed = sheetsToLines(sheets, kind);
-      if (parsed) {
+      if (sheets === null) {
+        throw new Error("This file has no readable sheets.");
+      }
+
+      // ---- Scoped path: one sheet, one segment, the chosen columns.
+      const scope = job.scope;
+      const scoped = scope ? extractUnderScope(sheets, scope, kind) : null;
+      if (scoped && "error" in scoped) throw new Error(scoped.error);
+
+      const parsed = scoped ? null : sheetsToLines(sheets, kind);
+      if (scoped) {
+        output = scoped;
+      } else if (parsed) {
         output = {
           method: "parser",
           lines: parsed.map((l) => ({

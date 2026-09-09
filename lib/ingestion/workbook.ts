@@ -49,12 +49,39 @@ export type LabelBlock = {
   periodColumns: PeriodColumn[];
 };
 
+export const UNIT_BASES = ["rupees", "thousands", "lakhs", "crores"] as const;
+export type UnitBasisName = (typeof UNIT_BASES)[number];
+
+export const UNIT_MULTIPLIER: Record<UnitBasisName, number> = {
+  rupees: 1,
+  thousands: 1_000,
+  lakhs: 100_000,
+  crores: 10_000_000,
+};
+
+/**
+ * THE HIGHEST-CONSEQUENCE FIELD IN SCOPE.
+ *
+ * Every other scope error produces a wrong line or a wrong column, which
+ * something downstream will notice. Getting rupees-versus-lakhs wrong is a
+ * 100,000× error that passes every internal consistency check we have — the
+ * statement still balances, every ratio still reconciles — and only reveals
+ * itself when a human reads the number. So the picker renders this at all
+ * times with its evidence, never only on failure, and it is always
+ * overridable in one control.
+ */
 export type UnitBasis = {
-  basis: "rupees" | "thousands" | "lakhs" | "crores";
+  basis: UnitBasisName;
   /** Multiply a printed figure by this to get rupees, the stored base. */
   multiplierToRupees: number;
-  /** What the detection was based on — carried into provenance. */
+  /** What the detection was based on — shown in the picker and provenance. */
   detectedFrom: string;
+  /**
+   * Largest absolute value printed in the sheet's period columns. The
+   * evidence an operator judges the basis against: "rupees (largest value
+   * 20,20,00,000)" reads very differently from "lakhs (largest 20,200)".
+   */
+  largestPrintedValue: number | null;
 };
 
 export type SheetScope = {
@@ -67,7 +94,11 @@ export type SheetScope = {
   candidateLineCount: number;
   /** Distinct canonical dates offered by this sheet, ascending. */
   canonicalDates: string[];
+  /** Distinct segment names offered, in header order. Null = unsegmented. */
+  segments: (string | null)[];
   unit: UnitBasis;
+  /** Enough real lines and dated columns to be worth offering as a scope. */
+  plausible: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -176,7 +207,7 @@ export function formatHeaderDate(isoDate: string): string {
 // Units
 // ---------------------------------------------------------------------------
 
-const UNIT_PATTERNS: { test: RegExp; basis: UnitBasis["basis"]; mult: number }[] = [
+const UNIT_PATTERNS: { test: RegExp; basis: UnitBasisName; mult: number }[] = [
   { test: /\bin\s*(rs\.?|₹|inr)?\s*crores?\b|\bcr\.?\s*in\b|\(\s*₹?\s*in\s*crores?\s*\)/i, basis: "crores", mult: 10_000_000 },
   { test: /\bin\s*(rs\.?|₹|inr)?\s*lakhs?\b|\blacs?\b|\(\s*₹?\s*in\s*lakhs?\s*\)/i, basis: "lakhs", mult: 100_000 },
   { test: /\bin\s*(rs\.?|₹|inr)?\s*(thousands?|'?000s?)\b/i, basis: "thousands", mult: 1_000 },
@@ -190,7 +221,11 @@ const UNIT_PATTERNS: { test: RegExp; basis: UnitBasis["basis"]; mult: number }[]
  * silent divide applied twice is the classic version of this bug; naming
  * the divisor in the output is what makes it visible instead of mysterious.
  */
-export function detectUnit(sheet: ParsedSheet, scanRows = 6): UnitBasis {
+export function detectUnit(
+  sheet: ParsedSheet,
+  scanRows = 6,
+  largestPrintedValue: number | null = null,
+): UnitBasis {
   for (let r = 0; r < Math.min(sheet.rows.length, scanRows); r++) {
     const row = sheet.rows[r];
     if (!row) continue;
@@ -202,7 +237,8 @@ export function detectUnit(sheet: ParsedSheet, scanRows = 6): UnitBasis {
           return {
             basis: p.basis,
             multiplierToRupees: p.mult,
-            detectedFrom: `sheet title: "${text.slice(0, 80)}"`,
+            detectedFrom: `stated in the sheet title: "${text.slice(0, 80)}"`,
+            largestPrintedValue,
           };
         }
       }
@@ -211,7 +247,22 @@ export function detectUnit(sheet: ParsedSheet, scanRows = 6): UnitBasis {
   return {
     basis: "rupees",
     multiplierToRupees: 1,
-    detectedFrom: "no unit stated in the sheet title — assumed rupees",
+    // Deliberately NOT dressed up as a detection. Nothing stated a unit;
+    // rupees is the assumption, and the operator confirms it against the
+    // largest value the picker shows beside it.
+    detectedFrom: "no unit stated in the sheet — assumed rupees",
+    largestPrintedValue,
+  };
+}
+
+/** Override a detected basis with an operator's choice, keeping the evidence. */
+export function withUnitBasis(unit: UnitBasis, basis: UnitBasisName): UnitBasis {
+  if (basis === unit.basis) return unit;
+  return {
+    basis,
+    multiplierToRupees: UNIT_MULTIPLIER[basis],
+    detectedFrom: `set by the operator (detected: ${unit.basis} — ${unit.detectedFrom})`,
+    largestPrintedValue: unit.largestPrintedValue,
   };
 }
 
@@ -363,20 +414,43 @@ export function describeSheet(sheet: ParsedSheet): SheetScope | null {
   if (blocks.length === 0) return null;
 
   const dates = new Set<string>();
+  const segments: (string | null)[] = [];
+  let largest: number | null = null;
   for (const b of blocks) {
-    for (const p of b.periodColumns) if (p.canonicalDate) dates.add(p.canonicalDate);
+    for (const p of b.periodColumns) {
+      if (p.canonicalDate) dates.add(p.canonicalDate);
+      if (!segments.some((seg) => sameSegment(seg, p.segment))) {
+        segments.push(p.segment);
+      }
+      for (let r = bodyStart; r < rows.length; r++) {
+        const v = cellNumber(rows[r]?.[p.columnIndex]);
+        if (v === null) continue;
+        const abs = Math.abs(v);
+        if (largest === null || abs > largest) largest = abs;
+      }
+    }
   }
+
+  const candidateLineCount = countCandidateLines(rows, blocks, bodyStart);
 
   return {
     sheetName: sheet.name,
     headerRows,
     twoSided: blocks.length > 1,
     blocks,
-    candidateLineCount: countCandidateLines(rows, blocks, bodyStart),
+    candidateLineCount,
     canonicalDates: [...dates].sort(),
-    unit: detectUnit(sheet),
+    segments,
+    unit: detectUnit(sheet, 6, largest),
+    plausible: candidateLineCount >= MIN_PLAUSIBLE_LINES && dates.size > 0,
   };
 }
+
+/**
+ * Below this a "sheet" is a working note, a register or an observations
+ * tab, not a statement worth offering as a scope.
+ */
+const MIN_PLAUSIBLE_LINES = 3;
 
 /** Describe every sheet that offers a dated scope. */
 export function describeWorkbook(sheets: ParsedSheet[]): SheetScope[] {
@@ -488,7 +562,10 @@ export function extractScopedRows(
   sheet: ParsedSheet,
   scope: SheetScope,
   requested: PeriodRequest[],
+  /** Operator's unit override; defaults to what the sheet declared. */
+  unitOverride?: UnitBasis,
 ): ScopedExtraction {
+  const unit = unitOverride ?? scope.unit;
   const rows = sheet.rows;
   const bodyStart = Math.max(...scope.headerRows) + 1;
   const out: ScopedRow[] = [];
@@ -533,7 +610,7 @@ export function extractScopedRows(
         side: block.side,
         section,
         amounts: rawAmounts.map((a) =>
-          a === null ? null : a * scope.unit.multiplierToRupees,
+          a === null ? null : a * unit.multiplierToRupees,
         ),
         provenance: columns.map((col) =>
           col === null ? null : `${sheet.name}!${columnRef(col.columnIndex)}${r + 1}`,
@@ -547,7 +624,181 @@ export function extractScopedRows(
     sheetName: sheet.name,
     periods: requested,
     periodLabels,
-    unit: scope.unit,
+    unit,
     rows: out,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Structural fingerprint
+// ---------------------------------------------------------------------------
+
+/**
+ * A cheap structural signature of a workbook: sheet count, sheet names, and
+ * each scoped sheet's header shape. Two monthly exports from the same Tally
+ * template produce the same fingerprint even though every figure differs.
+ *
+ * NOTHING READS THIS YET. It exists so scope MEMORY is possible later — a
+ * client uploading the same export every month should not meet the picker
+ * every month, which is ADR-016's exception principle applied one level up.
+ * Adding the column now is trivial; backfilling a fingerprint across
+ * historical jobs after the fact is not.
+ */
+export type WorkbookFingerprint = {
+  hash: string;
+  sheetCount: number;
+  sheetNames: string[];
+  shape: string;
+};
+
+/** FNV-1a. Not a security hash — a stable structural identity. */
+function fnv1a(input: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+export function fingerprintWorkbook(
+  sheets: ParsedSheet[],
+  scopes: SheetScope[],
+): WorkbookFingerprint {
+  const byName = new Map(scopes.map((s) => [s.sheetName, s]));
+  const shape = sheets
+    .map((sheet) => {
+      const scope = byName.get(sheet.name);
+      if (!scope) return `${sheet.name}:-`;
+      const cols = scope.blocks.reduce((n, b) => n + b.periodColumns.length, 0);
+      return `${sheet.name}:h${scope.headerRows.join(".")}/b${scope.blocks.length}/c${cols}`;
+    })
+    .join("|");
+  return {
+    hash: fnv1a(`${sheets.length}|${shape}`),
+    sheetCount: sheets.length,
+    sheetNames: sheets.map((s) => s.name),
+    shape,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Auto-selection
+// ---------------------------------------------------------------------------
+
+export type ScopeChoice = {
+  sheetName: string;
+  periods: PeriodRequest[];
+  unitBasis: UnitBasisName;
+  /**
+   * How this scope came to be. These are DIFFERENT FACTS and provenance
+   * must tell them apart: asked about a figure six months on, "nobody chose
+   * this, the system inferred it" and "the operator selected this on 12
+   * September" point at different places to look.
+   */
+  source: "auto" | "operator";
+};
+
+export type AutoSelectResult =
+  | { autoSelected: true; choice: ScopeChoice; because: string }
+  | { autoSelected: false; because: string };
+
+/**
+ * Auto-select a scope ONLY where there is exactly one plausible reading, at
+ * both levels: one plausible sheet, and one segment within it. Ambiguity is
+ * precisely when inference is worth least — RPIL's projection sheet offers
+ * Dhaulana, Greater Noida and Total, so it must NOT auto-select, and it
+ * doesn't.
+ *
+ * This fills a field; it does not skip a step. The approve-to-process gate
+ * still runs either way.
+ */
+export function autoSelectScope(scopes: SheetScope[]): AutoSelectResult {
+  const plausible = scopes.filter((s) => s.plausible);
+  if (plausible.length === 0) {
+    return { autoSelected: false, because: "No sheet offers dated period columns." };
+  }
+  if (plausible.length > 1) {
+    return {
+      autoSelected: false,
+      because: `${plausible.length} sheets could be the statement (${plausible
+        .map((s) => s.sheetName)
+        .join(", ")}).`,
+    };
+  }
+  const sheet = plausible[0];
+  if (!sheet) {
+    return { autoSelected: false, because: "No sheet offers dated period columns." };
+  }
+  if (sheet.segments.length > 1) {
+    return {
+      autoSelected: false,
+      because: `"${sheet.sheetName}" reports ${sheet.segments.length} units (${sheet.segments
+        .map((seg) => seg ?? "unnamed")
+        .join(", ")}) — which one is the statement is a decision.`,
+    };
+  }
+  const segment = sheet.segments[0] ?? null;
+  const periods = sheet.canonicalDates.map((canonicalDate) => ({
+    segment,
+    canonicalDate,
+  }));
+  return {
+    autoSelected: true,
+    choice: {
+      sheetName: sheet.sheetName,
+      periods,
+      unitBasis: sheet.unit.basis,
+      source: "auto",
+    },
+    because: `"${sheet.sheetName}" is the only sheet with dated columns, and it reports a single unit.`,
+  };
+}
+
+/**
+ * Validate an operator's choice against what the workbook actually offers.
+ * A scope naming a sheet, segment or date that is not there is REFUSED, not
+ * coerced to the nearest match — the same instinct that makes the
+ * classifier trustworthy.
+ */
+export function validateScopeChoice(
+  scopes: SheetScope[],
+  choice: ScopeChoice,
+): { ok: true } | { ok: false; error: string } {
+  const sheet = scopes.find((s) => s.sheetName === choice.sheetName);
+  if (!sheet) {
+    return { ok: false, error: `This workbook has no sheet named "${choice.sheetName}".` };
+  }
+  if (choice.periods.length === 0) {
+    return { ok: false, error: "Choose at least one period column." };
+  }
+  if (!UNIT_BASES.includes(choice.unitBasis)) {
+    return { ok: false, error: `"${choice.unitBasis}" is not a unit basis.` };
+  }
+  const offered = sheet.blocks.flatMap((b) => b.periodColumns);
+  for (const period of choice.periods) {
+    const hit = offered.some(
+      (p) =>
+        p.canonicalDate === period.canonicalDate &&
+        sameSegment(p.segment, period.segment),
+    );
+    if (!hit) {
+      const label = period.segment
+        ? `${period.segment} · ${formatHeaderDate(period.canonicalDate)}`
+        : formatHeaderDate(period.canonicalDate);
+      return {
+        ok: false,
+        error: `"${sheet.sheetName}" has no column for ${label}.`,
+      };
+    }
+  }
+  const seen = new Set<string>();
+  for (const p of choice.periods) {
+    const key = `${(p.segment ?? "").toLowerCase()}|${p.canonicalDate}`;
+    if (seen.has(key)) {
+      return { ok: false, error: "The same period column is selected twice." };
+    }
+    seen.add(key);
+  }
+  return { ok: true };
 }

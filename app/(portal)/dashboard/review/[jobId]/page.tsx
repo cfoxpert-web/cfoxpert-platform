@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card } from "@/components/cards/card";
 import { GateResults } from "@/components/dashboard/review/gate-results";
 import { ReviewForm } from "@/components/dashboard/review/review-form";
+import { ScopePicker } from "@/components/dashboard/review/scope-picker";
 import { DOCUMENT_KINDS, stageLabel } from "@/lib/documents/model";
 import { isInternalStaff } from "@/lib/documents/queries";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -48,6 +49,15 @@ export default async function ReviewJobPage({
   const kindLabel =
     DOCUMENT_KINDS.find((k) => k.key === detail.document.kind)?.label ?? "Other";
 
+  // Show the picker when the job is parked for a scope decision, and also
+  // whenever a readable workbook has no resolved scope — a job that stalled
+  // mid-flow should offer the way forward, not an empty line table.
+  const needsScope =
+    detail.stage === "awaiting_scope" ||
+    (detail.scope === null &&
+      detail.lines.length === 0 &&
+      detail.scopeOptions.some((o) => o.plausible));
+
   return (
     <DashboardLayout title="Review" companyName={detail.organizationName}>
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -77,16 +87,32 @@ export default async function ReviewJobPage({
           </div>
         </Card>
 
-        <GateResults results={detail.validation} />
+        {/*
+          A4-d-2: a job whose scope is unresolved gets the picker, not the
+          staged-lines form — there are no staged lines yet, and there will
+          not be until someone says which sheet and which columns to read.
+        */}
+        {needsScope ? (
+          <ScopePicker
+            jobId={detail.jobId}
+            options={detail.scopeOptions}
+            warnings={detail.scopeWarnings}
+            autoScope={detail.scope}
+          />
+        ) : (
+          <>
+            <GateResults results={detail.validation} />
 
-        <ReviewForm
-          jobId={detail.jobId}
-          stage={detail.stage}
-          lines={detail.lines}
-          catalogue={detail.catalogue}
-          periods={detail.periods}
-          periodHint={detail.document.periodHint}
-        />
+            <ReviewForm
+              jobId={detail.jobId}
+              stage={detail.stage}
+              lines={detail.lines}
+              catalogue={detail.catalogue}
+              periods={detail.periods}
+              periodHint={detail.document.periodHint}
+            />
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

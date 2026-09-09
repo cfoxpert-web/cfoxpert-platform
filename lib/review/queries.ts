@@ -1,5 +1,6 @@
 import type { DocumentKind, IngestionStage } from "../documents/model";
 import type { GateResult } from "../ingestion/types";
+import type { ScopeChoice, SheetScope } from "../ingestion/workbook";
 import { createClient } from "../supabase/server";
 
 /**
@@ -53,6 +54,10 @@ export type ReviewJobDetail = {
   lines: ReviewLine[];
   catalogue: { key: string; label: string }[];
   periods: { id: string; label: string; type: string }[];
+  /** A4-d-2 scope state: what the workbook offers and what was chosen. */
+  scopeOptions: SheetScope[];
+  scope: ScopeChoice | null;
+  scopeWarnings: string[];
 };
 
 const one = <T>(v: T | T[] | null | undefined): T | null =>
@@ -100,7 +105,7 @@ export async function getReviewJobDetail(
   const { data: job, error } = await supabase
     .from("ingestion_jobs")
     .select(
-      "id, stage, stage_note, validation, organization_id, organizations ( name ), client_documents ( file_name, kind, period_hint, created_at )",
+      "id, stage, stage_note, validation, scope, scope_options, scope_warnings, organization_id, organizations ( name ), client_documents ( file_name, kind, period_hint, created_at )",
     )
     .eq("id", jobId)
     .is("deleted_at", null)
@@ -169,6 +174,13 @@ export async function getReviewJobDetail(
       key: d.key as string,
       label: d.label as string,
     })),
+    scopeOptions: Array.isArray(job.scope_options)
+      ? (job.scope_options as SheetScope[])
+      : [],
+    scope: (job.scope as ScopeChoice | null) ?? null,
+    scopeWarnings: Array.isArray(job.scope_warnings)
+      ? (job.scope_warnings as string[])
+      : [],
     periods: (periodsRes.data ?? []).map((p) => ({
       id: p.id as string,
       label: p.period_label as string,

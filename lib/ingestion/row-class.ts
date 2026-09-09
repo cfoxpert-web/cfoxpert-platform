@@ -275,15 +275,6 @@ export function classifyRow(
     };
   }
 
-  // Ratio / percentage rows: "GP RATIO (%)", "Closing Stock (% of Sale)",
-  // "Consumption % as per sale". Never a financial line.
-  if (/%/.test(raw) || /\bratio\b/i.test(raw)) {
-    return {
-      kind: "ratio",
-      reason: "Ratio or percentage row, not a financial line.",
-      sectionName: null,
-    };
-  }
 
   // Derived subtotals carried across the T-account or computed from others.
   if (DERIVED_VOCABULARY.has(canonical)) {
@@ -315,6 +306,14 @@ export function classifyRow(
   }
 
   // ---- VALUE-GATED noise class. Never reachable for a row with an amount.
+  //
+  // This runs BEFORE the ratio check on purpose. A footnote may well
+  // mention a percentage — "5.The reduction in NP margin from 6.50% in the
+  // annualised June figures" — and testing for `%` first would exclude it
+  // as a "ratio or percentage row". The outcome is the same either way,
+  // but the REASON is what the review screen shows a human, and calling a
+  // sentence a ratio row is nonsense. Ratio detection follows, for rows
+  // that are not prose.
   const prose = looksLikeFootnote(raw) || looksLikeProse(raw);
   const signatory = isSignatory(normalized);
 
@@ -333,6 +332,16 @@ export function classifyRow(
       kind: "unclear",
       reason:
         "Reads like a note but carries an amount — needs a human decision; not excluded automatically.",
+      sectionName: null,
+    };
+  }
+
+  // Ratio / percentage rows: "GP RATIO (%)", "Closing Stock (% of Sale)",
+  // "Consumption % as per sale". Never a financial line.
+  if (/%/.test(raw) || /\bratio\b/i.test(raw)) {
+    return {
+      kind: "ratio",
+      reason: "Ratio or percentage row, not a financial line.",
       sectionName: null,
     };
   }

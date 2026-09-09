@@ -25,6 +25,7 @@ export function isDocumentKind(value: string): value is DocumentKind {
  */
 export const INGESTION_STAGES = {
   received: "Awaiting review",
+  awaiting_scope: "Needs a scope decision",
   approved: "Queued for processing",
   extracting: "Processing",
   needs_review: "Being verified",

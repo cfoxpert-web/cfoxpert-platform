@@ -6,8 +6,9 @@ import { describe, expect, it } from "vitest";
 import fixture from "./__fixtures__/rpil-projection-fixture.v2.json";
 import { classifyHead, applySignConvention, type ProjectionHead } from "./head-classify";
 import { isStageable } from "./row-class";
+import { extractUnderScope } from "./scoped-extract";
 import { readWorkbook } from "./spreadsheet-file";
-import { describeSheet, extractScopedRows } from "./workbook";
+import { describeSheet, extractScopedRows, type ScopeChoice } from "./workbook";
 
 /**
  * A4-d golden test — the real client workbook end to end.
@@ -252,5 +253,97 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
         expect(a === null || Number.isFinite(a)).toBe(true);
       }
     }
+  });
+
+  // -------------------------------------------------------------------------
+  // Through the PRODUCTION path. Everything above drives the scope model
+  // directly; this drives `extractUnderScope`, the function runExtraction
+  // actually calls — the path that was broken, and therefore the one worth
+  // asserting.
+  // -------------------------------------------------------------------------
+  describe("through runExtraction's scoped path", () => {
+    const scope: ScopeChoice = {
+      sheetName: "26-27 Projection",
+      periods: [
+        { segment: "Total", canonicalDate: "2026-03-31" },
+        { segment: "Total", canonicalDate: "2027-03-31" },
+      ],
+      unitBasis: "rupees",
+      source: "operator",
+    };
+    const result = extractUnderScope(sheets, scope, "pnl");
+    if ("error" in result) throw new Error(result.error);
+
+    it("stages one figure per (line, period) that actually carries one", () => {
+      // 66 lines across 2 periods is not 132 figures: a head can be blank
+      // in one year. Expected counts are DERIVED from the fixture rather
+      // than hard-coded, so this asserts the production path agrees with
+      // the recorded extraction instead of with a number I typed.
+      const expected = [0, 1].map(
+        (p) => fixture.lines.filter((l) => l.vals[p] !== null).length,
+      );
+      const perPeriod = new Map<string, number>();
+      for (const l of result.lines) {
+        perPeriod.set(l.periodLabel ?? "?", (perPeriod.get(l.periodLabel ?? "?") ?? 0) + 1);
+      }
+      expect([...perPeriod.keys()].sort()).toEqual([
+        "Total · 31.03.2026",
+        "Total · 31.03.2027",
+      ]);
+      expect(perPeriod.get("Total · 31.03.2026")).toBe(expected[0]);
+      expect(perPeriod.get("Total · 31.03.2027")).toBe(expected[1]);
+      expect(result.lines).toHaveLength((expected[0] ?? 0) + (expected[1] ?? 0));
+    });
+
+    it("reads ONE sheet — no line comes from anywhere else", () => {
+      // The defect this whole amendment exists for: provenance spanning
+      // '25-26 Actual', 'Dhaulana' and 'Upto June Dh' in one flat list.
+      for (const line of result.lines) {
+        expect(line.provenance).toMatch(/^26-27 Projection!/);
+      }
+    });
+
+    it("tags every staged figure with its own segment and period", () => {
+      for (const line of result.lines) {
+        expect(line.segment).toBe("Total");
+        expect(line.periodLabel).toMatch(/^Total · 31\.03\.202[67]$/);
+      }
+    });
+
+    it("reconciles gross profit through the production path", () => {
+      const at = (label: string, period: string) =>
+        (result.lines.find(
+          (l) => l.sourceLabel === label && l.periodLabel === period,
+        )?.amount ?? 0) / LAKH;
+      expect(near(at("Sales", "Total · 31.03.2027"), 20200)).toBe(true);
+      expect(near(at("OPENING STOCK", "Total · 31.03.2026"), 932.35)).toBe(true);
+      // Closing stock keeps its contra sign through this path too.
+      expect(at("CLOSING STOCK", "Total · 31.03.2026")).toBeLessThan(0);
+    });
+
+    it("records the scope and the unit conversion in its notes", () => {
+      expect(result.notes.join(" ")).toMatch(/Scoped to "26-27 Projection" · Total/);
+      expect(result.notes.join(" ")).toMatch(/operator-selected/);
+      expect(result.notes.join(" ")).toMatch(/read in rupees/);
+    });
+
+    it("refuses a scope naming a sheet the workbook lacks", () => {
+      const bad = extractUnderScope(sheets, { ...scope, sheetName: "Nope" }, "pnl");
+      expect("error" in bad).toBe(true);
+    });
+
+    it("applies an operator's unit override at the single boundary", () => {
+      const asLakhs = extractUnderScope(
+        sheets,
+        { ...scope, unitBasis: "lakhs" },
+        "pnl",
+      );
+      if ("error" in asLakhs) throw new Error(asLakhs.error);
+      const sales = asLakhs.lines.find(
+        (l) => l.sourceLabel === "Sales" && l.periodLabel === "Total · 31.03.2027",
+      );
+      // Same printed figure, read as lakhs: 100,000x the rupee reading.
+      expect(sales?.amount).toBe(20200 * LAKH * LAKH);
+    });
   });
 });

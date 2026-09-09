@@ -9,6 +9,11 @@ import { after } from "next/server";
 
 import { runExtraction } from "../ingestion/run";
 import {
+  introspectDocument,
+  jobNeedsScope,
+  parkForScope,
+} from "./scope-actions";
+import {
   ACCEPTED_MIME_TYPES,
   MAX_UPLOAD_BYTES,
   STORAGE_BUCKET,
@@ -170,7 +175,24 @@ export async function uploadClientDocument(
     const jobId = jobRow.id as string;
     const actorId = user.id;
     after(async () => {
+      // A4-d-2: read the workbook's structure BEFORE extracting, so a
+      // staff upload either arrives with an auto-selected scope or parks
+      // for a decision — it never flattens every sheet into one list.
+      await introspectDocument(jobId, actorId);
+      if (await jobNeedsScope(jobId)) {
+        await parkForScope(jobId, "this workbook offers more than one reading");
+        return;
+      }
       await runExtraction(jobId, actorId);
+    });
+  } else if (jobRow) {
+    // Client upload: it waits at 'received' for the approve-to-process
+    // gate. Introspect anyway so the analyst opens the picker on a job
+    // that already knows what it contains. Stage is NOT touched.
+    const jobId = jobRow.id as string;
+    const actorId = user.id;
+    after(async () => {
+      await introspectDocument(jobId, actorId);
     });
   }
 
@@ -250,6 +272,20 @@ export async function processIngestionJob(jobId: string): Promise<ProcessResult>
     if (error) {
       return { ok: false, error: `Could not approve the job: ${error.message}` };
     }
+  }
+
+  // A4-d-2: approval has happened. If the workbook offers more than one
+  // reading and nothing could be auto-selected, the job parks for a scope
+  // decision rather than guessing which sheet is the statement.
+  if (await jobNeedsScope(jobId)) {
+    await parkForScope(jobId, "this workbook offers more than one reading");
+    revalidatePath("/dashboard/documents");
+    revalidatePath("/dashboard/review");
+    return {
+      ok: false,
+      error:
+        "This workbook offers more than one reading — choose the sheet and period columns before it can be processed.",
+    };
   }
 
   const result = await runExtraction(jobId, user.id);
