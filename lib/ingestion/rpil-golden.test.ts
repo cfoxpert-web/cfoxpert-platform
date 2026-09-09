@@ -9,6 +9,13 @@ import { isStageable } from "./row-class";
 import { extractUnderScope } from "./scoped-extract";
 import { readWorkbook } from "./spreadsheet-file";
 import { describeSheet, extractScopedRows, type ScopeChoice } from "./workbook";
+import {
+  rollUpToKpis,
+  reconcileRollup,
+  UNCLASSIFIED_KPI_KEY,
+  type HeadKpiMap,
+  type StatementLineInput,
+} from "../kpi/rollup";
 
 /**
  * A4-d golden test — the real client workbook end to end.
@@ -371,6 +378,97 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       );
       // Same printed figure, read as lakhs: 100,000x the rupee reading.
       expect(sales?.amount).toBe(20200 * LAKH * LAKH);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // A7-a: the 66 lines as the FACT TABLE, rolled up to KPI values.
+  // -------------------------------------------------------------------------
+  describe("published as statement lines and rolled up", () => {
+    // Head map version 1, as seeded in migration 0023.
+    const MAP_V1: HeadKpiMap = {
+      version: 1,
+      entries: {
+        revenue: "revenue",
+        cogs: "cost_of_goods_sold",
+        // The accounting identity: opening + purchases − closing IS COGS.
+        stockChange: "cost_of_goods_sold",
+        directExp: "direct_expenses",
+        adminExp: "indirect_expenses",
+        sellingExp: "selling_expenses",
+        employee: "employee_cost",
+        interest: "finance_cost",
+        depreciation: "depreciation",
+        otherIncome: "other_income",
+        otherExp: "other_expenses",
+      },
+    };
+
+    /** Every staged line for one period, as it would be published. */
+    const factLines = (period: number): StatementLineInput[] =>
+      staged
+        .filter((s) => s.amounts[period] !== null)
+        .map((s, i) => ({
+          id: `line-${period}-${i}`,
+          segment: "Total",
+          sourceLabel: s.sourceLabel,
+          head: s.head,
+          headStatus: s.head === null ? ("unclassified" as const) : ("classified" as const),
+          amount: s.amounts[period] ?? 0,
+        }));
+
+    it("publishes every line INCLUDING the eight unclassified ones", () => {
+      // A fact table that omits rows cannot be reconciled to its source.
+      const lines = factLines(0);
+      expect(lines).toHaveLength(65); // Subscription fee is nil in FY 2025-26
+      expect(lines.filter((l) => l.headStatus === "unclassified")).toHaveLength(8);
+    });
+
+    it("exposes the unclassified value rather than dropping it", () => {
+      const { unclassified, values } = rollUpToKpis(factLines(0), MAP_V1);
+      expect(near(unclassified.total / LAKH, 25.01)).toBe(true);
+      expect(unclassified.lineCount).toBe(8);
+      // And it reaches the report through the ordinary KPI path.
+      const flag = values.find((v) => v.kpiKey === UNCLASSIFIED_KPI_KEY);
+      expect(near((flag?.value ?? 0) / LAKH, 25.01)).toBe(true);
+    });
+
+    it("rolls 66 lines up to a P&L that still reconciles", () => {
+      for (const [period, expected] of [
+        { revenue: 17812.49, gp: 3111.17 },
+        { revenue: 20200, gp: 3579.48 },
+      ].entries()) {
+        const { values } = rollUpToKpis(factLines(period), MAP_V1);
+        const at = (key: string) =>
+          (values.find((v) => v.kpiKey === key)?.value ?? 0) / LAKH;
+
+        expect(near(at("revenue"), expected.revenue)).toBe(true);
+
+        // Gross profit is DERIVED at read time, never stored (A3 rule).
+        const direct = at("cost_of_goods_sold") + at("direct_expenses");
+        expect(near(at("revenue") - direct, expected.gp)).toBe(true);
+      }
+    });
+
+    it("names the source lines behind every rolled-up value", () => {
+      const { values } = rollUpToKpis(factLines(0), MAP_V1);
+      const indirect = values.find((v) => v.kpiKey === "indirect_expenses");
+      // Many lines to one KPI — the case the old publish action refused.
+      expect((indirect?.sourceLineIds.length ?? 0)).toBeGreaterThan(1);
+      for (const v of values) {
+        if (v.kpiKey === UNCLASSIFIED_KPI_KEY) continue;
+        expect(v.sourceLineIds.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("reconciles: the published values reproduce from their own lines", () => {
+      const lines = factLines(1);
+      const published = rollUpToKpis(lines, MAP_V1).values.map((v) => ({
+        kpiKey: v.kpiKey,
+        segment: v.segment,
+        value: v.value,
+      }));
+      expect(reconcileRollup({ lines, map: MAP_V1, published })).toEqual({ ok: true });
     });
   });
 });

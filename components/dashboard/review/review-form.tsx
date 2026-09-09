@@ -12,6 +12,22 @@ import {
   type PublishInput,
 } from "@/lib/review/actions";
 import type { ReviewLine } from "@/lib/review/queries";
+import { PROJECTION_HEADS } from "@/lib/ingestion/head-classify";
+
+/** Operator-facing names for the projection heads. */
+const HEAD_LABELS: Record<string, string> = {
+  revenue: "Revenue",
+  cogs: "Cost of Goods Sold",
+  stockChange: "Stock Movement",
+  directExp: "Direct Expenses",
+  adminExp: "Indirect / Admin",
+  sellingExp: "Selling & Distribution",
+  employee: "Employee Cost",
+  interest: "Finance Cost",
+  depreciation: "Depreciation",
+  otherIncome: "Other Income",
+  otherExp: "Other Expenses",
+};
 
 /**
  * A4-c — the analyst's working surface. Selection, mapping and period
@@ -20,7 +36,7 @@ import type { ReviewLine } from "@/lib/review/queries";
  * into the client's mapping memory.
  */
 
-type LineState = { include: boolean; kpiKey: string; segment: string };
+type LineState = { include: boolean; head: string; segment: string };
 
 const PERIOD_TYPES = [
   { value: "monthly", label: "Monthly" },
@@ -77,8 +93,11 @@ export function ReviewForm({
     const initial: Record<string, LineState> = {};
     for (const l of lines) {
       initial[l.id] = {
-        include: l.proposedKpiKey !== null && l.amount !== null,
-        kpiKey: l.proposedKpiKey ?? "",
+        // A7-a: every line with an amount publishes, including the
+        // unclassified ones — a fact table that omits rows cannot be
+        // reconciled to its source.
+        include: l.amount !== null,
+        head: l.proposedHead ?? "",
         segment: l.segment ?? "",
       };
     }
@@ -98,7 +117,7 @@ export function ReviewForm({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  const EMPTY: LineState = { include: false, kpiKey: "", segment: "" };
+  const EMPTY: LineState = { include: false, head: "", segment: "" };
   const st = (id: string): LineState => lineState[id] ?? EMPTY;
   const patch = (id: string, p: Partial<LineState>) =>
     setLineState((s) => ({ ...s, [id]: { ...(s[id] ?? EMPTY), ...p } }));
@@ -111,13 +130,11 @@ export function ReviewForm({
     for (const l of lines) {
       const s = st(l.id);
       if (!s.include) continue;
-      if (s.kpiKey === "") {
-        setError(`"${l.sourceLabel}" is selected but has no KPI assigned — pick one or deselect it.`);
-        return;
-      }
+      // A head is NOT required: an unclassified line still publishes and is
+      // counted in unclassified_value, so the figure never goes missing.
       selected.push({
         lineId: l.id,
-        kpiKey: s.kpiKey,
+        head: s.head === "" ? null : s.head,
         segment: s.segment.trim() === "" ? null : s.segment.trim(),
       });
     }
@@ -140,7 +157,13 @@ export function ReviewForm({
     startTransition(async () => {
       const result = await publishIngestionJob({ jobId, period, lines: selected });
       if (result.ok) {
-        setDone(`Published ${result.published} value(s). The client's report reads them immediately.`);
+        const unclassified = result.unclassifiedTotal ?? 0;
+        setDone(
+          `Published ${result.published} line(s). The client's report reads them immediately.` +
+            (unclassified !== 0
+              ? ` ₹${unclassified.toLocaleString("en-IN")} across ${result.unclassifiedCount} line(s) is still unclassified and is shown on the report as Unclassified Value — it is NOT in any margin or ratio.`
+              : ""),
+        );
         router.refresh();
       } else {
         setError(result.error);
@@ -186,7 +209,7 @@ export function ReviewForm({
               {!readOnly && <th className="py-2 pr-2" />}
               <th className="py-2 pr-4">Source line</th>
               <th className="py-2 pr-4 text-right">Amount (₹)</th>
-              <th className="py-2 pr-4">KPI</th>
+              <th className="py-2 pr-4">Head</th>
               <th className="py-2 pr-4">Segment</th>
               <th className="py-2">Mapping conf.</th>
             </tr>
@@ -227,12 +250,12 @@ export function ReviewForm({
                       failed rather than one waiting on the head→KPI
                       roll-up (A7-a). Same row, opposite impression.
                     */}
-                    {l.proposedHead && s.kpiKey === "" && (
+                    {l.proposedHead && s.head !== "" && (
                       <div className="mt-1 inline-flex items-center gap-1 rounded-pill bg-teal/10 px-2 py-0.5 text-[10.5px] font-semibold text-teal">
                         {l.proposedHead} · mapping pending
                       </div>
                     )}
-                    {!l.proposedHead && s.kpiKey === "" && (
+                    {s.head === "" && (
                       <div className="mt-1 inline-flex items-center gap-1 rounded-pill bg-amber-100 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700">
                         needs a decision
                       </div>
@@ -241,21 +264,31 @@ export function ReviewForm({
                   <td className="py-2 pr-4 text-right align-top text-[13px] tabular-nums text-ink">
                     {formatAmount(l.amount)}
                   </td>
+                  {/*
+                    A7-a: the operator confirms a HEAD, not a KPI. The
+                    head → KPI rollup is versioned data (ADR-018), so a
+                    per-line KPI choice would be a second, hand-made copy of
+                    a map that already exists. The override still has to
+                    survive though — a classifier default that cannot be
+                    corrected is worse than a dropdown — so this stays a
+                    control, and the correction is remembered for this
+                    client's next upload (ADR-017).
+                  */}
                   <td className="py-2 pr-4 align-top">
                     {readOnly ? (
                       <span className="text-[12.5px] text-slate">
-                        {l.proposedKpiKey ?? "—"}
+                        {l.proposedHead ?? "—"}
                       </span>
                     ) : (
                       <select
-                        value={s.kpiKey}
-                        onChange={(e) => patch(l.id, { kpiKey: e.target.value })}
+                        value={s.head}
+                        onChange={(e) => patch(l.id, { head: e.target.value })}
                         className={inputClass}
                       >
-                        <option value="">— not mapped —</option>
-                        {catalogue.map((k) => (
-                          <option key={k.key} value={k.key}>
-                            {k.label}
+                        <option value="">— needs a head —</option>
+                        {PROJECTION_HEADS.map((h) => (
+                          <option key={h} value={h}>
+                            {HEAD_LABELS[h]}
                           </option>
                         ))}
                       </select>
@@ -280,11 +313,11 @@ export function ReviewForm({
                     Mapping confidence ONLY. The old column rendered the
                     AMOUNT's confidence here, so every deterministically
                     parsed row showed "100%" next to "— not mapped —" — a
-                    contradiction on its face. A line with no KPI assigned
+                    contradiction on its face. A line with no head assigned
                     has no mapping to be confident about, so it shows a dash.
                   */}
                   <td className="py-2 align-top text-[12.5px] text-slate">
-                    {s.kpiKey === "" || l.mappingConfidence === null
+                    {s.head === "" || l.mappingConfidence === null
                       ? "—"
                       : `${Math.round(l.mappingConfidence * 100)}%`}
                   </td>
