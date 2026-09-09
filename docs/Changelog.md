@@ -1,5 +1,12 @@
 # Changelog.md
 
+## 2026-09-09 (vitest path aliases — the suite is green for the first time)
+
+- `vitest.config.ts` added, mirroring tsconfig.json's `@/*` paths. Vitest never had a config, so `@/` imports resolved under `tsc` and `next build` but NOT under the test runner: `lib/health-check/financial-score.test.ts` had never run, and `pnpm test` had been exiting non-zero. A permanently red suite carries no signal — the next real regression hides inside the existing failure — and this file covers the A2 health-score engine, which is live for RPIL.
+- CONFIRMED RED ON THE ALIAS, NOT ON SUBSTANCE: all 15 tests pass once the import resolves. Nothing inside the engine was touched.
+- Suite now 9 files / 150 tests, all passing.
+- Kept as its own commit, separate from A4-d, so the parser work and the tooling fix can be reverted independently.
+
 ## 2026-09-09 (A4-d-1 — scope model, row classifier, four honesty fixes)
 
 - FIRST SLICE OF A4-d BUILT against the corrected golden fixture. Full suite 135 passing, typecheck clean, production build green (32 pages). One pre-existing failure untouched: `lib/health-check/financial-score.test.ts` cannot resolve `@/constants/drivers` because there is no vitest path-alias config — verified red on a clean tree before this work, and unrelated to it.
