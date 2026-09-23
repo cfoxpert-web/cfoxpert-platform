@@ -33,6 +33,8 @@ export type ReviewLine = {
   proposedKpiKey: string | null;
   /** Projection head the classifier assigned; null = a real exception. */
   proposedHead: string | null;
+  /** Grouping key — the line's own period end, from staging. */
+  periodKey: string | null;
   /** Confidence in the AMOUNT as read from the source. */
   confidence: number | null;
   /** Confidence in the KPI MAPPING; null when nothing is mapped. */
@@ -170,6 +172,7 @@ export async function getReviewJobDetail(
       segment: (l.segment as string | null) ?? null,
       proposedKpiKey: (l.proposed_kpi_key as string | null) ?? null,
       proposedHead: (l.proposed_head as string | null) ?? null,
+      periodKey: (l.period_end as string | null) ?? null,
       confidence: l.confidence === null ? null : Number(l.confidence),
       mappingConfidence:
         l.mapping_confidence === null || l.mapping_confidence === undefined

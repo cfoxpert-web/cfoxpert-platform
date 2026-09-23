@@ -146,6 +146,8 @@ const line = (over: Partial<CandidateLine>): CandidateLine => ({
   sourceLabel: "x",
   amount: 0,
   periodLabel: null,
+  periodStart: null,
+  periodEnd: null,
   segment: null,
   provenance: "t",
   proposedKpiKey: null,

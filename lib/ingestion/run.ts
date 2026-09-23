@@ -210,8 +210,11 @@ export async function runExtraction(
         source_label: l.sourceLabel,
         amount: l.amount,
         period_label: l.periodLabel,
-        period_start: output.periodStart,
-        period_end: output.periodEnd,
+        // The LINE's period. Previously output.periodStart/End — the scope
+        // span — which stamped every row with the same two dates and made
+        // a multi-period scope indistinguishable at publish time.
+        period_start: l.periodStart ?? output.periodStart,
+        period_end: l.periodEnd ?? output.periodEnd,
         segment: l.segment,
         proposed_kpi_key: l.proposedKpiKey,
         proposed_head: l.proposedHead,

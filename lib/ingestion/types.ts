@@ -13,7 +13,20 @@ export type CandidateLine = {
   sourceLabel: string;
   /** Signed amount. Trial balance convention: debit positive, credit negative. */
   amount: number | null;
+  /**
+   * Period label for THIS line. Carries no segment — segment has its own
+   * column, and leaking it into the period name produced "Total ·
+   * 31.03.2026" as a period, which also contradicted its own date range.
+   */
   periodLabel: string | null;
+  /**
+   * This line's own period, derived from the column it came from. Written
+   * per line, NOT per scope: a two-column scope previously stamped the
+   * whole span (2026-03-31 → 2027-03-31) onto every row, so publishing
+   * merged both years into one period.
+   */
+  periodStart: string | null;
+  periodEnd: string | null;
   segment: string | null;
   /** Where in the source this came from ("Sheet1!B14", "page 3"). */
   provenance: string;

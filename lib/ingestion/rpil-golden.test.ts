@@ -293,12 +293,12 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       for (const l of result.lines) {
         perPeriod.set(l.periodLabel ?? "?", (perPeriod.get(l.periodLabel ?? "?") ?? 0) + 1);
       }
-      expect([...perPeriod.keys()].sort()).toEqual([
-        "Total · 31.03.2026",
-        "Total · 31.03.2027",
-      ]);
-      expect(perPeriod.get("Total · 31.03.2026")).toBe(expected[0]);
-      expect(perPeriod.get("Total · 31.03.2027")).toBe(expected[1]);
+      // Period labels carry NO segment — segment has its own column, and
+      // "Total · 31.03.2026" as a period name both leaked the unit and
+      // contradicted its own date range.
+      expect([...perPeriod.keys()].sort()).toEqual(["FY 2025-26", "FY 2026-27"]);
+      expect(perPeriod.get("FY 2025-26")).toBe(expected[0]);
+      expect(perPeriod.get("FY 2026-27")).toBe(expected[1]);
       expect(result.lines).toHaveLength((expected[0] ?? 0) + (expected[1] ?? 0));
     });
 
@@ -310,10 +310,41 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       }
     });
 
-    it("tags every staged figure with its own segment and period", () => {
+    it("tags every staged figure with ITS OWN period, not the scope span", () => {
+      // The blocker this slice exists for: period_start/period_end used to
+      // be the whole scope (2026-03-31 → 2027-03-31) on every row, so both
+      // years were indistinguishable at publish time and merged into one.
       for (const line of result.lines) {
         expect(line.segment).toBe("Total");
-        expect(line.periodLabel).toMatch(/^Total · 31\.03\.202[67]$/);
+        expect(line.periodLabel).toMatch(/^FY 202[56]-2[67]$/);
+        if (line.periodLabel === "FY 2025-26") {
+          expect(line.periodStart).toBe("2025-04-01");
+          expect(line.periodEnd).toBe("2026-03-31");
+        } else {
+          expect(line.periodStart).toBe("2026-04-01");
+          expect(line.periodEnd).toBe("2027-03-31");
+        }
+      }
+      // Two distinct periods, and they do not share an end date.
+      const ends = new Set(result.lines.map((l) => l.periodEnd));
+      expect(ends.size).toBe(2);
+    });
+
+    it("stages an explicit zero but not a blank — the client stated one, not the other", () => {
+      // Four credit-side income lines are an explicit 0 in FY 2026-27 and
+      // stage; ten lines are BLANK there and do not. A stated zero is
+      // information; an empty cell is an absence. 65 + 56 = 121.
+      const fy27 = result.lines.filter((l) => l.periodLabel === "FY 2026-27");
+      const zeros = fy27.filter((l) => l.amount === 0).map((l) => l.sourceLabel).sort();
+      expect(zeros).toEqual([
+        "Account Write off",
+        "Difference in Exch Rate",
+        "Interest on IT Refund",
+        "Profit on sale of FA",
+      ]);
+      const fy27Labels = new Set(fy27.map((l) => l.sourceLabel));
+      for (const blank of ["Diwali Exps.", "Bad debt", "Donation", "Gratuity"]) {
+        expect(fy27Labels.has(blank)).toBe(false);
       }
     });
 
@@ -322,10 +353,11 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
         (result.lines.find(
           (l) => l.sourceLabel === label && l.periodLabel === period,
         )?.amount ?? 0) / LAKH;
-      expect(near(at("Sales", "Total · 31.03.2027"), 20200)).toBe(true);
-      expect(near(at("OPENING STOCK", "Total · 31.03.2026"), 932.35)).toBe(true);
+      expect(near(at("Sales", "FY 2026-27"), 20200)).toBe(true);
+      expect(near(at("Sales", "FY 2025-26"), 17812.49)).toBe(true);
+      expect(near(at("OPENING STOCK", "FY 2025-26"), 932.35)).toBe(true);
       // Closing stock keeps its contra sign through this path too.
-      expect(at("CLOSING STOCK", "Total · 31.03.2026")).toBeLessThan(0);
+      expect(at("CLOSING STOCK", "FY 2025-26")).toBeLessThan(0);
     });
 
     it("carries the classifier's head onto every staged line", () => {
@@ -375,7 +407,7 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       const asLakhs = extractUnderScope(sheets, scope, "pnl", "lakhs");
       if ("error" in asLakhs) throw new Error(asLakhs.error);
       const sales = asLakhs.lines.find(
-        (l) => l.sourceLabel === "Sales" && l.periodLabel === "Total · 31.03.2027",
+        (l) => l.sourceLabel === "Sales" && l.periodLabel === "FY 2026-27",
       );
       // Same printed figure, read as lakhs: 100,000x the rupee reading.
       expect(sales?.amount).toBe(20200 * LAKH * LAKH);

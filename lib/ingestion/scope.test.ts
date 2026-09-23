@@ -91,10 +91,29 @@ describe("auto-selection", () => {
   });
 
   it("marks a register as implausible rather than hiding it", () => {
+    // This test's NAME always described the intent; its assertion used to
+    // require the opposite, and describeWorkbook dropped undescribable
+    // sheets entirely. On a real 33-sheet workbook that listed 7 and
+    // silently lost 26, including sheets with real content.
     const described = describeWorkbook([simple, register]);
-    // The register offers no dated columns at all, so it is not even
-    // described — the picker lists it from the workbook, greyed.
-    expect(described.map((d) => d.sheetName)).toEqual(["P&L"]);
+    expect(described.map((d) => d.sheetName)).toEqual([
+      "P&L",
+      "Depreciation Register",
+    ]);
+    const reg = described.find((d) => d.sheetName === "Depreciation Register");
+    expect(reg?.plausible).toBe(false);
+    expect(reg?.reason).toMatch(/No header row with two or more readable dates/);
+    // And it never becomes a scope option by accident.
+    expect(autoSelectScope(described).autoSelected).toBe(true);
+  });
+
+  it("returns one entry per sheet, always — the count the picker shows", () => {
+    const described = describeWorkbook([simple, register, multiUnit]);
+    expect(described).toHaveLength(3);
+    for (const d of described) {
+      expect(d.plausible ? d.reason : d.reason ?? "").not.toBe(undefined);
+      if (!d.plausible) expect(d.reason).toBeTruthy();
+    }
   });
 });
 

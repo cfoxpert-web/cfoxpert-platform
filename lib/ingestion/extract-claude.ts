@@ -248,6 +248,9 @@ File name: ${input.fileName}`;
     sourceLabel: l.source_label,
     amount: l.amount,
     periodLabel: l.period_label ?? parsed.period_label,
+    // The model rung reports one period for the whole document.
+    periodStart: parsed.period_start,
+    periodEnd: parsed.period_end,
     segment: l.segment,
     provenance: l.provenance,
     // The model may only PROPOSE catalogue keys; anything else is dropped

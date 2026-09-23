@@ -99,6 +99,8 @@ export type SheetScope = {
   unit: UnitBasis;
   /** Enough real lines and dated columns to be worth offering as a scope. */
   plausible: boolean;
+  /** Why it cannot be scoped, when it cannot. Null when it can. */
+  reason: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -443,6 +445,42 @@ export function describeSheet(sheet: ParsedSheet): SheetScope | null {
     segments,
     unit: detectUnit(sheet, 6, largest),
     plausible: candidateLineCount >= MIN_PLAUSIBLE_LINES && dates.size > 0,
+    reason:
+      candidateLineCount >= MIN_PLAUSIBLE_LINES && dates.size > 0
+        ? null
+        : `Only ${candidateLineCount} candidate line(s) under ${dates.size} dated column(s)`,
+  };
+}
+
+/**
+ * A sheet that could not be scoped at all, described so the picker can LIST
+ * it rather than drop it.
+ *
+ * `describeWorkbook` used to return only sheets it could describe. On a
+ * 33-sheet client workbook that listed 7 and silently omitted 26 —
+ * including `Dhaulana` (67 rows) and `Upto June Dh` (61 rows), sheets with
+ * real content. The picker then labelled that count "7 sheets in this
+ * workbook", which was simply untrue. An operator looking for a sheet that
+ * is not offered has to be told why, or they conclude the tool is broken.
+ */
+function undescribable(sheet: ParsedSheet, reason: string): SheetScope {
+  const rows = sheet.rows.filter((r) => r && r.some((c) => c !== null)).length;
+  return {
+    sheetName: sheet.name,
+    headerRows: [],
+    twoSided: false,
+    blocks: [],
+    candidateLineCount: 0,
+    canonicalDates: [],
+    segments: [],
+    unit: {
+      basis: "rupees",
+      multiplierToRupees: 1,
+      detectedFrom: "not read — this sheet was not scoped",
+      largestPrintedValue: null,
+    },
+    plausible: false,
+    reason: `${reason} (${rows} non-empty row${rows === 1 ? "" : "s"})`,
   };
 }
 
@@ -452,14 +490,20 @@ export function describeSheet(sheet: ParsedSheet): SheetScope | null {
  */
 const MIN_PLAUSIBLE_LINES = 3;
 
-/** Describe every sheet that offers a dated scope. */
+/**
+ * Describe EVERY sheet in the workbook — one entry per sheet, always.
+ *
+ * Sheets that cannot be scoped come back with `plausible: false` and a
+ * reason, so the picker greys them with an explanation instead of dropping
+ * them. Never filter here: the count this returns is what the picker calls
+ * "sheets in this workbook", and it must match reality.
+ */
 export function describeWorkbook(sheets: ParsedSheet[]): SheetScope[] {
-  const out: SheetScope[] = [];
-  for (const sheet of sheets) {
-    const scope = describeSheet(sheet);
-    if (scope) out.push(scope);
-  }
-  return out;
+  return sheets.map(
+    (sheet) =>
+      describeSheet(sheet) ??
+      undescribable(sheet, "No header row with two or more readable dates"),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -755,6 +799,37 @@ export function autoSelectScope(scopes: SheetScope[]): AutoSelectResult {
  * coerced to the nearest match — the same instinct that makes the
  * classifier trustworthy.
  */
+/**
+ * Names that mean "the consolidated column" in an Indian statement.
+ *
+ * Used to pick a SAFE default when a sheet reports several units. The
+ * previous default was `segments[0]` — the leftmost header — which on this
+ * client's projection sheet is Dhaulana. An operator who did not notice
+ * would publish one plant's figures as the whole company's: the exact
+ * hazard fixed in the data layer (ADR-014 addendum), reintroduced as a UI
+ * default. When no consolidated column can be identified, the picker
+ * chooses NOTHING and makes the operator decide.
+ */
+const CONSOLIDATED_SEGMENT_NAMES = [
+  "total",
+  "consolidated",
+  "consolidation",
+  "combined",
+  "grand total",
+  "company",
+  "all units",
+];
+
+export function findConsolidatedSegment(
+  segments: (string | null)[],
+): string | null | undefined {
+  if (segments.length <= 1) return segments[0] ?? null;
+  return segments.find((seg) => {
+    const name = (seg ?? "").trim().toLowerCase();
+    return CONSOLIDATED_SEGMENT_NAMES.includes(name);
+  });
+}
+
 /** Is this a unit basis we can convert from? Guards untrusted input. */
 export function isUnitBasisName(value: unknown): value is UnitBasisName {
   return typeof value === "string" && (UNIT_BASES as readonly string[]).includes(value);

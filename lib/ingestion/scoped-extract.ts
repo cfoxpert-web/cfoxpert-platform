@@ -1,6 +1,7 @@
 import type { DocumentKind } from "../documents/model";
 import { classifyHead, applySignConvention } from "./head-classify";
 import { isStageable } from "./row-class";
+import { derivePeriod } from "./period";
 import type { ParsedSheet } from "./parse-spreadsheet";
 import type { CandidateLine, ExtractionOutput } from "./types";
 import {
@@ -42,6 +43,10 @@ export function extractUnderScope(
   }
 
   const unit = unitBasis ? withUnitBasis(described.unit, unitBasis) : described.unit;
+
+  // One proposal per requested column. The period is a property of the
+  // COLUMN, so it is resolved once here and stamped on every line from it.
+  const periods = scope.periods.map((p) => derivePeriod(p.canonicalDate));
   const extraction = extractScopedRows(sheet, described, scope.periods, unit);
 
   const lines: CandidateLine[] = [];
@@ -67,11 +72,15 @@ export function extractUnderScope(
         side: row.side,
         label: row.sourceLabel,
       });
+      const derived = periods[i];
       lines.push({
         statement: kind === "other" ? "pnl" : kind,
         sourceLabel: row.sourceLabel,
         amount,
-        periodLabel: extraction.periodLabels[i] ?? null,
+        // Segment-free: "FY 2026-27", not "Total · 31.03.2027".
+        periodLabel: derived?.label ?? null,
+        periodStart: derived?.start ?? null,
+        periodEnd: derived?.end ?? null,
         segment: period.segment,
         provenance: row.provenance[i] ?? extraction.sheetName,
         // The head matcher proposes a PROJECTION head, not a kpi_definitions
@@ -89,9 +98,12 @@ export function extractUnderScope(
   const first = scope.periods[0];
   const last = scope.periods[scope.periods.length - 1];
   const notes = [
+    periods.length > 1
+      ? `${periods.length} periods staged separately: ${periods.map((p) => p.label).join(", ")}. Each publishes into its own period.`
+      : null,
     `Scoped to "${scope.sheetName}"${first?.segment ? ` · ${first.segment}` : ""} (${scope.source === "auto" ? "auto-selected" : "operator-selected"}).`,
     `Amounts read in ${unit.basis}${unit.multiplierToRupees === 1 ? "" : ` × ${unit.multiplierToRupees.toLocaleString("en-IN")}`} — ${unit.detectedFrom}.`,
-  ];
+  ].filter((n): n is string => n !== null);
 
   return {
     method: "parser",

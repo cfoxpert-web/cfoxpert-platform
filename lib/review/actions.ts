@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isFeatureEnabled } from "../feature-flags";
 import { normalizeLabel } from "../ingestion/normalize";
 import type { GateResult } from "../ingestion/types";
+import { findPeriodCollisions } from "../ingestion/period";
 import { UNIT_MULTIPLIER, isUnitBasisName, type UnitBasisName } from "../ingestion/workbook";
 import { rollUpToKpis } from "../kpi/rollup";
 import { createAdminClient } from "../supabase/admin";
@@ -40,17 +41,30 @@ export type PublishLineInput = {
   segment: string | null;
 };
 
+/** One resolution per DISTINCT staged period, keyed by the line's period_end. */
+export type PublishPeriodInput = {
+  /** `extracted_lines.period_end` — the column's own canonical date. */
+  periodKey: string;
+} & (
+  | { mode: "existing"; periodId: string }
+  | {
+      mode: "new";
+      label: string;
+      periodType: string;
+      periodStart: string; // YYYY-MM-DD
+      periodEnd: string;
+    }
+);
+
 export type PublishInput = {
   jobId: string;
-  period:
-    | { mode: "existing"; periodId: string }
-    | {
-        mode: "new";
-        label: string;
-        periodType: string;
-        periodStart: string; // YYYY-MM-DD
-        periodEnd: string;
-      };
+  /**
+   * A publish can span several periods. Scoping two columns stages both
+   * years; publishing them into ONE period merged FY 2025-26 into
+   * FY 2026-27 — on this client roughly ₹38,012 L of revenue for a company
+   * doing 20,200 — into an insert-only table.
+   */
+  periods: PublishPeriodInput[];
   lines: PublishLineInput[];
 };
 
@@ -61,6 +75,8 @@ export type ReviewActionResult =
       /** Rupee value published but sitting outside the rollup. */
       unclassifiedTotal?: number;
       unclassifiedCount?: number;
+      /** One entry per period this publish wrote into. */
+      periods?: { label: string; lines: number; unclassified: number }[];
     }
   | { ok: false; error: string };
 
@@ -156,7 +172,7 @@ export async function publishIngestionJob(
 
   const { data: lineRows } = await supabase
     .from("extracted_lines")
-    .select("id, source_label, amount, segment, provenance")
+    .select("id, source_label, amount, segment, provenance, period_label, period_end")
     .eq("job_id", input.jobId)
     .is("deleted_at", null);
   const byId = new Map(
@@ -204,6 +220,9 @@ export async function publishIngestionJob(
     amount: number;
     sourceLabel: string;
     provenance: string | null;
+    /** The line's OWN period, from staging. Never the scope span. */
+    periodKey: string;
+    periodLabel: string | null;
   }[] = [];
 
   for (const sel of input.lines) {
@@ -234,6 +253,14 @@ export async function publishIngestionJob(
         ? sel.segment.trim().slice(0, 100)
         : null;
 
+    const periodKey = (row.period_end as string | null) ?? null;
+    if (!periodKey) {
+      return {
+        ok: false,
+        error: `"${row.source_label}" has no period recorded — re-extract the document before publishing.`,
+      };
+    }
+
     resolved.push({
       lineId: sel.lineId,
       head,
@@ -242,38 +269,72 @@ export async function publishIngestionJob(
       amount: Number(row.amount),
       sourceLabel: row.source_label as string,
       provenance: (row.provenance as string | null) ?? null,
+      periodKey,
+      periodLabel: (row.period_label as string | null) ?? null,
     });
   }
 
-  // ---- Resolve the target period.
-  let periodId: string;
-  let periodLabel: string;
+  // ---- Every staged period in this publish must have a resolution.
+  const stagedKeys = [...new Set(resolved.map((r) => r.periodKey))].sort();
+  const byKey = new Map(input.periods.map((p) => [p.periodKey, p]));
+  const unresolved = stagedKeys.filter((k) => !byKey.has(k));
+  if (unresolved.length > 0) {
+    return {
+      ok: false,
+      error: `No period was chosen for ${unresolved.join(", ")} — every staged period needs one before publishing.`,
+    };
+  }
 
-  if (input.period.mode === "existing") {
-    const { data: period } = await supabase
-      .from("kpi_periods")
-      .select("id, period_label, organization_id")
-      .eq("id", input.period.periodId)
-      .is("deleted_at", null)
-      .single();
-    if (!period || (period.organization_id as string) !== orgId) {
-      return { ok: false, error: "Selected period not found for this client." };
+  // ---- No two selected lines may share (period, segment, label): under
+  // statement_lines_current the later row supersedes the earlier one, so
+  // one of the two figures would silently vanish from the fact table.
+  const identity = new Set<string>();
+  for (const r of resolved) {
+    const key = `${r.periodKey}|${r.segment ?? ""}|${normalizeLabel(r.sourceLabel)}`;
+    if (identity.has(key)) {
+      return {
+        ok: false,
+        error: `"${r.sourceLabel}" is selected twice for the same period and unit — the second would supersede the first. Deselect one.`,
+      };
     }
-    periodId = period.id as string;
-    periodLabel = period.period_label as string;
-  } else {
-    const label = input.period.label.trim().slice(0, 50);
-    const periodType = input.period.periodType as PeriodType;
-    if (label === "") return { ok: false, error: "Period label is required." };
+    identity.add(key);
+  }
+
+  // ---- Resolve EVERY staged period to its own target. One per period.
+  const targets = new Map<string, { id: string; label: string }>();
+  for (const key of stagedKeys) {
+    const spec = byKey.get(key);
+    if (!spec) continue; // unreachable: checked above
+
+    if (spec.mode === "existing") {
+      const { data: period } = await supabase
+        .from("kpi_periods")
+        .select("id, period_label, organization_id")
+        .eq("id", spec.periodId)
+        .is("deleted_at", null)
+        .single();
+      if (!period || (period.organization_id as string) !== orgId) {
+        return { ok: false, error: `Selected period for ${key} not found for this client.` };
+      }
+      targets.set(key, {
+        id: period.id as string,
+        label: period.period_label as string,
+      });
+      continue;
+    }
+
+    const label = spec.label.trim().slice(0, 50);
+    const periodType = spec.periodType as PeriodType;
+    if (label === "") return { ok: false, error: `Period label is required for ${key}.` };
     if (!PERIOD_TYPES.includes(periodType)) {
-      return { ok: false, error: "Choose a period type (monthly/quarterly/yearly)." };
+      return { ok: false, error: `Choose a period type for ${label} (monthly/quarterly/yearly).` };
     }
     if (
-      !ISO_DATE.test(input.period.periodStart) ||
-      !ISO_DATE.test(input.period.periodEnd) ||
-      input.period.periodStart > input.period.periodEnd
+      !ISO_DATE.test(spec.periodStart) ||
+      !ISO_DATE.test(spec.periodEnd) ||
+      spec.periodStart > spec.periodEnd
     ) {
-      return { ok: false, error: "Period dates are missing or reversed." };
+      return { ok: false, error: `Period dates for ${label} are missing or reversed.` };
     }
     // Insert-only path is service-role by design (kpi tables have no
     // client write policies); the audit entry below carries the real actor.
@@ -283,8 +344,8 @@ export async function publishIngestionJob(
         organization_id: orgId,
         period_label: label,
         period_type: periodType,
-        period_start: input.period.periodStart,
-        period_end: input.period.periodEnd,
+        period_start: spec.periodStart,
+        period_end: spec.periodEnd,
         created_by: userId,
         updated_by: userId,
       })
@@ -298,8 +359,30 @@ export async function publishIngestionJob(
           : `Could not create the period: ${periodError?.message ?? "unknown error"}.`,
       };
     }
-    periodId = created.id as string;
-    periodLabel = label;
+    targets.set(key, { id: created.id as string, label });
+  }
+
+  // ---- THE RAIL. Two DISTINCT staged periods must never land in the same
+  // target period. Segment is deliberately NOT part of this check: Dhaulana
+  // and Greater Noida both publishing into FY 2026-27 as separate segments
+  // is per-segment publishing working (ADR-014), not a collision. Segment is
+  // a dimension WITHIN a period; only period-to-period mapping can merge.
+  const collisions = findPeriodCollisions(
+    stagedKeys.map((key) => ({
+      periodKey: key,
+      targetPeriodId: targets.get(key)?.id ?? "",
+      label: targets.get(key)?.label ?? key,
+    })),
+  );
+  if (collisions.length > 0) {
+    const first = collisions[0];
+    return {
+      ok: false,
+      error:
+        `${first?.periodKeys.join(" and ")} would both publish into "${first?.label}", ` +
+        `merging different periods into one. Give each staged period its own target — ` +
+        `published values are insert-only and cannot be unmerged.`,
+    };
   }
 
   // ---- Publish, in one direction: LINES ARE THE FACT TABLE (ADR-018).
@@ -310,7 +393,7 @@ export async function publishIngestionJob(
   const factRows = resolved.map((r, index) => ({
     id: crypto.randomUUID(),
     organization_id: orgId,
-    kpi_period_id: periodId,
+    kpi_period_id: targets.get(r.periodKey)?.id ?? "",
     segment: r.segment,
     source_label: r.sourceLabel,
     source_label_normalized: normalizeLabel(r.sourceLabel),
@@ -336,25 +419,55 @@ export async function publishIngestionJob(
     return { ok: false, error: `Publish failed: ${linesError.message}` };
   }
 
-  // ---- Then DERIVE kpi_values from those lines. Never the other way round.
-  const rollup = rollUpToKpis(
-    factRows.map((l) => ({
-      id: l.id,
-      segment: l.segment,
-      sourceLabel: l.source_label,
-      head: l.head,
-      headStatus: l.head_status,
-      amount: l.amount,
-    })),
-    { version: headMapVersion, entries: headToKpi },
-  );
+  // ---- Then DERIVE kpi_values from those lines, PER PERIOD. Never the
+  // other way round (ADR-018). Rolling up across periods is precisely the
+  // merge the rail above refuses; doing it here would reintroduce it after
+  // the check had passed.
+  const valueRows: {
+    kpi_period_id: string;
+    kpi_definition_id: string;
+    value: number;
+    segment: string | null;
+    source_statement_line_ids: string[];
+    head_map_version: number;
+    note: string;
+    created_by: string;
+  }[] = [];
+  let unclassifiedTotal = 0;
+  let unclassifiedCount = 0;
+  const publishedPeriods: { label: string; lines: number; unclassified: number }[] = [];
 
-  const valueRows = rollup.values
-    .map((v) => {
+  for (const key of stagedKeys) {
+    const target = targets.get(key);
+    if (!target) continue;
+    const periodRows = factRows.filter((l) => l.kpi_period_id === target.id);
+    if (periodRows.length === 0) continue;
+
+    const rollup = rollUpToKpis(
+      periodRows.map((l) => ({
+        id: l.id,
+        segment: l.segment,
+        sourceLabel: l.source_label,
+        head: l.head,
+        headStatus: l.head_status,
+        amount: l.amount,
+      })),
+      { version: headMapVersion, entries: headToKpi },
+    );
+
+    unclassifiedTotal += rollup.unclassified.total;
+    unclassifiedCount += rollup.unclassified.lineCount;
+    publishedPeriods.push({
+      label: target.label,
+      lines: periodRows.length,
+      unclassified: rollup.unclassified.total,
+    });
+
+    for (const v of rollup.values) {
       const definitionId = defIdByKey.get(v.kpiKey);
-      if (!definitionId) return null;
-      return {
-        kpi_period_id: periodId,
+      if (!definitionId) continue;
+      valueRows.push({
+        kpi_period_id: target.id,
         kpi_definition_id: definitionId,
         value: v.value,
         segment: v.segment,
@@ -362,9 +475,9 @@ export async function publishIngestionJob(
         head_map_version: v.headMapVersion,
         note: `Rolled up from ${v.sourceLineIds.length || rollup.unclassified.lineCount} line(s) in ${fileName} via ingestion review (head map v${v.headMapVersion})`,
         created_by: userId,
-      };
-    })
-    .filter((v): v is NonNullable<typeof v> => v !== null);
+      });
+    }
+  }
 
   if (valueRows.length > 0) {
     const { error: valuesError } = await admin.from("kpi_values").insert(valueRows);
@@ -425,9 +538,10 @@ export async function publishIngestionJob(
     .update({
       stage: "published",
       stage_note:
-        `${resolved.length} line(s) published to ${periodLabel}` +
-        (rollup.unclassified.lineCount > 0
-          ? ` · ₹${rollup.unclassified.total.toLocaleString("en-IN")} across ${rollup.unclassified.lineCount} line(s) still unclassified`
+        `${resolved.length} line(s) published across ${publishedPeriods.length} period(s): ` +
+        publishedPeriods.map((p) => `${p.label} (${p.lines})`).join(", ") +
+        (unclassifiedCount > 0
+          ? ` · ₹${unclassifiedTotal.toLocaleString("en-IN")} across ${unclassifiedCount} line(s) still unclassified`
           : ""),
       updated_by: userId,
     })
@@ -443,13 +557,12 @@ export async function publishIngestionJob(
     target_table: "ingestion_jobs",
     target_id: input.jobId,
     after: {
-      period_id: periodId,
-      period_label: periodLabel,
+      periods: publishedPeriods,
       line_count: resolved.length,
       value_count: valueRows.length,
       head_map_version: headMapVersion,
-      unclassified_total: rollup.unclassified.total,
-      unclassified_lines: rollup.unclassified.labels,
+      unclassified_total: unclassifiedTotal,
+      unclassified_count: unclassifiedCount,
     },
     metadata: { organization_id: orgId, file_name: fileName },
   });
@@ -460,8 +573,9 @@ export async function publishIngestionJob(
   return {
     ok: true,
     published: resolved.length,
-    unclassifiedTotal: rollup.unclassified.total,
-    unclassifiedCount: rollup.unclassified.lineCount,
+    unclassifiedTotal,
+    unclassifiedCount,
+    periods: publishedPeriods,
   };
 }
 
