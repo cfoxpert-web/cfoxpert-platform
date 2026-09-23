@@ -115,6 +115,23 @@ begin
     raise exception 'tables in public have RLS disabled: %', missing;
   end if;
 
+  -- ---- 10. The sandbox org exists and is NOT the platform owner. A second
+  -- platform owner would confer internal-staff status on its members
+  -- through is_internal_staff() (migration 0006).
+  if not exists (
+    select 1 from public.organizations
+    where name = 'CFOXPERT Sandbox — test data, not a client'
+      and deleted_at is null and not is_platform_owner
+  ) then
+    raise exception 'sandbox organization is missing, or is flagged as platform owner';
+  end if;
+
+  select count(*) into n from public.organizations
+  where is_platform_owner and deleted_at is null;
+  if n > 1 then
+    raise exception 'more than one organization is flagged is_platform_owner (%)', n;
+  end if;
+
   raise notice 'All post-migration assertions passed.';
 end
 $$;
