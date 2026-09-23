@@ -42,6 +42,46 @@ export function stageLabel(stage: string): string {
     : stage;
 }
 
+/**
+ * Stages where the analyst's action is "run it" — the Process/Retry button.
+ * Moved here from document-list.tsx so it sits beside the reviewable rule
+ * and the two can be checked for completeness together.
+ */
+export const PROCESSABLE_STAGES: ReadonlySet<string> = new Set([
+  "received",
+  "approved",
+  "failed",
+]);
+
+/** Work is under way; the analyst waits rather than acts. */
+export const IN_FLIGHT_STAGES: ReadonlySet<string> = new Set(["extracting"]);
+
+/** The job is finished, one way or the other. */
+export const TERMINAL_STAGES: ReadonlySet<string> = new Set([
+  "published",
+  "rejected",
+]);
+
+/**
+ * Stages that have something for an analyst to DO on the review screen.
+ *
+ * A4-d-2 introduced `awaiting_scope` and the picker that resolves it, but
+ * both action cells still tested `stage === "needs_review"` as a literal.
+ * The result: a parked job appeared in the queue and on the documents page
+ * with a badge, no Review link, and no Process button — visible, correct,
+ * and completely unreachable. The picker existed and nothing routed to it.
+ *
+ * The rule lives here, once, so the two call sites cannot drift again.
+ */
+export function isReviewableStage(stage: string | null | undefined): boolean {
+  return stage === "needs_review" || stage === "awaiting_scope";
+}
+
+/** What the analyst is being asked to do — the two stages differ. */
+export function reviewActionLabel(stage: string | null | undefined): string {
+  return stage === "awaiting_scope" ? "Choose scope" : "Review";
+}
+
 /** Accepted upload types (v1: spreadsheets + PDFs; scans arrive as PDF). */
 export const ACCEPTED_MIME_TYPES: Record<string, string> = {
   "application/pdf": ".pdf",

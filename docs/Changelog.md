@@ -1,5 +1,14 @@
 # Changelog.md
 
+## 2026-09-23 (Preview pass step 1 — the scope picker was unreachable)
+
+- **FOUND IN THE BROWSER, exactly where the gap was flagged.** A job parked at `awaiting_scope` rendered correctly — right badge, right subtitle, auto-select correctly refusing on a multi-unit workbook — and had NO route to the picker. Both action cells tested `stage === "needs_review"` as an inline literal: `components/dashboard/documents/document-list.tsx:106` and `app/(portal)/dashboard/review/page.tsx:92`. `PROCESSABLE_STAGES` excluded it too, so the row offered no Review link AND no Process button. Visible, correctly labelled, completely unreachable — the picker existed and nothing routed to it.
+- Root cause is duplication, not oversight: A4-d-2 added a stage and a screen, and the rule for "which stages open the review screen" lived as a literal in two files. Fixed by moving the rule into `lib/documents/model.ts` — `isReviewableStage()` and `reviewActionLabel()` — alongside `PROCESSABLE_STAGES`, `IN_FLIGHT_STAGES` and `TERMINAL_STAGES`, which were also consolidated there from a local const. One rule, one place, two consumers.
+- The label differs by stage: `awaiting_scope` offers **"Choose scope"**, `needs_review` offers **"Review"**. Calling it Review on a job with no staged lines would misdescribe what the screen does next.
+- **THE TEST ASSERTS COMPLETENESS, NOT THE FIX.** "isReviewableStage covers awaiting_scope" would be circular — it restates the patch. `lib/documents/model.test.ts` instead asserts that EVERY stage in `INGESTION_STAGES` is processable, reviewable, in-flight or terminal, and in exactly one of those. Proven both ways: reverting the rule to its pre-fix form fails three assertions with `these stages give the analyst no action and no explanation — a job parked in one of them looks broken: awaiting_scope`. The next stage anyone adds fails here until it has been given a route.
+- This is the third instance of the same shape in this milestone — introspection failure with no rendered state (A4-d-3), the discarded classifier head (A4-d-3), and now a stage with no route. Each one produced a screen that looked broken while the system underneath was working correctly.
+- Suite 13 files / 209 tests, typecheck clean, build green. Remaining Preview steps still unverified.
+
 ## 2026-09-23 (0023 applied; migration-safety rule recorded)
 
 - **0023 IS ON.** Applied clean on run #15 after the ordering fix. `statement_lines`, `head_kpi_map`, the `head_status` type and the six new KPI definitions are live. The A7-a schema is complete.

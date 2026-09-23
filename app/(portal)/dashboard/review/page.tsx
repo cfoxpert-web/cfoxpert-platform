@@ -2,7 +2,11 @@ import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card } from "@/components/cards/card";
 import { cn } from "@/lib/utils";
-import { stageLabel } from "@/lib/documents/model";
+import {
+  isReviewableStage,
+  reviewActionLabel,
+  stageLabel,
+} from "@/lib/documents/model";
 import { isInternalStaff } from "@/lib/documents/queries";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getReviewQueue } from "@/lib/review/queries";
@@ -89,12 +93,12 @@ export default async function ReviewQueuePage() {
                   >
                     {stageLabel(item.stage)}
                   </span>
-                  {item.stage === "needs_review" && (
+                  {isReviewableStage(item.stage) && (
                     <Link
                       href={`/dashboard/review/${item.jobId}`}
                       className="shrink-0 rounded-pill border border-line px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:border-teal hover:text-teal"
                     >
-                      Review
+                      {reviewActionLabel(item.stage)}
                     </Link>
                   )}
                 </div>

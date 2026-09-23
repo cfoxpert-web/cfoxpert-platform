@@ -2,13 +2,17 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 import { Card } from "@/components/cards/card";
 import { cn } from "@/lib/utils";
-import { DOCUMENT_KINDS, stageLabel } from "@/lib/documents/model";
+import {
+  DOCUMENT_KINDS,
+  PROCESSABLE_STAGES,
+  isReviewableStage,
+  reviewActionLabel,
+  stageLabel,
+} from "@/lib/documents/model";
 import type { DocumentListItem } from "@/lib/documents/queries";
 import { ProcessButton } from "./process-button";
 
 /** Stages the staff Process/Retry trigger applies to (A4-b). */
-const PROCESSABLE_STAGES = new Set(["received", "approved", "failed"]);
-
 /**
  * Amendment A4-a — uploaded documents with their coarse pipeline stage.
  * Server-rendered; members see stage labels only (analyst notes are
@@ -103,12 +107,12 @@ export function DocumentList({
                 PROCESSABLE_STAGES.has(doc.stage) && (
                   <ProcessButton jobId={doc.jobId} stage={doc.stage} />
                 )}
-              {isStaff && doc.jobId && doc.stage === "needs_review" && (
+              {isStaff && doc.jobId && isReviewableStage(doc.stage) && (
                 <Link
                   href={`/dashboard/review/${doc.jobId}`}
                   className="shrink-0 rounded-pill border border-line px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:border-teal hover:text-teal"
                 >
-                  Review
+                  {reviewActionLabel(doc.stage)}
                 </Link>
               )}
             </div>
