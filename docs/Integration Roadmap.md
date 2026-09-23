@@ -96,6 +96,7 @@ Unchanged. Still correctly last: highest complexity, highest external risk, depe
 3. KPI computation logic lives in exactly one place (#10). Dashboard and Board Packs consume it; neither reimplements it.
 4. Role/permission checks are always resolved through `organization_members`, never through a role field on `users`.
 5. No milestone ships without: what changes, why it's required, what depends on it (before) — and a self-review plus improvement suggestions (after) — per your existing process. This document does not change that process, only the plan it operates on.
+6. **`db-verify` must be green before `db-migrate` is run against production (ADR-021).** A migration is not correct until a real database has applied it and the resulting state has been asserted against. Added 2026-09-23 after migration 0023 failed live on an ordering error that a text-searching test had reported as safe — and after the same text-not-state error was reproduced inside the first attempt to fix it.
 
 ---
 

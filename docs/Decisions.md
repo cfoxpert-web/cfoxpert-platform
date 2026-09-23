@@ -311,6 +311,33 @@ The general rule this sets: `segment` is for units of one legal entity — one P
 
 ---
 
+## ADR-021: A migration is not correct until a real database says so
+
+**Date:** 2026-09-23
+
+**Decision:** Every migration is applied, in filename order, to a throwaway Postgres matching the live major version, and the resulting STATE is asserted against — `.github/workflows/db-verify.yml` + `supabase/ci/`. **`db-verify` must be green before `db-migrate` is ever run against production.** That is a standing operating rule, not a suggestion.
+
+No test that reads migration TEXT may be described as verifying the database. Such tests are useful as fast early warnings and are necessary-but-never-sufficient; they must say so in their own header, and they must not grow assertions they cannot honestly make.
+
+**Why — two worked examples, both from the session that produced this rule:**
+
+**1. The one that reached production.** Migration 0023 seeded `head_kpi_map` above the `kpi_definitions` rows its foreign key references. Postgres executes top to bottom, so it failed on the live database with `Key (kpi_key)=(cost_of_goods_sold) is not present in table "kpi_definitions"`. The test meant to prevent exactly this concatenated every migration file into one string and regex-searched for the key — finding it sixteen lines further down the same file, and passing. It had no model of execution order and no model of a database. It was reported as checking that every head "points at a key some migration actually **creates**"; the word implied execution, and nothing executed.
+
+**2. The same error, repeated in the fix.** The first replacement assertion — "definitions are seeded before the map" — also searched all migrations concatenated, where `insert into public.kpi_definitions` appears in 0007 and 0009 as well. It matched an unrelated file and PASSED with 0023 deliberately re-broken. It was caught only by flipping the order to prove the test failed, and watching it pass.
+
+The second example is the load-bearing one. The first can be read as a careless mistake. The second shows that someone who has just been burned by text-not-state reasoning, is actively trying to fix it, and knows exactly what the failure mode is, will still reproduce it — because text searching *feels* like verification. Cleverness applied to SQL text does not converge on correctness. Only executing it does.
+
+**Why this mattered more than usual at the time:** when 0023 ran, the project was on the Supabase Free plan, which keeps **no backups**. There was no restore point. For that period `db-verify` was not a quality gate, it was **the sole substitute for a backup** — the only thing between a bad migration and an unrecoverable production database holding live client financial records. The project moves to Supabase Pro (daily backups + PITR) before further migration work, and the rule survives that change: a backup makes a bad migration recoverable, it does not make it acceptable.
+
+**What the CI database does NOT prove, named so nobody over-reads a green run:** `auth.uid()` returns NULL in the shim, so RLS policies are proven syntactically valid and column-correct but NOT proven to admit and deny the right people. Tenant isolation continues to be proven by live testing, as recorded in the Changelog.
+
+**Alternatives considered:**
+- Smarter static analysis of the SQL (parse statements, order them, resolve dependencies) — rejected: it is a reimplementation of Postgres that is always behind Postgres, and example 2 shows the failure mode is *confidence* in text reasoning, not insufficient sophistication of it.
+- Rely on the production run's `--single-transaction` rollback — rejected: it makes a failure survivable, not preventable, and it burns the attempt against live data. 0023 rolled back cleanly, which was luck of the draw on which statement failed first, not a guarantee.
+- A shared staging Supabase project instead — rejected as the primary control because it is slower, costs money, drifts from production, and still requires someone to remember to use it. A per-run throwaway database cannot drift and cannot be skipped. (A preview-scoped project remains worth having for APPLICATION testing — see the standing risk that Preview currently shares production's database.)
+
+---
+
 ## Template for future entries
 
 ```

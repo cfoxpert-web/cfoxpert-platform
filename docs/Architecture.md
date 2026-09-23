@@ -35,6 +35,32 @@ Role is scoped to `organization_members` (user × organization), not global to t
 - Every write-capable table participates in `audit_logs`. See ADR-005.
 - KPI definitions are data, not code. See ADR-004.
 
+## Migration safety (standing rule, ADR-021)
+
+**`db-verify` green before `db-migrate` runs. No exceptions.**
+
+- `.github/workflows/db-verify.yml` applies every migration in order to a
+  throwaway Postgres 17 (matching `cfoxpert-prod`) and asserts against the
+  resulting state. It runs on every branch and PR touching
+  `supabase/migrations/**`.
+- `.github/workflows/db-migrate.yml` applies migrations to the LIVE database.
+  It triggers on pushes to `integration-milestones`/`main`, or manually
+  against any branch.
+- A test that reads migration TEXT is an early warning, never a verification.
+  It must say so in its own header. See ADR-021 for the two worked examples
+  of why — including one where the same text-not-state error was repeated
+  inside the fix for it.
+- `supabase/ci/bootstrap.sql` names what the CI database cannot prove:
+  `auth.uid()` is NULL there, so RLS is checked for validity, not for who it
+  admits.
+
+**Also standing:** Vercel Preview currently shares Production's Supabase
+project — all three Supabase env vars are single entries targeting both
+environments, and `NEXT_PUBLIC_FEATURE_FLAGS` is shared too. So the rule
+"Production stays on mock flows until Preview is validated, flags are the
+enforcement mechanism" does not hold as configured. A preview-scoped
+Supabase project is open work, not a someday.
+
 ## Computation boundary
 
 KPI Engine (Milestone 10) is the *only* place aggregation/calculation logic lives once built. The Dashboard and the future Board Pack Generator both call into it — neither reimplements it. This mirrors the existing `score-engine.ts` pattern and prevents the dashboard and a PDF board pack from ever showing different numbers for the same period.

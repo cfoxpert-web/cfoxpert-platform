@@ -1,5 +1,15 @@
 # Changelog.md
 
+## 2026-09-23 (0023 applied; migration-safety rule recorded)
+
+- **0023 IS ON.** Applied clean on run #15 after the ordering fix. `statement_lines`, `head_kpi_map`, the `head_status` type and the six new KPI definitions are live. The A7-a schema is complete.
+- **ADR-021 recorded — "a migration is not correct until a real database says so".** `db-verify` green before `db-migrate` runs, as a standing operating rule, now also in `docs/Architecture.md` (new Migration safety section) and as standing rule #6 in the roadmap.
+- The ADR carries BOTH worked examples, and names the second as the load-bearing one: the 0023 ordering failure that a text-searching test called safe, AND the repeat of that same text-not-state error inside the first attempt to fix it. One is a careless mistake; two — by someone who had just been burned, was actively fixing it, and knew the failure mode by name — is evidence that text searching *feels* like verification. Cleverness applied to SQL text does not converge on correctness; executing it does.
+- **The ADR records that `db-verify` stood in for a backup.** When 0023 ran, Supabase Free kept no backups and there was no restore point; for that period the verifier was not a quality gate but the only thing between a bad migration and an unrecoverable production database holding live client financial records. Parth is moving to Supabase Pro (daily backups + PITR) BEFORE further migration work. The rule survives that change — a backup makes a bad migration recoverable, not acceptable.
+- Rejected alternatives are recorded too, including relying on `--single-transaction` rollback: 0023 rolled back cleanly, but that was which statement happened to fail first, not a guarantee.
+- **Advisor:** the CRITICAL is on the Supabase dashboard's HEALTH tab, which neither the security nor the performance lint API exposes — which is why both came back without one. Awaiting the exact title.
+- Still UNVERIFIED IN A BROWSER: A4-d-2, A4-d-3, A7-a. Preview pass running now.
+
 ## 2026-09-23 (Migration 0023 failed in production — the check that should have caught it was validating text)
 
 - **WHAT HAPPENED.** Migration 0023 seeded `head_kpi_map` ABOVE the `kpi_definitions` rows its foreign key references. Postgres executes top to bottom, so it failed on the live database: `Key (kpi_key)=(cost_of_goods_sold) is not present in table "kpi_definitions"`. 0020–0022 applied and are recorded; 0023 rolled back in its single transaction. Verified read-only against production afterwards — `head_kpi_map`, `statement_lines`, the `head_status` type and all six new KPI definitions are absent, and `_applied_migrations` stops at 0022. **The rollback was complete and atomic; nothing was left behind.**
