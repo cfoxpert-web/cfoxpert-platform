@@ -68,6 +68,43 @@ language sql
 stable
 set search_path = public
 as $$ select coalesce(max(version), 1) from public.head_kpi_map $$;
+-- ----------------------------------------------------------------------------
+-- 3. KPI definitions the rollup needs
+-- ----------------------------------------------------------------------------
+insert into public.kpi_definitions
+  (key, label, unit, category, ideal_min, ideal_max, higher_is_better, sort_order, active)
+values
+  ('cost_of_goods_sold', 'Cost of Goods Sold', 'INR', 'profitability', null, null, false, 170, true),
+  ('direct_expenses',    'Direct Expenses',    'INR', 'profitability', null, null, false, 180, true),
+  ('selling_expenses',   'Selling Expenses',   'INR', 'profitability', null, null, false, 190, true),
+  ('employee_cost',      'Employee Cost',      'INR', 'profitability', null, null, false, 200, true),
+  ('other_expenses',     'Other Expenses',     'INR', 'profitability', null, null, false, 210, true),
+  -- A DATA-QUALITY metric, deliberately a first-class KPI so it travels the
+  -- existing read path and cannot be quietly ignored. See the note on
+  -- statement_lines below: unclassified lines are all expenses, so dropping
+  -- them silently understates cost and flatters every margin and ratio.
+  ('unclassified_value', 'Unclassified Value', 'INR', 'other', null, 0, false, 900, true)
+on conflict (key) do update
+  set label = excluded.label, unit = excluded.unit, category = excluded.category,
+      ideal_max = excluded.ideal_max, higher_is_better = excluded.higher_is_better,
+      sort_order = excluded.sort_order, active = true;
+
+-- ----------------------------------------------------------------------------
+-- 3b. Seed head_kpi_map — AFTER the definitions it references
+-- ----------------------------------------------------------------------------
+-- ORDER IS LOAD-BEARING. head_kpi_map.kpi_key is a foreign key into
+-- kpi_definitions, so this insert cannot run before the definitions above
+-- exist. The first version of this migration seeded the map in section 2,
+-- above the definitions, and failed on the live database with
+--   insert or update on table "head_kpi_map" violates foreign key
+--   constraint "head_kpi_map_kpi_key_fkey"
+--   DETAIL: Key (kpi_key)=(cost_of_goods_sold) is not present in
+--           table "kpi_definitions".
+-- The file-parsing test that was supposed to catch this searched the
+-- migration TEXT for the key and found it 16 lines further down, so it
+-- passed. A migration is only correct when a database says so — see
+-- .github/workflows/db-verify.yml, which now applies every migration to a
+-- real Postgres and asserts against the resulting STATE.
 
 -- Version 1. Heads are lib/ingestion/head-classify.ts's PROJECTION_HEADS.
 --
@@ -91,27 +128,6 @@ insert into public.head_kpi_map (version, head, kpi_key) values
   (1, 'depreciation', 'depreciation'),
   (1, 'otherIncome',  'other_income'),
   (1, 'otherExp',     'other_expenses');
-
--- ----------------------------------------------------------------------------
--- 3. KPI definitions the rollup needs
--- ----------------------------------------------------------------------------
-insert into public.kpi_definitions
-  (key, label, unit, category, ideal_min, ideal_max, higher_is_better, sort_order, active)
-values
-  ('cost_of_goods_sold', 'Cost of Goods Sold', 'INR', 'profitability', null, null, false, 170, true),
-  ('direct_expenses',    'Direct Expenses',    'INR', 'profitability', null, null, false, 180, true),
-  ('selling_expenses',   'Selling Expenses',   'INR', 'profitability', null, null, false, 190, true),
-  ('employee_cost',      'Employee Cost',      'INR', 'profitability', null, null, false, 200, true),
-  ('other_expenses',     'Other Expenses',     'INR', 'profitability', null, null, false, 210, true),
-  -- A DATA-QUALITY metric, deliberately a first-class KPI so it travels the
-  -- existing read path and cannot be quietly ignored. See the note on
-  -- statement_lines below: unclassified lines are all expenses, so dropping
-  -- them silently understates cost and flatters every margin and ratio.
-  ('unclassified_value', 'Unclassified Value', 'INR', 'other', null, 0, false, 900, true)
-on conflict (key) do update
-  set label = excluded.label, unit = excluded.unit, category = excluded.category,
-      ideal_max = excluded.ideal_max, higher_is_better = excluded.higher_is_better,
-      sort_order = excluded.sort_order, active = true;
 
 -- ----------------------------------------------------------------------------
 -- 4. statement_lines — the fact table

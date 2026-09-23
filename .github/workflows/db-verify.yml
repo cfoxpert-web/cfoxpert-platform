@@ -1,0 +1,82 @@
+name: Verify database migrations
+
+# Applies EVERY migration, in order, to a throwaway Postgres 17 and asserts
+# against the database that results. Runs on every branch and every PR that
+# touches supabase/migrations/**.
+#
+# WHY THIS EXISTS. Migration 0023 seeded head_kpi_map above the
+# kpi_definitions rows its foreign key references, and failed on the live
+# database. The test that was supposed to catch it searched the migration
+# FILES for the key, found it further down the same file, and passed. It
+# asserted a property of text; Postgres asserts a property of state.
+#
+# WHY IT MATTERS MORE THAN USUAL HERE. The project is on the Supabase Free
+# plan, which keeps NO backups — there is no restore point if a migration
+# damages live client data. Until that changes, this job is the only thing
+# standing between a bad migration and an unrecoverable production. It must
+# pass before db-migrate.yml is run against production.
+
+on:
+  push:
+    paths: ["supabase/migrations/**", "supabase/ci/**", ".github/workflows/db-verify.yml"]
+  pull_request:
+    paths: ["supabase/migrations/**", "supabase/ci/**", ".github/workflows/db-verify.yml"]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Match the live project: Supabase reports Postgres 17 for
+        # cfoxpert-prod. Verifying on a different major version would prove
+        # something about a database we do not run.
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: verify
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: verify
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Bootstrap Supabase-shaped scaffolding
+        run: psql -v ON_ERROR_STOP=1 -f supabase/ci/bootstrap.sql
+
+      - name: Apply every migration in order
+        run: |
+          set -euo pipefail
+          # Deliberately mirrors db-migrate.yml: same order, same
+          # --single-transaction per file. If the two ever diverge, this job
+          # stops proving anything about the production run.
+          for f in supabase/migrations/*.sql; do
+            echo "::group::apply $(basename "$f")"
+            psql -v ON_ERROR_STOP=1 --single-transaction -f "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Assert the resulting database state
+        run: psql -v ON_ERROR_STOP=1 -f supabase/ci/assertions.sql
+
+      - name: Re-apply is a no-op (migrations must not be order-dependent twice)
+        run: |
+          set -euo pipefail
+          # Guards a real failure mode: a migration that works once but
+          # breaks a rerun leaves the production pipeline unable to recover
+          # after a partial failure. Only idempotent files are re-run here —
+          # the rest are covered by _applied_migrations in production.
+          psql -v ON_ERROR_STOP=1 -c "select count(*) from public.head_kpi_map;"
