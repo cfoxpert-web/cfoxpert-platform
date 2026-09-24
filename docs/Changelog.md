@@ -1,5 +1,19 @@
 # Changelog.md
 
+## 2026-09-24 (HOTFIX to production — a lead's score could render as a client's)
+
+- **LIVE CLIENT-VISIBLE DEFECT, CLOSED.** `lib/dashboard/data.ts` read `health_scores` with no `organization_id` filter and rendered the most recent row as the viewed client's Business Health Score. The rows in that table are **public lead self-assessments with `organization_id IS NULL`** — they belong to no organization, so RLS cannot scope them by membership. One line: `.eq("organization_id", org.id)`.
+- **ON FILE, should a client ever query a score from this window:**
+  - **Window:** 2026-07-27 (when `healthCheckPersistence` went on in Production and the first lead score persisted, 12:10) to 2026-09-24.
+  - **Values displayed:** 93 / Grade A from 27 Jul; 58 / Grade B from 30 Jul; **67 / Grade B from 5 Aug onward**.
+  - **Who could see it:** the fallback fires only when the per-period financial score cannot be computed. **RPIL** has five of seven periods too sparse to score — FY25, Mar 2026, Apr 2026, May 2026, Jun 2026 — all selectable from the period dropdown. **Sheetal was never exposed**; all five of its periods compute.
+  - **What was disclosed:** the card renders only score and grade. No name, company, email, questionnaire answers, or `submission_id`. **No client's data ever reached another client.**
+  - **Why proactive notification was not made (Parth's decision, recorded):** nothing of RPIL's was exposed and nothing identifying of the lead's. The deciding factor: 67/B is one point from RPIL's own 68/B, so had they seen it, it would have looked entirely normal — the same plausible-wrong-number shape as every other defect this pass surfaced, and indistinguishable from correct without this record.
+- **ADR-022 recorded: RLS is a boundary, never a selector.** RLS answers "may this viewer see this row", never "is this the organization I am looking at". Org-scoped reads must filter `organization_id`, fetch by primary key, or carry a written `rls-scope:` justification.
+- `lib/rls-scope.test.ts` enforces it across `lib/`, `app/` and `components/`. Verified by reverting the fix and watching it fail by file and line. Its scope is stated honestly: it reads SOURCE, so it proves every org-scoped read is filtered, keyed or justified in writing — it does NOT prove the filter passes the right id. Two deliberate cross-org staff surfaces (the review queue, the leads page) carry `rls-scope:` comments.
+- `vitest.config.ts` included: without it the `@/` path aliases do not resolve under the test runner and `financial-score.test.ts` cannot load, so the suite is red and carries no signal.
+- **SEPARABLE BY CONSTRUCTION — no migration, no schema change, no dependency on the A7 milestone.** Verified on a worktree of `main`: typecheck clean, 7 files / 106 tests green, production build successful. The Supabase Pro backup move is NOT a prerequisite for this change: it touches no database object.
+
 ## 2026-08-04 (Client report artefacts — byte-for-byte, auth-gated)
 
 - Closes the last open acceptance criterion from the Sheetal onboarding brief ("report renders identically to the supplied file") — Parth re-supplied the artefact to request it.

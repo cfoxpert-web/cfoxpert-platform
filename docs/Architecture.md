@@ -35,6 +35,19 @@ Role is scoped to `organization_members` (user × organization), not global to t
 - Every write-capable table participates in `audit_logs`. See ADR-005.
 - KPI definitions are data, not code. See ADR-004.
 
+## Tenancy reads (standing rule, ADR-022)
+
+**RLS is a boundary, never a selector.** It answers "may this viewer see
+this row", not "is this the organization I am looking at".
+
+- Reads of org-scoped tables filter `organization_id` explicitly, or fetch
+  a single row by primary key, or carry a written `rls-scope:` justification
+  for a deliberate cross-org staff surface.
+- `lib/rls-scope.test.ts` enforces it and fails the suite otherwise.
+- Rows with a NULL `organization_id` (public lead submissions) belong to no
+  organization and are invisible to membership predicates — RLS cannot
+  protect against attributing one to a client. Only an explicit filter can.
+
 ## Computation boundary
 
 KPI Engine (Milestone 10) is the *only* place aggregation/calculation logic lives once built. The Dashboard and the future Board Pack Generator both call into it — neither reimplements it. This mirrors the existing `score-engine.ts` pattern and prevents the dashboard and a PDF board pack from ever showing different numbers for the same period.

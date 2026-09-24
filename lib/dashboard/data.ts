@@ -115,6 +115,14 @@ export async function getDashboardData(
     supabase
       .from("health_scores")
       .select("overall_score, grade")
+      // REQUIRED, and missing until now. RLS scopes this to organizations
+      // the viewer BELONGS TO — not to the organization being viewed, and
+      // rows with a NULL organization_id (public lead self-assessments)
+      // belong to no organization at all, so membership cannot scope them.
+      // Without this filter the dashboard rendered the most recent LEAD
+      // questionnaire score as the viewed client's Business Health Score.
+      // See ADR-022: RLS is a boundary, never a selector.
+      .eq("organization_id", org.id)
       .order("computed_at", { ascending: false })
       .limit(1)
       .then(({ data }) => data?.[0] ?? null),

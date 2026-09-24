@@ -144,6 +144,33 @@ This is the single log of every consequential architectural decision made on the
 
 ---
 
+## ADR-022: RLS is a boundary, never a selector
+
+**Date:** 2026-09-24
+
+**Decision:** Row Level Security answers **"may this viewer see this row"**. It never answers **"is this row the organization I am currently looking at"**. Any read of an org-scoped table whose result is then attributed to a particular organization MUST filter `organization_id` explicitly. Fetching a single row by primary key is acceptable (RLS is a genuine boundary when the id is already known). A deliberate cross-organization read — a staff queue that spans clients — must carry a written `rls-scope:` justification at the call site.
+
+Enforced by `lib/rls-scope.test.ts`, which fails the suite when an org-scoped table is read with no filter, no primary key and no justification.
+
+**Why — this codebase has made the mistake twice, and the second was worse:**
+
+**1. Milestone 11, org resolution.** `organization_members` was read without filtering `user_id`, because RLS deliberately shows teammates' membership rows so team views work. Visibility was driving resolution. Caught in live testing, and the Changelog recorded the lesson at the time: *"visibility must never drive resolution"*.
+
+**2. A7-a-2, the Business Health Score.** `lib/dashboard/data.ts` read `health_scores` with no `organization_id` filter and rendered the most recent row as the viewed client's score. The rows in that table are **public lead self-assessments with `organization_id IS NULL`** — submissions from the marketing questionnaire, taken before any organization exists. RLS cannot scope those by membership because there is no membership to check. The result was a stranger's questionnaire score, 67/Grade B, displayed as a client's Business Health Score.
+
+The second is worse than the first in a way worth naming: the M11 bug leaked between organizations the viewer already belonged to. This one surfaced a row belonging to **no organization at all**, which no amount of correct RLS could have prevented. That is the precise reason the rule has to live in application code — RLS is not capable of expressing it.
+
+**A note on how it was found, because it nearly was not:** the first verification query for this investigation joined `health_scores` to `organizations` on `organization_id`. An INNER JOIN silently drops rows where that column is NULL — which was every row in the table. The conclusion drawn was "health_scores is empty", and it was wrong. A query written to check for a scoping bug reproduced the scoping bug. Verify with the narrowest query that can answer the question, not the most convenient one.
+
+**Alternatives considered:**
+- Fix the individual query and move on — rejected: one unfiltered query was found by accident while tracing something unrelated, which is not a search. The class needs a rule.
+- Express the rule in RLS itself — rejected: impossible. RLS cannot know which organization a page is rendering, and rows with a NULL `organization_id` fall outside membership predicates entirely.
+- A runtime assertion rather than a source check — rejected as the primary control: it would fire in production, on a client's screen, after the wrong number had already rendered. The source check fails before merge. (A runtime guard remains worth adding where a figure is attributed to a named organization.)
+
+**Scope of the check, stated honestly (ADR-021):** it reads SOURCE. It proves every org-scoped list-read is filtered, keyed, or justified in writing. It does NOT prove the filter passes the correct id, and it does not claim to. Its value is that a new unfiltered read cannot be added silently — someone has to write down why.
+
+---
+
 ## Template for future entries
 
 ```
