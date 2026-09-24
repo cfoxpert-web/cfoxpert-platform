@@ -61,6 +61,19 @@ environments, and `NEXT_PUBLIC_FEATURE_FLAGS` is shared too. So the rule
 enforcement mechanism" does not hold as configured. A preview-scoped
 Supabase project is open work, not a someday.
 
+## Tenancy reads (standing rule, ADR-022)
+
+**RLS is a boundary, never a selector.** It answers "may this viewer see
+this row", not "is this the organization I am looking at".
+
+- Reads of org-scoped tables filter `organization_id` explicitly, or fetch
+  a single row by primary key, or carry a written `rls-scope:` justification
+  for a deliberate cross-org staff surface.
+- `lib/rls-scope.test.ts` enforces it and fails the suite otherwise.
+- Rows with a NULL `organization_id` (public lead submissions) belong to no
+  organization and are invisible to membership predicates — RLS cannot
+  protect against attributing one to a client. Only an explicit filter can.
+
 ## Computation boundary
 
 KPI Engine (Milestone 10) is the *only* place aggregation/calculation logic lives once built. The Dashboard and the future Board Pack Generator both call into it — neither reimplements it. This mirrors the existing `score-engine.ts` pattern and prevents the dashboard and a PDF board pack from ever showing different numbers for the same period.

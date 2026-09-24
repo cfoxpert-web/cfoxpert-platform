@@ -32,6 +32,10 @@ function labelForAnswer(questionKey: string, value: unknown): string | null {
 export async function getLeads(): Promise<LeadListItem[]> {
   const supabase = await createClient();
 
+  // rls-scope: cross-org by design — leads are pre-signup submissions
+  // that belong to NO organization yet (organization_id is null until
+  // conversion), so there is nothing to filter on. Staff-only via the
+  // M9 read policy. See ADR-022.
   const { data, error } = await supabase
     .from("health_check_submissions")
     .select(

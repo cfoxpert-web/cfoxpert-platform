@@ -74,6 +74,10 @@ const one = <T>(v: T | T[] | null | undefined): T | null =>
 export async function getReviewQueue(): Promise<ReviewQueueItem[]> {
   const supabase = await createClient();
 
+  // rls-scope: cross-org by design — the analyst queue spans every client.
+  // The staff RLS policy (migration 0013) IS the boundary here, and the
+  // result is never attributed to one organization: each row carries and
+  // displays its own. Deliberately unfiltered; see ADR-022.
   const { data, error } = await supabase
     .from("ingestion_jobs")
     .select(
