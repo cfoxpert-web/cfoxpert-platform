@@ -397,6 +397,22 @@ but it will mislead the redesign — remove it there rather than in a drive-by.
   `report.projections_modelling` already exist in `lib/entitlements.ts`; the
   tab must be added to `components/dashboard/report/tab-defs.ts`.
 - **A9 — Export.** Depends on A8.
+- **A2-b — Separate lead self-assessments from client health scores (S–M, added 2026-09-24).**
+  `health_scores` holds a LEAD's questionnaire result (pre-signup, no
+  organization by definition) and a CLIENT's financial score (A2, a
+  different engine) in one table, distinguished only by a nullable
+  `organization_id`. That made "belongs to nobody" a legal state in a table
+  every read attributes to somebody — and one missing filter then showed a
+  stranger's score on a client's dashboard (ADR-022, and the exposure
+  assessment in the 2026-09-24 Changelog). Split `lead_health_scores` out;
+  make `health_scores.organization_id` NOT NULL, added `NOT VALID` so the
+  three legacy rows are grandfathered since `reject_mutation` blocks DELETE.
+  Separation makes the class impossible where the test makes it catchable.
+  **Sequenced after backups and the Preview pass, AHEAD of the SECURITY
+  DEFINER hardening** — client-visible defect class before unexploited
+  surface area. Touches the live lead-capture path, so it goes through
+  `db-verify` with a Preview check on the public health-check form.
+
 - **A10 — Bank Finance Pack (CMA).** Cost of Project and Means of Finance,
   term loan repayment schedule for submission, MPBF under Tandon Committee
   Method II, DSCR working, assumptions summary, and an editable market section
