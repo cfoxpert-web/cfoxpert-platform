@@ -315,7 +315,10 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
       // be the whole scope (2026-03-31 → 2027-03-31) on every row, so both
       // years were indistinguishable at publish time and merged into one.
       for (const line of result.lines) {
-        expect(line.segment).toBe("Total");
+        // "Total" is the WORKBOOK's word for consolidated; this platform
+        // spells it NULL (migration 0009). Publishing the string produced
+        // 121 correct, reconciled, invisible lines.
+        expect(line.segment).toBeNull();
         expect(line.periodLabel).toMatch(/^FY 202[56]-2[67]$/);
         if (line.periodLabel === "FY 2025-26") {
           expect(line.periodStart).toBe("2025-04-01");
@@ -431,7 +434,7 @@ describe.skipIf(!available)("RPIL golden extraction", async () => {
         .filter((s) => s.amounts[period] !== null)
         .map((s, i) => ({
           id: `line-${period}-${i}`,
-          segment: "Total",
+          segment: null,
           sourceLabel: s.sourceLabel,
           head: s.head,
           headStatus: s.head === null ? ("unclassified" as const) : ("classified" as const),

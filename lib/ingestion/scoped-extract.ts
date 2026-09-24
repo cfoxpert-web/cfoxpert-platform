@@ -8,6 +8,7 @@ import {
   describeSheet,
   extractScopedRows,
   withUnitBasis,
+  normalizeSegment,
   type ScopeChoice,
   type UnitBasisName,
 } from "./workbook";
@@ -81,7 +82,10 @@ export function extractUnderScope(
         periodLabel: derived?.label ?? null,
         periodStart: derived?.start ?? null,
         periodEnd: derived?.end ?? null,
-        segment: period.segment,
+        // THE single boundary where a source-document column name becomes
+        // a platform segment value. "Total" means consolidated, which this
+        // platform spells NULL (migration 0009).
+        segment: normalizeSegment(period.segment),
         provenance: row.provenance[i] ?? extraction.sheetName,
         // The head matcher proposes a PROJECTION head, not a kpi_definitions
         // key. Mapping memory and the analyst still decide the KPI, so the

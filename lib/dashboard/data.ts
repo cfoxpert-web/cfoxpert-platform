@@ -115,6 +115,14 @@ export async function getDashboardData(
     supabase
       .from("health_scores")
       .select("overall_score, grade")
+      // REQUIRED, and missing until now. RLS scopes this to organizations
+      // the viewer BELONGS TO — not to the organization being viewed. An
+      // analyst who is a member of two clients would see the most recently
+      // scored client's figure on the other client's dashboard.
+      //
+      // Exactly the lesson M11 already recorded for org resolution:
+      // "visibility must never drive resolution". Same trap, second query.
+      .eq("organization_id", org.id)
       .order("computed_at", { ascending: false })
       .limit(1)
       .then(({ data }) => data?.[0] ?? null),

@@ -6,7 +6,12 @@ import { isFeatureEnabled } from "../feature-flags";
 import { normalizeLabel } from "../ingestion/normalize";
 import type { GateResult } from "../ingestion/types";
 import { findPeriodCollisions } from "../ingestion/period";
-import { UNIT_MULTIPLIER, isUnitBasisName, type UnitBasisName } from "../ingestion/workbook";
+import {
+  UNIT_MULTIPLIER,
+  isUnitBasisName,
+  normalizeSegment,
+  type UnitBasisName,
+} from "../ingestion/workbook";
 import { rollUpToKpis } from "../kpi/rollup";
 import { createAdminClient } from "../supabase/admin";
 import { createClient } from "../supabase/server";
@@ -248,10 +253,11 @@ export async function publishIngestionJob(
         error: `'${head}' is not a projection head in map version ${headMapVersion}.`,
       };
     }
-    const segment =
-      typeof sel.segment === "string" && sel.segment.trim() !== ""
-        ? sel.segment.trim().slice(0, 100)
-        : null;
+    // An operator who types "Total" means the same thing the workbook did.
+    // One rule, applied wherever a segment name enters the system.
+    const segment = normalizeSegment(
+      typeof sel.segment === "string" ? sel.segment.slice(0, 100) : null,
+    );
 
     const periodKey = (row.period_end as string | null) ?? null;
     if (!periodKey) {

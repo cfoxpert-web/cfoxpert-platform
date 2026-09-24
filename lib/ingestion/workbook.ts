@@ -820,6 +820,27 @@ const CONSOLIDATED_SEGMENT_NAMES = [
   "all units",
 ];
 
+/**
+ * A source document's column header is not the platform's segment
+ * vocabulary. Migration 0009 established ONE marker for consolidated
+ * figures: `segment IS NULL`. Every consolidated read filters on it
+ * (`lib/kpi/queries.ts`), and RPIL's and Sheetal's data follows it.
+ *
+ * A workbook that heads its consolidated column "Total" must therefore
+ * publish as NULL, not as the string "Total". Publishing the string
+ * created a second marker for the same concept: 121 statement lines and 19
+ * KPI values that were correct, reconciled, and completely invisible —
+ * every report tab read `segment is null` and found nothing, while a
+ * segment-wise view would have shown "Total" as if it were a plant.
+ */
+export function normalizeSegment(name: string | null | undefined): string | null {
+  const trimmed = (name ?? "").trim();
+  if (trimmed === "") return null;
+  return CONSOLIDATED_SEGMENT_NAMES.includes(trimmed.toLowerCase())
+    ? null
+    : trimmed;
+}
+
 export function findConsolidatedSegment(
   segments: (string | null)[],
 ): string | null | undefined {
